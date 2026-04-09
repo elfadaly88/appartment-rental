@@ -1,0 +1,101 @@
+<section class="payout-settings" role="region" [attr.aria-label]="t('إعدادات التحويل', 'Payout Settings')">
+  @if (isSetupComplete()) {
+    <article class="payout-success">
+      <div class="payout-success__icon" aria-hidden="true">✓</div>
+      <div class="payout-success__content">
+        <h2>{{ t('الحساب موثّق ومتصّل', 'Account Verified & Connected') }}</h2>
+        <p>{{ maskedAccount() }}</p>
+        @if (subMerchantId(); as merchantId) {
+          <small>{{ t('معرّف التاجر الفرعي', 'Sub-merchant ID') }}: {{ merchantId }}</small>
+        }
+      </div>
+    </article>
+  } @else {
+    <article class="payout-shell">
+      <header class="payout-shell__header">
+        <div class="payout-shell__lock" aria-hidden="true">🔒</div>
+        <div>
+          <h2>{{ t('كيف ستستلم مدفوعاتك', "How you'll get paid") }}</h2>
+          <p>{{ t('بيانات التحويل محمية ومشفّرة لضمان أمان عمليات السحب.', 'Your payout details are encrypted and protected for secure withdrawals.') }}</p>
+        </div>
+      </header>
+
+      <div class="payout-toggle" role="tablist" [attr.aria-label]="t('طريقة الاستلام', 'Payout method')">
+        <button
+          type="button"
+          class="payout-toggle__item"
+          [class.payout-toggle__item--active]="payoutMethod() === 'bank'"
+          (click)="setPayoutMethod('bank')"
+        >
+          {{ t('تحويل بنكي', 'Bank Transfer') }}
+        </button>
+        <button
+          type="button"
+          class="payout-toggle__item"
+          [class.payout-toggle__item--active]="payoutMethod() === 'wallet'"
+          (click)="setPayoutMethod('wallet')"
+        >
+          {{ t('محفظة إلكترونية', 'E-Wallet') }}
+        </button>
+      </div>
+
+      <form class="payout-form" [formGroup]="form" (ngSubmit)="submit()">
+        @if (payoutMethod() === 'bank') {
+          <div class="payout-form__panel">
+            <div class="field" [class.field--filled]="!!form.controls.beneficiaryName.value" [class.field--invalid]="shouldShowError('beneficiaryName')">
+              <input id="beneficiaryName" type="text" class="field__input" formControlName="beneficiaryName" autocomplete="name" />
+              <label class="field__label" for="beneficiaryName">{{ t('اسم المستفيد', 'Beneficiary Name') }}</label>
+            </div>
+            @if (shouldShowError('beneficiaryName')) {
+              <p class="field__error">{{ errorText('beneficiaryName') }}</p>
+            }
+
+            <div class="field field--select" [class.field--filled]="!!form.controls.bankName.value" [class.field--invalid]="shouldShowError('bankName')">
+              <select id="bankName" class="field__input" formControlName="bankName">
+                <option value=""></option>
+                @for (bank of egyptianBanks; track bank) {
+                  <option [value]="bank">{{ bank }}</option>
+                }
+              </select>
+              <label class="field__label" for="bankName">{{ t('اسم البنك', 'Bank Name') }}</label>
+            </div>
+            @if (shouldShowError('bankName')) {
+              <p class="field__error">{{ errorText('bankName') }}</p>
+            }
+
+            <div class="field" [class.field--filled]="!!form.controls.iban.value" [class.field--invalid]="shouldShowError('iban')">
+              <input id="iban" type="text" class="field__input" formControlName="iban" inputmode="text" autocomplete="off" />
+              <label class="field__label" for="iban">{{ t('رقم الـ IBAN', 'IBAN') }}</label>
+            </div>
+            @if (shouldShowError('iban')) {
+              <p class="field__error">{{ errorText('iban') }}</p>
+            }
+          </div>
+        } @else {
+          <div class="payout-form__panel">
+            <div class="field" [class.field--filled]="!!form.controls.walletNumber.value" [class.field--invalid]="shouldShowError('walletNumber')">
+              <input id="walletNumber" type="tel" class="field__input" formControlName="walletNumber" inputmode="numeric" autocomplete="tel" />
+              <label class="field__label" for="walletNumber">{{ t('رقم المحفظة', 'Wallet Number') }}</label>
+            </div>
+            @if (shouldShowError('walletNumber')) {
+              <p class="field__error">{{ errorText('walletNumber') }}</p>
+            }
+          </div>
+        }
+
+        @if (payoutService.error(); as err) {
+          <p class="payout-form__service-error" role="alert">{{ err }}</p>
+        }
+
+        <button type="submit" class="payout-form__submit" [disabled]="payoutService.isSaving()">
+          @if (payoutService.isSaving()) {
+            <span class="payout-form__spinner" aria-hidden="true"></span>
+            {{ t('جاري الحفظ...', 'Saving...') }}
+          } @else {
+            {{ t('حفظ تفاصيل التحويل', 'Save Payout Details') }}
+          }
+        </button>
+      </form>
+    </article>
+  }
+</section>

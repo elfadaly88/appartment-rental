@@ -1,0 +1,26 @@
+<section class="toast-stack" aria-live="polite" aria-atomic="false">
+  @for (toast of toastViewModels(); track toast.id) {
+    <article class="toast" [class.toast--leaving]="toast.leaving" role="status">
+      <header class="toast__head">
+        <p class="toast__guest">{{ toast.guestLabel }}</p>
+        <button
+          class="toast__close"
+          type="button"
+          [attr.aria-label]="t('إغلاق', 'Dismiss')"
+          (click)="dismiss(toast.id)"
+        >
+          ×
+        </button>
+      </header>
+
+      <p class="toast__property">{{ toast.propertyLabel }}</p>
+      <p class="toast__body">{{ toast.body }}</p>
+
+      <footer class="toast__actions">
+        <a class="toast__view" routerLink="/host/bookings" (click)="dismiss(toast.id)">
+          {{ t('عرض', 'View') }}
+        </a>
+      </footer>
+    </article>
+  }
+</section>

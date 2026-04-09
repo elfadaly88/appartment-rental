@@ -1,0 +1,24 @@
+<section class="list" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'">
+  <header class="list__header">
+    <h2 class="list__heading">{{ heading() }}</h2>
+  </header>
+
+  <div class="list__grid">
+    @for (property of properties(); track property.id) {
+      <app-property-card
+        [property]="property"
+        [locale]="locale()"
+      />
+    } @empty {
+      <div class="list__empty">
+        <svg class="list__empty-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        <p class="list__empty-text">{{ emptyMessage() }}</p>
+      </div>
+    }
+  </div>
+</section>

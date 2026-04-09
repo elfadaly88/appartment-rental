@@ -1,0 +1,76 @@
+<section class="master-dashboard" role="region" [attr.aria-label]="t('لوحة التحكم الرئيسية', 'Master Dashboard')">
+  <header class="master-dashboard__header">
+    <h2 class="master-dashboard__title">{{ t('لوحة الإدارة', 'Admin Master Dashboard') }}</h2>
+    <p class="master-dashboard__subtitle">
+      {{ t('نظرة فورية على الأداء والإيرادات', 'Instant visibility into revenue and platform performance') }}
+    </p>
+  </header>
+
+  @if (store.isLoading()) {
+    <section class="kpi-grid kpi-grid--loading" aria-hidden="true">
+      @for (_ of [1, 2, 3]; track $index) {
+        <article class="kpi-card kpi-card--skeleton">
+          <div class="skeleton skeleton--label"></div>
+          <div class="skeleton skeleton--value"></div>
+          <div class="skeleton skeleton--sub"></div>
+        </article>
+      }
+    </section>
+
+    <section class="chart-panel chart-panel--skeleton" aria-hidden="true">
+      <div class="skeleton skeleton--chart-title"></div>
+      <div class="skeleton skeleton--chart"></div>
+    </section>
+  } @else {
+    <section class="kpi-grid">
+      <article class="kpi-card">
+        <p class="kpi-card__label">{{ revenueLabel() }}</p>
+        <p class="kpi-card__value kpi-card__value--revenue">{{ formattedRevenue() }}</p>
+      </article>
+
+      <article class="kpi-card">
+        <p class="kpi-card__label">{{ bookingsLabel() }}</p>
+        <p class="kpi-card__value">{{ store.activeBookings().toLocaleString(lang.currentLang() === 'ar' ? 'ar-SA' : 'en-US') }}</p>
+      </article>
+
+      <article class="kpi-card">
+        <p class="kpi-card__label">{{ growthLabel() }}</p>
+        <p class="kpi-card__value" [class.kpi-card__value--positive]="isGrowthPositive()" [class.kpi-card__value--negative]="!isGrowthPositive()">
+          <span class="kpi-card__arrow" aria-hidden="true">{{ isGrowthPositive() ? '↗' : '↘' }}</span>
+          {{ formattedGrowth() }}
+        </p>
+      </article>
+    </section>
+
+    <section class="chart-panel">
+      <div class="chart-panel__header">
+        <h3>{{ t('اتجاه الإيرادات الشهرية', 'Monthly Revenue Trend') }}</h3>
+      </div>
+
+      @if (store.monthlyRevenueTrend().length === 0) {
+        <div class="chart-panel__empty">
+          <p>{{ t('لا توجد بيانات رسوم بيانية حالياً', 'No chart data available right now') }}</p>
+        </div>
+      } @else {
+        <apx-chart
+          class="chart-panel__chart"
+          [series]="revenueSeries()"
+          [chart]="$any(chartOptions().chart)"
+          [stroke]="$any(chartOptions().stroke)"
+          [fill]="$any(chartOptions().fill)"
+          [xaxis]="$any(chartOptions().xaxis)"
+          [yaxis]="$any(chartOptions().yaxis)"
+          [grid]="$any(chartOptions().grid)"
+          [tooltip]="$any(chartOptions().tooltip)"
+          [dataLabels]="$any(chartOptions().dataLabels)"
+          [markers]="$any(chartOptions().markers)"
+          [colors]="$any(chartOptions().colors)"
+        ></apx-chart>
+      }
+    </section>
+  }
+
+  @if (store.error(); as err) {
+    <p class="master-dashboard__error" role="alert">{{ err }}</p>
+  }
+</section>

@@ -1,0 +1,60 @@
+# Version Control
+.git
+.gitignore
+.github
+
+# Build Output
+dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node Modules (CRITICAL: Avoid Windows/Mac native modules override)
+node_modules/
+
+# Development & IDE Artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+karma.conf.js
+*.test.ts
+*.spec.ts
+
+# Environment & Configuration
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Package Manager Locks (optional, for clarity if multi-stage reuses)
+# Keeping package-lock.json in context for reproducible builds
+# package-lock.json  # Uncomment if you want to exclude
+
+# Documentation & CI/CD
+README.md
+CHANGELOG.md
+.github/
+.gitlab-ci.yml
+.husky/
+
+# Temporary Files
+tmp/
+temp/
+*.bak
+
+# Docker Files (exclusion to avoid context bloat)
+Dockerfile
+docker-compose.yml
+docker-compose.override.yml

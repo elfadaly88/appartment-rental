@@ -1,0 +1,133 @@
+<section class="calendar-shell" [attr.aria-label]="t('تقويم العقار التفاعلي', 'Interactive property calendar')">
+  <header class="calendar-shell__header">
+    <div>
+      <p class="calendar-shell__eyebrow">Host Calendar</p>
+      <h1 class="calendar-shell__title">
+        {{ propertyName() || t('تقويم الإشغال', 'Availability calendar') }}
+      </h1>
+      <p class="calendar-shell__subtitle">
+        {{ t('إدارة الحجز والحظر والتسعير من واجهة واحدة واضحة.', 'Manage bookings, blocks, and pricing from one clear surface.') }}
+      </p>
+    </div>
+
+    <div class="calendar-toolbar">
+      <button type="button" class="calendar-toolbar__nav" (click)="previousMonth()" [attr.aria-label]="t('الشهر السابق', 'Previous month')">
+        <span aria-hidden="true">&#8249;</span>
+      </button>
+      <p class="calendar-toolbar__label">{{ monthLabel() }}</p>
+      <button type="button" class="calendar-toolbar__nav" (click)="nextMonth()" [attr.aria-label]="t('الشهر التالي', 'Next month')">
+        <span aria-hidden="true">&#8250;</span>
+      </button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="calendar-shell__error" role="alert">{{ error() }}</div>
+  }
+
+  <div class="calendar-desktop" [class.is-loading]="isLoading()">
+    <div class="calendar-grid">
+      @for (label of weekdayLabels(); track label) {
+        <div class="calendar-grid__weekday">{{ label }}</div>
+      }
+
+      @for (day of calendarDays(); track trackDay($index, day)) {
+        <button
+          type="button"
+          class="day-cell"
+          [class.day-cell--outside]="!day.isCurrentMonth"
+          [class.day-cell--past]="day.state === 'past'"
+          [class.day-cell--booking]="day.state === 'booking'"
+          [class.day-cell--blocked]="day.state === 'blocked'"
+          [class.day-cell--selected]="day.isSelected"
+          [class.day-cell--range-start]="day.isRangeStart"
+          [class.day-cell--range-end]="day.isRangeEnd"
+          [class.day-cell--today]="day.isToday"
+          [disabled]="!day.isSelectable"
+          (click)="onDayClick(day, $event)"
+        >
+          <span class="day-cell__number">{{ day.dayNumber }}</span>
+
+          @if (day.state === 'booking') {
+            <span class="day-cell__pill day-cell__pill--booking">{{ day.guestName || t('محجوز', 'Booked') }}</span>
+          } @else if (day.state === 'blocked') {
+            <span class="day-cell__pill day-cell__pill--blocked">{{ t('محظور', 'Blocked') }}</span>
+          } @else if (day.isSelected) {
+            <span class="day-cell__pill day-cell__pill--selected">{{ t('محدد', 'Selected') }}</span>
+          }
+
+          @if (day.helperText && day.state !== 'past') {
+            <span class="day-cell__meta">{{ day.helperText }}</span>
+          }
+        </button>
+      }
+    </div>
+
+    @if (quickActionPosition(); as menu) {
+      <aside
+        class="quick-action"
+        [style.insetInlineStart.px]="menu.x"
+        [style.insetBlockStart.px]="menu.y"
+        role="dialog"
+        [attr.aria-label]="t('إجراءات سريعة', 'Quick actions')"
+      >
+        <p class="quick-action__label">{{ selectedRangeLabel() }}</p>
+        <button type="button" class="quick-action__button quick-action__button--block" [disabled]="isBlocking()" (click)="blockSelectedDates()">
+          @if (isBlocking()) {
+            {{ t('جارٍ الحظر...', 'Blocking...') }}
+          } @else {
+            {{ t('حظر هذه التواريخ', 'Block these dates') }}
+          }
+        </button>
+        <button type="button" class="quick-action__button quick-action__button--price" (click)="requestCustomPrice()">
+          {{ t('تحديد سعر مخصص', 'Set Custom Price') }}
+        </button>
+        <button type="button" class="quick-action__link" (click)="closeQuickAction()">
+          {{ t('إغلاق', 'Close') }}
+        </button>
+      </aside>
+    }
+  </div>
+
+  <section class="calendar-agenda" [class.is-loading]="isLoading()">
+    <header class="calendar-agenda__header">
+      <h2>{{ t('القائمة الزمنية', 'Timeline view') }}</h2>
+      <p>{{ monthLabel() }}</p>
+    </header>
+
+    @if (agendaItems().length) {
+      <div class="calendar-agenda__list">
+        @for (item of agendaItems(); track trackAgenda($index, item)) {
+          <article class="agenda-card" [class.agenda-card--booking]="item.type === 'booking'" [class.agenda-card--blocked]="item.type === 'blocked'">
+            <p class="agenda-card__range">{{ item.rangeLabel }}</p>
+            <h3 class="agenda-card__title">{{ item.title }}</h3>
+            <p class="agenda-card__subtitle">{{ item.subtitle }}</p>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="calendar-agenda__empty">
+        {{ t('لا توجد حجوزات أو فترات حظر لهذا الشهر.', 'No bookings or blocked periods for this month.') }}
+      </div>
+    }
+  </section>
+
+  <footer class="calendar-legend" [attr.aria-label]="t('دليل الألوان', 'Color legend')">
+    <div class="calendar-legend__item">
+      <span class="calendar-legend__swatch calendar-legend__swatch--available"></span>
+      <span>{{ t('متاح', 'Available') }}</span>
+    </div>
+    <div class="calendar-legend__item">
+      <span class="calendar-legend__swatch calendar-legend__swatch--booking"></span>
+      <span>{{ t('حجز مؤكد', 'Booked') }}</span>
+    </div>
+    <div class="calendar-legend__item">
+      <span class="calendar-legend__swatch calendar-legend__swatch--blocked"></span>
+      <span>{{ t('حظر يدوي', 'Blocked') }}</span>
+    </div>
+    <div class="calendar-legend__item">
+      <span class="calendar-legend__swatch calendar-legend__swatch--past"></span>
+      <span>{{ t('يوم سابق', 'Past day') }}</span>
+    </div>
+  </footer>
+</section>

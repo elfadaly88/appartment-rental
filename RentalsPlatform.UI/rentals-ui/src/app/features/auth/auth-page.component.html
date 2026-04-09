@@ -1,0 +1,151 @@
+<main class="auth-shell">
+  <div class="auth-shell__ambient auth-shell__ambient--one" aria-hidden="true"></div>
+  <div class="auth-shell__ambient auth-shell__ambient--two" aria-hidden="true"></div>
+
+  <section class="auth-card" [class.auth-card--register]="view() === 'register'">
+    <header class="auth-card__header">
+      <p class="auth-card__eyebrow">{{ 'AUTH.EYEBROW' | translate }}</p>
+      <h1 class="auth-card__title">{{ (view() === 'login' ? 'AUTH.TITLE_LOGIN' : 'AUTH.TITLE_REGISTER') | translate }}</h1>
+      <p class="auth-card__subtitle">
+        {{ (view() === 'login' ? 'AUTH.SUBTITLE_LOGIN' : 'AUTH.SUBTITLE_REGISTER') | translate }}
+      </p>
+    </header>
+
+    <div class="auth-card__mode-toggle" role="tablist" [attr.aria-label]="'AUTH.TAB_LOGIN' | translate">
+      <button
+        type="button"
+        class="auth-card__mode-button"
+        [class.is-active]="view() === 'login'"
+        (click)="switchView('login')"
+      >
+        {{ 'AUTH.TAB_LOGIN' | translate }}
+      </button>
+      <button
+        type="button"
+        class="auth-card__mode-button"
+        [class.is-active]="view() === 'register'"
+        (click)="switchView('register')"
+      >
+        {{ 'AUTH.TAB_REGISTER' | translate }}
+      </button>
+    </div>
+
+    <div class="auth-card__body" [attr.data-view]="view()">
+      @switch (view()) {
+        @case ('login') {
+          <form class="auth-form auth-form--login" [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+            <label class="floating-field" [class.is-invalid]="fieldHasError('login', 'email')">
+              <input class="floating-field__input" type="email" formControlName="email" placeholder=" " autocomplete="email" />
+              <span class="floating-field__label">{{ 'AUTH.FIELD_EMAIL' | translate }}</span>
+            </label>
+            @if (fieldHasError('login', 'email')) {
+              <p class="auth-form__error">{{ fieldErrorText('login', 'email') | translate: fieldErrorParams('login', 'email') }}</p>
+            }
+
+            <label class="floating-field" [class.is-invalid]="fieldHasError('login', 'password')">
+              <input
+                class="floating-field__input"
+                type="password"
+                formControlName="password"
+                placeholder=" "
+                autocomplete="current-password"
+              />
+              <span class="floating-field__label">{{ 'AUTH.FIELD_PASSWORD' | translate }}</span>
+            </label>
+            @if (fieldHasError('login', 'password')) {
+              <p class="auth-form__error">{{ fieldErrorText('login', 'password') | translate: fieldErrorParams('login', 'password') }}</p>
+            }
+
+            @if (submitError()) {
+              <p class="auth-form__error auth-form__error--block">{{ submitError() }}</p>
+            }
+
+            <button class="auth-form__submit" type="submit" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <span class="auth-form__spinner" aria-hidden="true"></span>
+                {{ 'AUTH.BTN_SIGNING_IN' | translate }}
+              } @else {
+                {{ 'AUTH.BTN_CONTINUE' | translate }}
+              }
+            </button>
+          </form>
+        }
+        @case ('register') {
+          <form class="auth-form auth-form--register" [formGroup]="registerForm" (ngSubmit)="submit()" novalidate>
+            <div class="role-toggle" role="group" [attr.aria-label]="'AUTH.TAB_REGISTER' | translate">
+              <button
+                type="button"
+                class="role-toggle__button"
+                [class.is-active]="registerRole() === 'guest'"
+                (click)="switchRole('guest')"
+              >
+                {{ 'AUTH.ROLE_GUEST' | translate }}
+              </button>
+              <button
+                type="button"
+                class="role-toggle__button"
+                [class.is-active]="registerRole() === 'host'"
+                (click)="switchRole('host')"
+              >
+                {{ 'AUTH.ROLE_HOST' | translate }}
+              </button>
+            </div>
+
+            <label class="floating-field" [class.is-invalid]="fieldHasError('register', 'fullName')">
+              <input class="floating-field__input" type="text" formControlName="fullName" placeholder=" " autocomplete="name" />
+              <span class="floating-field__label">{{ 'AUTH.FIELD_FULLNAME' | translate }}</span>
+            </label>
+            @if (fieldHasError('register', 'fullName')) {
+              <p class="auth-form__error">{{ fieldErrorText('register', 'fullName') | translate: fieldErrorParams('register', 'fullName') }}</p>
+            }
+
+            <label class="floating-field" [class.is-invalid]="fieldHasError('register', 'email')">
+              <input class="floating-field__input" type="email" formControlName="email" placeholder=" " autocomplete="email" />
+              <span class="floating-field__label">{{ 'AUTH.FIELD_EMAIL' | translate }}</span>
+            </label>
+            @if (fieldHasError('register', 'email')) {
+              <p class="auth-form__error">{{ fieldErrorText('register', 'email') | translate: fieldErrorParams('register', 'email') }}</p>
+            }
+
+            <label class="floating-field" [class.is-invalid]="fieldHasError('register', 'password')">
+              <input
+                class="floating-field__input"
+                type="password"
+                formControlName="password"
+                placeholder=" "
+                autocomplete="new-password"
+              />
+              <span class="floating-field__label">{{ 'AUTH.FIELD_PASSWORD' | translate }}</span>
+            </label>
+            @if (fieldHasError('register', 'password')) {
+              <p class="auth-form__error">{{ fieldErrorText('register', 'password') | translate: fieldErrorParams('register', 'password') }}</p>
+            }
+
+            @if (registerRole() === 'host') {
+              <label class="terms-check" [class.is-invalid]="fieldHasError('register', 'acceptedHostTerms')">
+                <input class="terms-check__input" type="checkbox" formControlName="acceptedHostTerms" />
+                <span class="terms-check__label">{{ 'AUTH.TERMS_LABEL' | translate }}</span>
+              </label>
+              @if (fieldHasError('register', 'acceptedHostTerms')) {
+                <p class="auth-form__error">{{ fieldErrorText('register', 'acceptedHostTerms') | translate }}</p>
+              }
+            }
+
+            @if (submitError()) {
+              <p class="auth-form__error auth-form__error--block">{{ submitError() }}</p>
+            }
+
+            <button class="auth-form__submit" type="submit" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <span class="auth-form__spinner" aria-hidden="true"></span>
+                {{ 'AUTH.BTN_CREATING_ACCOUNT' | translate }}
+              } @else {
+                {{ 'AUTH.BTN_CREATE_ACCOUNT' | translate }}
+              }
+            </button>
+          </form>
+        }
+      }
+    </div>
+  </section>
+</main>

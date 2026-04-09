@@ -1,0 +1,48 @@
+<article class="card">
+  <div class="card__media">
+    @defer (on viewport) {
+      <img
+        class="card__image"
+        [src]="imageUrl()"
+        [alt]="imageAlt()"
+        loading="lazy"
+        decoding="async"
+      />
+    } @placeholder {
+      <div class="card__skeleton" aria-hidden="true">
+        <div class="card__skeleton-shimmer"></div>
+      </div>
+    }
+
+    <span class="card__price-badge">
+      {{ formattedPrice() }}
+    </span>
+  </div>
+
+  <div class="card__body">
+    <h3 class="card__title">{{ name() }}</h3>
+    <p class="card__address">
+      <svg class="card__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 1 1 18 0z"/>
+        <circle cx="12" cy="10" r="3"/>
+      </svg>
+      {{ address() }}
+    </p>
+  </div>
+
+  <div class="card__actions">
+    <a
+      class="card__map-btn"
+      [href]="mapUrl()"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <svg class="card__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+        <line x1="8" y1="2" x2="8" y2="18"/>
+        <line x1="16" y1="6" x2="16" y2="22"/>
+      </svg>
+      {{ mapLabel() }}
+    </a>
+  </div>
+</article>

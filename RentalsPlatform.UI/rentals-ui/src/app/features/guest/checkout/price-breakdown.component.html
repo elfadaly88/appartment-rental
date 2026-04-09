@@ -1,0 +1,63 @@
+<section class="price-breakdown" role="region" [attr.aria-label]="t('تفاصيل السعر', 'Price Breakdown')">
+  <header class="price-breakdown__header">
+    <div>
+      <p class="price-breakdown__eyebrow">Booking Summary</p>
+      <h2>{{ t('تفاصيل السعر', 'Price Breakdown') }}</h2>
+    </div>
+    <p class="price-breakdown__dates">
+      {{ formatDate(checkIn()) }} - {{ formatDate(checkOut()) }}
+    </p>
+  </header>
+
+  <div class="price-breakdown__card">
+    <div class="price-breakdown__row">
+      <span>{{ t('إجمالي الليالي', 'Total Nights') }}</span>
+      <strong>{{ totalNights() }}</strong>
+    </div>
+
+    <div class="price-breakdown__row">
+      <span>{{ t('متوسط السعر لليلة', 'Average nightly rate') }}</span>
+      <strong>{{ formatCurrency(averageNightlyRate()) }}</strong>
+    </div>
+
+    <div class="price-breakdown__row">
+      <span>{{ t('إجمالي الإقامة', 'Stay subtotal') }}</span>
+      <strong>{{ formatCurrency(subtotal()) }}</strong>
+    </div>
+
+    @if (hasSeasonalAdjustment()) {
+      <div class="price-breakdown__adjustment">
+        <button type="button" class="price-breakdown__adjustment-toggle" (click)="toggleAdjustment()">
+          <span class="price-breakdown__info-icon" aria-hidden="true">i</span>
+          <span>{{ t('يشمل تعديلات الأسعار الموسمية', 'Includes seasonal pricing adjustments') }}</span>
+        </button>
+
+        @if (isAdjustmentExpanded()) {
+          <div class="price-breakdown__adjustment-panel">
+            <p>
+              {{ t('تم احتساب الإجمالي بناءً على قواعد موسمية أو فترات طلب مرتفع، لذلك قد يختلف عن السعر الأساسي × عدد الليالي.', 'The total reflects seasonal rules or high-demand windows, so it may differ from the base rate multiplied by the number of nights.') }}
+            </p>
+            @if (expectedBaseTotal(); as baseTotal) {
+              <div class="price-breakdown__comparison">
+                <span>{{ t('الإجمالي بالسعر الأساسي', 'Base-price total') }}</span>
+                <strong>{{ formatCurrency(baseTotal) }}</strong>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div class="price-breakdown__row">
+      <span>{{ t('رسوم المنصة', 'Platform Fee') }} ({{ percentageLabel() }})</span>
+      <strong>{{ formatCurrency(platformFee()) }}</strong>
+    </div>
+
+    <div class="price-breakdown__divider"></div>
+
+    <div class="price-breakdown__row price-breakdown__row--total">
+      <span>{{ t('الإجمالي النهائي', 'Final Total') }}</span>
+      <strong>{{ formatCurrency(totalPrice()) }}</strong>
+    </div>
+  </div>
+</section>

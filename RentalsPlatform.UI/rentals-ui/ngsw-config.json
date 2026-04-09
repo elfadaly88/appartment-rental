@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": ["/favicon.ico", "/index.html", "/*.css", "/*.js"]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/**", "!/**/*.map", "!/**/*.txt"]
+      }
+    }
+  ],
+  "appData": {
+    "notification": {
+      "icon": "/icons/icon-192x192.png",
+      "badge": "/icons/badge-72x72.png",
+      "click_action": "/"
+    }
+  },
+  "navigationUrls": [
+    "/**",
+    "!/**/*.*",
+    "!/**/*__*",
+    "!/**/*__*/**",
+    "!/hubs/**"
+  ]
+}

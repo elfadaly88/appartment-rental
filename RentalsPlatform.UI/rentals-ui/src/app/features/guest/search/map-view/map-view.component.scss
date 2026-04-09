@@ -1,0 +1,126 @@
+:host {
+  display: block;
+  block-size: 100%;
+  inline-size: 100%;
+}
+
+.map-view-shell {
+  position: relative;
+  block-size: 100%;
+  inline-size: 100%;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(circle at 18% 12%, rgb(255 255 255 / 0.28), transparent 42%),
+    radial-gradient(circle at 85% 84%, rgb(191 214 255 / 0.24), transparent 40%),
+    rgb(243 246 250);
+}
+
+.map-canvas {
+  block-size: 100%;
+  inline-size: 100%;
+}
+
+:host ::ng-deep .mapboxgl-ctrl.mapboxgl-ctrl-group {
+  border: 1px solid rgb(255 255 255 / 0.4);
+  border-radius: 0.95rem;
+  background: rgb(255 255 255 / 0.66);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 28px rgb(18 23 34 / 0.12);
+}
+
+:host ::ng-deep .map-price-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.78rem;
+  border: 1px solid rgb(255 255 255 / 0.52);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.58);
+  backdrop-filter: blur(12px) saturate(145%);
+  color: rgb(18 30 51);
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  user-select: none;
+  box-shadow:
+    0 10px 24px rgb(12 19 31 / 0.2),
+    inset 0 1px 0 rgb(255 255 255 / 0.7);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+:host ::ng-deep .map-price-pill:hover,
+:host ::ng-deep .map-price-pill:focus-visible,
+:host ::ng-deep .map-price-pill.is-active {
+  transform: translateY(-2px) scale(1.05);
+  background: rgb(18 30 51 / 0.96);
+  color: rgb(250 252 255);
+  box-shadow:
+    0 14px 28px rgb(12 19 31 / 0.36),
+    inset 0 1px 0 rgb(255 255 255 / 0.35);
+  outline: none;
+}
+
+.locate-fab {
+  position: absolute;
+  inset-block-end: calc(1rem + env(safe-area-inset-bottom));
+  inset-inline-end: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 2.85rem;
+  padding-inline: 0.88rem;
+  border: 1px solid rgb(255 255 255 / 0.5);
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgb(18 30 51 / 0.92), rgb(34 48 72 / 0.94));
+  color: rgb(247 250 255);
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.012em;
+  box-shadow:
+    0 14px 28px rgb(7 13 24 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease;
+}
+
+.locate-fab:hover,
+.locate-fab:focus-visible {
+  transform: translateY(-1px) scale(1.03);
+  filter: brightness(1.08);
+  box-shadow:
+    0 18px 34px rgb(7 13 24 / 0.4),
+    inset 0 1px 0 rgb(255 255 255 / 0.34);
+  outline: none;
+}
+
+.fab-icon {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.15);
+}
+
+@media (max-width: 720px) {
+  .locate-fab {
+    min-block-size: 2.65rem;
+    padding-inline: 0.72rem;
+  }
+
+  .fab-label {
+    display: none;
+  }
+}

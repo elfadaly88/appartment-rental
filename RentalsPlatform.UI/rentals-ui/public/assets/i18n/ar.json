@@ -1,0 +1,33 @@
+{
+  "AUTH": {
+    "EYEBROW": "الوصول الفندقي",
+    "TITLE_LOGIN": "مرحباً بعودتك",
+    "TITLE_REGISTER": "إنشاء حسابك",
+    "SUBTITLE_LOGIN": "سجّل الدخول لإدارة الحجوزات والمفضلة والمحادثات المميزة.",
+    "SUBTITLE_REGISTER": "انضم إلى مجتمعنا المنتقى للحجز أو لاستضافة إقامات استثنائية.",
+    "TAB_LOGIN": "تسجيل الدخول",
+    "TAB_REGISTER": "إنشاء حساب",
+    "ROLE_GUEST": "أريد الحجز",
+    "ROLE_HOST": "أريد الاستضافة",
+    "FIELD_EMAIL": "البريد الإلكتروني",
+    "FIELD_PASSWORD": "كلمة المرور",
+    "FIELD_FULLNAME": "الاسم الكامل",
+    "BTN_CONTINUE": "متابعة",
+    "BTN_SIGNING_IN": "جارٍ الدخول...",
+    "BTN_CREATE_ACCOUNT": "إنشاء الحساب",
+    "BTN_CREATING_ACCOUNT": "جارٍ الإنشاء...",
+    "TERMS_LABEL": "أوافق على شروط خدمة المضيف",
+    "ERROR_REQUIRED": "هذا الحقل مطلوب.",
+    "ERROR_EMAIL": "أدخل عنوان بريد إلكتروني صحيح.",
+    "ERROR_MINLENGTH": "يرجى استخدام {{requiredLength}} أحرف على الأقل.",
+    "ERROR_TERMS": "يجب قبول شروط خدمة المضيف.",
+    "ERROR_FALLBACK": "يرجى مراجعة هذا الحقل."
+  },
+  "NAV": {
+    "LOGIN": "دخول",
+    "LOGOUT": "تسجيل خروج",
+    "WELCOME": "مرحباً، {{name}}",
+    "PROPERTIES": "العقارات",
+    "TOGGLE_LANG_LABEL": "التبديل للإنجليزية"
+  }
+}

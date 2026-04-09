@@ -1,0 +1,110 @@
+<section class="property-reviews" role="region" [attr.aria-label]="t('تقييمات العقار', 'Property Reviews')">
+  <div class="property-reviews__container">
+    <!-- Header with Stats -->
+    <header class="property-reviews__header">
+      <div class="property-reviews__stats">
+        <div class="property-reviews__rating-circle">
+          <div class="property-reviews__rating-value">{{ averageRating() }}</div>
+          <svg viewBox="0 0 24 24" class="property-reviews__star-icon" aria-hidden="true">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        </div>
+        <div class="property-reviews__summary">
+          <h2 class="property-reviews__title">{{ t('تقييمات الضيوف', 'Guest Reviews') }}</h2>
+          <p class="property-reviews__subtitle">
+            {{ stats() ? stats()!.totalReviews : 0 }}
+            {{ t('تقييماً', 'reviews') }}
+          </p>
+        </div>
+      </div>
+
+      @if (error(); as err) {
+        <div class="property-reviews__error" role="alert">
+          {{ err }}
+        </div>
+      }
+    </header>
+
+    <!-- Reviews List -->
+    <div class="property-reviews__content">
+      @if (isLoading()) {
+        <div class="property-reviews__skeleton" aria-busy="true" aria-label="Loading reviews">
+          @for (_ of [1, 2, 3]; track $index) {
+            <div class="property-reviews__skeleton-item"></div>
+          }
+        </div>
+      } @else if (!stats() || (stats()!.reviews && stats()!.reviews.length === 0)) {
+        <div class="property-reviews__empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <p>{{ t('لا توجد تقييمات حتى الآن', 'No reviews yet') }}</p>
+        </div>
+      } @else {
+        <div class="property-reviews__list" role="list">
+          @for (review of paginatedReviews(); let last = $last; track review.id) {
+            <article class="property-reviews__card" role="listitem" [class.property-reviews__card--last]="last">
+              <div class="property-reviews__card-header">
+                <div class="property-reviews__guest-info">
+                  <h3 class="property-reviews__guest-name">{{ review.guestName }}</h3>
+                  <time class="property-reviews__review-date" [dateTime]="review.createdAt">
+                    {{ formatDate(review.createdAt) }}
+                  </time>
+                </div>
+                <div class="property-reviews__card-rating" role="img" [attr.aria-label]="t('تصنيف ' + review.rating + ' من 5', 'Rating ' + review.rating + ' out of 5')">
+                  @for (_ of renderStars(review.rating); let index = $index; track index) {
+                    <svg
+                      viewBox="0 0 24 24"
+                      class="property-reviews__mini-star"
+                      [class.property-reviews__mini-star--filled]="index < getFilledStars(review.rating)"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  }
+                </div>
+              </div>
+
+              @if (review.comment) {
+                <p class="property-reviews__comment">{{ review.comment }}</p>
+              }
+            </article>
+          }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <nav class="property-reviews__pagination" role="navigation" [attr.aria-label]="t('ملاحة الصفحات', 'Pagination navigation')">
+            <button
+              type="button"
+              class="property-reviews__pagination-btn"
+              [disabled]="!hasPreviousPage()"
+              (click)="previousPage()"
+              [attr.aria-label]="t('الصفحة السابقة', 'Previous page')"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="15 18l-6-6 6-6" />
+              </svg>
+            </button>
+
+            <div class="property-reviews__page-info">
+              {{ currentPage() }} / {{ totalPages() }}
+            </div>
+
+            <button
+              type="button"
+              class="property-reviews__pagination-btn"
+              [disabled]="!hasNextPage()"
+              (click)="nextPage()"
+              [attr.aria-label]="t('الصفحة التالية', 'Next page')"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </nav>
+        }
+      }
+    </div>
+  </div>
+</section>

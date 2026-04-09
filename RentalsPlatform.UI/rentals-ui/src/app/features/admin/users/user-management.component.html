@@ -1,0 +1,148 @@
+<section class="user-management" role="region" [attr.aria-label]="t('إدارة المستخدمين', 'User Management')">
+  <header class="user-management__header">
+    <div>
+      <h2 class="user-management__title">{{ t('إدارة المستخدمين', 'User Management') }}</h2>
+      <p class="user-management__subtitle">
+        {{ t('إدارة المضيفين والضيوف والوصول للحسابات', 'Manage hosts, guests, and account access') }}
+      </p>
+    </div>
+
+    <button type="button" class="user-management__refresh" [disabled]="store.isLoading()" (click)="refresh()">
+      @if (store.isLoading()) {
+        {{ t('جاري التحديث...', 'Refreshing...') }}
+      } @else {
+        {{ t('تحديث', 'Refresh') }}
+      }
+    </button>
+  </header>
+
+  <nav class="user-tabs" [attr.aria-label]="t('فلاتر المستخدمين', 'User filters')">
+    @for (tab of tabs(); track tab.id) {
+      <button
+        type="button"
+        class="user-tabs__item"
+        [class.user-tabs__item--active]="activeTab() === tab.id"
+        (click)="setTab(tab.id)"
+      >
+        <span>{{ tab.label }}</span>
+        <span class="user-tabs__count">{{ tab.count }}</span>
+      </button>
+    }
+  </nav>
+
+  @if (store.error(); as err) {
+    <p class="user-management__error" role="alert">{{ err }}</p>
+  }
+
+  @if (visibleUsers().length === 0 && !store.isLoading()) {
+    <article class="user-empty" role="status">
+      <svg viewBox="0 0 72 72" aria-hidden="true">
+        <rect x="12" y="16" width="48" height="40" rx="10" />
+        <circle cx="28" cy="32" r="6" />
+        <path d="M20 46c2.4-4.6 13.6-4.6 16 0" />
+        <circle cx="46" cy="31" r="5" />
+        <path d="M41 45c1.9-3.8 10.1-3.8 12 0" />
+      </svg>
+      <h3>{{ t('لا يوجد مستخدمون ضمن هذا الفلتر', 'No users in this filter') }}</h3>
+      <p>{{ t('جرّب تبويباً آخر أو قم بالتحديث.', 'Try another tab or refresh.') }}</p>
+    </article>
+  } @else {
+    <div class="user-grid" role="table" [attr.aria-label]="t('جدول المستخدمين', 'Users table')">
+      <div class="user-grid__head" role="rowgroup">
+        <div role="row" class="user-grid__row user-grid__row--head">
+          <div role="columnheader">{{ t('اسم المستخدم', 'User Name') }}</div>
+          <div role="columnheader">{{ t('البريد الإلكتروني', 'Email') }}</div>
+          <div role="columnheader">{{ t('الدور', 'Role') }}</div>
+          <div role="columnheader">{{ t('الحالة', 'Status') }}</div>
+          <div role="columnheader">{{ t('الإجراءات', 'Actions') }}</div>
+        </div>
+      </div>
+
+      <div class="user-grid__body" role="rowgroup">
+        @for (user of visibleUsers(); track user.id) {
+          <div role="row" class="user-grid__row">
+            <div role="cell" [attr.data-label]="t('اسم المستخدم', 'User Name')">
+              <strong class="user-grid__name">{{ user.fullName }}</strong>
+            </div>
+
+            <div role="cell" [attr.data-label]="t('البريد الإلكتروني', 'Email')">
+              <span class="user-grid__email">{{ user.email }}</span>
+            </div>
+
+            <div role="cell" [attr.data-label]="t('الدور', 'Role')">
+              <span class="badge badge--role">{{ roleLabel(user.role) }}</span>
+            </div>
+
+            <div role="cell" [attr.data-label]="t('الحالة', 'Status')">
+              <span class="badge" [class.badge--active]="!user.isBanned" [class.badge--banned]="user.isBanned">
+                {{ statusLabel(user.isBanned) }}
+              </span>
+            </div>
+
+            <div role="cell" [attr.data-label]="t('الإجراءات', 'Actions')">
+              <div class="user-grid__actions">
+                @if (user.isBanned) {
+                  <button type="button" class="action-btn action-btn--unban" [disabled]="store.isSubmitting()" (click)="unban(user)">
+                    {{ t('إلغاء الحظر', 'Unban') }}
+                  </button>
+                } @else {
+                  <button type="button" class="action-btn action-btn--ban" [disabled]="store.isSubmitting()" (click)="openBanModal(user)">
+                    {{ t('حظر', 'Ban') }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (isBanModalOpen()) {
+    <div class="ban-modal" role="dialog" aria-modal="true" [attr.aria-label]="t('تأكيد الحظر', 'Confirm Ban')">
+      <button
+        type="button"
+        class="ban-modal__backdrop"
+        [attr.aria-label]="t('إغلاق', 'Close')"
+        (click)="closeBanModal()"
+      ></button>
+
+      <article class="ban-modal__panel">
+        <header class="ban-modal__header">
+          <h3>{{ t('حظر المستخدم', 'Ban User') }}</h3>
+          <p>{{ selectedUser()?.fullName }} · {{ selectedUser()?.email }}</p>
+        </header>
+
+        <label class="ban-modal__label" for="banReason">
+          {{ t('سبب الحظر', 'Reason for Banning') }}
+        </label>
+
+        <textarea
+          id="banReason"
+          class="ban-modal__textarea"
+          [value]="banReason()"
+          (input)="updateBanReason($any($event.target).value)"
+          rows="5"
+          [placeholder]="t('اشرح سبب الحظر بوضوح...', 'Explain the reason clearly...')"
+        ></textarea>
+
+        @if (modalError(); as modalErr) {
+          <p class="ban-modal__error" role="alert">{{ modalErr }}</p>
+        }
+
+        <footer class="ban-modal__actions">
+          <button type="button" class="ban-modal__btn ban-modal__btn--cancel" (click)="closeBanModal()">
+            {{ t('إلغاء', 'Cancel') }}
+          </button>
+          <button type="button" class="ban-modal__btn ban-modal__btn--confirm" [disabled]="store.isSubmitting()" (click)="confirmBan()">
+            @if (store.isSubmitting()) {
+              {{ t('جاري التنفيذ...', 'Applying...') }}
+            } @else {
+              {{ t('تأكيد الحظر', 'Confirm Ban') }}
+            }
+          </button>
+        </footer>
+      </article>
+    </div>
+  }
+</section>

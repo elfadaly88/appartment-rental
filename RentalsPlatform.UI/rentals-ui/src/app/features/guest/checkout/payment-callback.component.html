@@ -1,0 +1,36 @@
+<section class="payment-callback" role="region" [attr.aria-label]="messageTitle()">
+  @if (status() === 'success') {
+    <div class="payment-callback__confetti" aria-hidden="true"></div>
+  }
+
+  <article class="payment-callback__card" [class.payment-callback__card--success]="status() === 'success'" [class.payment-callback__card--failed]="status() === 'failed'" [class.payment-callback__card--processing]="status() === 'processing'">
+    <div class="payment-callback__icon" aria-hidden="true">
+      @if (status() === 'success') {
+        ✓
+      } @else if (status() === 'failed') {
+        !
+      } @else {
+        ···
+      }
+    </div>
+
+    <h1>{{ messageTitle() }}</h1>
+    <p>{{ messageBody() }}</p>
+
+    <div class="payment-callback__actions">
+      @if (status() === 'success') {
+        <a routerLink="/host/dashboard" class="payment-callback__btn payment-callback__btn--success">
+          {{ t('عرض حجزي', 'View My Booking') }}
+        </a>
+      } @else if (status() === 'failed') {
+        <a routerLink="/properties" class="payment-callback__btn payment-callback__btn--retry">
+          {{ t('إعادة المحاولة', 'Try Again') }}
+        </a>
+      } @else {
+        <a routerLink="/properties" class="payment-callback__btn payment-callback__btn--processing">
+          {{ t('العودة للعقارات', 'Back to Properties') }}
+        </a>
+      }
+    </div>
+  </article>
+</section>

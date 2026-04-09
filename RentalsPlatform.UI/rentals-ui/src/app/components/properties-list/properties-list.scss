@@ -1,0 +1,74 @@
+// ---------------------------------------------------------------------------
+// Properties List — Fluid Grid Container
+// BEM: .list, .list__header, .list__heading, .list__grid, .list__empty
+// ---------------------------------------------------------------------------
+
+:host {
+  display: block;
+  contain: layout style;
+}
+
+// ── Design Tokens (scoped) ──────────────────────────────────────────────────
+
+.list {
+  --_max-width: var(--list-max-width, 88rem);
+  --_gap: var(--list-gap, 2rem);
+  --_heading-color: var(--text-primary, #1a1a2e);
+  --_empty-color: var(--text-secondary, #6b7280);
+  --_bg: var(--surface-bg, transparent);
+
+  max-inline-size: var(--_max-width);
+  margin-inline: auto;
+  padding-block-start: calc(1.5rem + env(safe-area-inset-top, 0px));
+  padding-block-end: calc(2rem + env(safe-area-inset-bottom, 0px));
+  padding-inline: max(1.25rem, env(safe-area-inset-left, 0px));
+  background: var(--_bg);
+  overscroll-behavior-y: contain;
+}
+
+// ── Header ──────────────────────────────────────────────────────────────────
+
+.list__header {
+  padding-block-end: 1.5rem;
+}
+
+.list__heading {
+  margin: 0;
+  font-size: clamp(1.5rem, 2vw + 1rem, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--_heading-color);
+  letter-spacing: -0.01em;
+}
+
+// ── Grid ────────────────────────────────────────────────────────────────────
+
+.list__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--_gap);
+}
+
+// ── Empty State ─────────────────────────────────────────────────────────────
+
+.list__empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding-block: 5rem;
+  text-align: center;
+}
+
+.list__empty-icon {
+  color: var(--_empty-color);
+  opacity: 0.45;
+}
+
+.list__empty-text {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--_empty-color);
+}

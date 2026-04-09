@@ -1,0 +1,153 @@
+<section class="approvals" role="region" [attr.aria-label]="title()">
+  <header class="approvals__header">
+    <div>
+      <h2 class="approvals__title">{{ title() }}</h2>
+      <p class="approvals__subtitle">
+        {{ store.pendingCount() }}
+        {{ t('طلبات بانتظار المراجعة', 'requests awaiting review') }}
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="approvals__refresh"
+      [disabled]="store.isLoading()"
+      (click)="refresh()"
+    >
+      @if (store.isLoading()) {
+        {{ t('جاري التحديث...', 'Refreshing...') }}
+      } @else {
+        {{ t('تحديث', 'Refresh') }}
+      }
+    </button>
+  </header>
+
+  @if (store.error(); as err) {
+    <p class="approvals__error" role="alert">{{ err }}</p>
+  }
+
+  @if (store.pendingProperties().length === 0 && !store.isLoading()) {
+    <article class="approvals__empty">
+      <svg viewBox="0 0 72 72" aria-hidden="true">
+        <rect x="14" y="18" width="44" height="36" rx="10" />
+        <path d="M22 28h28M22 36h20" />
+        <circle cx="50" cy="50" r="8" />
+        <path d="M46.5 50h7" />
+      </svg>
+      <h3>{{ t('صندوق الوارد فارغ', 'Inbox Zero') }}</h3>
+      <p>{{ t('لا توجد عقارات بانتظار المراجعة.', 'No properties pending review.') }}</p>
+    </article>
+  } @else {
+    <div class="approvals__grid" role="list">
+      @for (item of store.pendingProperties(); track item.id) {
+        <article class="approval-card" role="listitem">
+          <div class="approval-card__top">
+            <div class="approval-card__meta">
+              <h3 class="approval-card__title">{{ item.title }}</h3>
+              <p class="approval-card__host">
+                {{ t('المضيف:', 'Host:') }}
+                <strong>{{ item.hostName }}</strong>
+              </p>
+            </div>
+
+            <p class="approval-card__price">
+              {{ formatPrice(item.priceAmount, item.priceCurrency) }}
+            </p>
+          </div>
+
+          <div class="approval-card__gallery" role="group" [attr.aria-label]="t('معرض الصور', 'Image gallery')">
+            @for (image of item.images; track imageTrackBy($index)) {
+              <img
+                class="approval-card__thumb"
+                [src]="image"
+                [alt]="item.title"
+                loading="lazy"
+                decoding="async"
+              />
+            }
+          </div>
+
+          <footer class="approval-card__actions">
+            <button
+              type="button"
+              class="approval-card__btn approval-card__btn--approve"
+              [disabled]="store.isSubmitting()"
+              (click)="approve(item.id)"
+            >
+              {{ t('موافقة', 'Approve') }}
+            </button>
+
+            <button
+              type="button"
+              class="approval-card__btn approval-card__btn--reject"
+              [disabled]="store.isSubmitting()"
+              (click)="openRejectModal(item)"
+            >
+              {{ t('رفض', 'Reject') }}
+            </button>
+          </footer>
+        </article>
+      }
+    </div>
+  }
+
+  @if (isRejectModalOpen()) {
+    <div class="reject-modal" role="dialog" aria-modal="true" [attr.aria-label]="t('رفض العقار', 'Reject property')">
+      <button
+        type="button"
+        class="reject-modal__backdrop"
+        [attr.aria-label]="t('إغلاق', 'Close')"
+        (click)="closeRejectModal()"
+      ></button>
+
+      <article class="reject-modal__panel">
+        <header class="reject-modal__header">
+          <h3>{{ t('سبب الرفض', 'Rejection reason') }}</h3>
+          <p>
+            {{ selectedProperty()?.title }}
+          </p>
+        </header>
+
+        <label class="reject-modal__label" for="rejectionReason">
+          {{ t('اشرح للمضيف ما الذي يحتاج تعديله', 'Explain what the host needs to update') }}
+        </label>
+
+        <textarea
+          id="rejectionReason"
+          class="reject-modal__textarea"
+          [value]="rejectionReason()"
+          (input)="updateReason($any($event.target).value)"
+          [placeholder]="t('مثال: الصور لا تظهر الواجهة بالكامل...', 'Example: The photos do not show the full facade...')"
+          rows="5"
+        ></textarea>
+
+        @if (modalError(); as modalErr) {
+          <p class="reject-modal__error" role="alert">{{ modalErr }}</p>
+        }
+
+        <footer class="reject-modal__actions">
+          <button
+            type="button"
+            class="reject-modal__btn reject-modal__btn--cancel"
+            (click)="closeRejectModal()"
+          >
+            {{ t('إلغاء', 'Cancel') }}
+          </button>
+
+          <button
+            type="button"
+            class="reject-modal__btn reject-modal__btn--confirm"
+            [disabled]="store.isSubmitting()"
+            (click)="submitRejection()"
+          >
+            @if (store.isSubmitting()) {
+              {{ t('جاري الإرسال...', 'Submitting...') }}
+            } @else {
+              {{ t('تأكيد الرفض', 'Confirm Rejection') }}
+            }
+          </button>
+        </footer>
+      </article>
+    </div>
+  }
+</section>

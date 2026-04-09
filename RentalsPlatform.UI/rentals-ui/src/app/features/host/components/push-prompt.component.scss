@@ -1,0 +1,114 @@
+:host {
+  display: block;
+}
+
+.push-prompt {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  margin-block-end: 1rem;
+  padding-block: 1rem;
+  padding-inline: 1rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.68), rgba(243, 249, 255, 0.36));
+  backdrop-filter: blur(25px) saturate(1.45);
+  -webkit-backdrop-filter: blur(25px) saturate(1.45);
+  box-shadow:
+    0 24px 48px rgba(12, 29, 63, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.push-prompt__icon {
+  inline-size: 48px;
+  block-size: 48px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f4b8f;
+  background: rgba(61, 118, 255, 0.14);
+  border: 1px solid rgba(61, 118, 255, 0.24);
+
+  svg {
+    inline-size: 22px;
+    block-size: 22px;
+  }
+}
+
+.push-prompt__content {
+  h3 {
+    margin: 0;
+    color: #132b49;
+    font-size: 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: rgba(19, 43, 73, 0.76);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+}
+
+.push-prompt__error {
+  color: #b91c1c;
+  font-size: 0.82rem;
+}
+
+.push-prompt__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.push-prompt__btn {
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  border-radius: 999px;
+  border: 0;
+  padding-inline: 1rem;
+  font-weight: 700;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: transform 170ms ease, box-shadow 200ms ease, background 200ms ease;
+
+  &:active:enabled {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.push-prompt__btn--primary {
+  color: #ffffff;
+  background: linear-gradient(145deg, #1f66f0, #3282ff);
+  box-shadow: 0 12px 22px rgba(32, 102, 241, 0.35);
+}
+
+.push-prompt__btn--secondary {
+  color: #1b3556;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(27, 53, 86, 0.14);
+}
+
+@media (max-width: 900px) {
+  .push-prompt {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .push-prompt__actions {
+    inline-size: 100%;
+  }
+
+  .push-prompt__btn {
+    flex: 1;
+  }
+}

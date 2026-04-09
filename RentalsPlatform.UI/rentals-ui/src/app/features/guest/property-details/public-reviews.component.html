@@ -1,0 +1,93 @@
+<section class="public-reviews" role="region" [attr.aria-label]="t('تقييمات مراجعات العقار', 'Property Reviews')">
+  <!-- Header Summary -->
+  <header class="public-reviews__header">
+    <div class="public-reviews__summary">
+      <div class="public-reviews__rating-badge">
+        <svg viewBox="0 0 24 24" class="public-reviews__star-icon" aria-hidden="true">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+        <span class="public-reviews__rating-value">{{ avgRatingDisplay() }}</span>
+      </div>
+      <div class="public-reviews__summary-text">
+        <p class="public-reviews__summary-tag">
+          {{ stats().totalReviews }}
+          {{ t('تقييمات مراجعات موثوقة', 'verified reviews') }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Optional: Rating Bar (visual indicator) -->
+    <div class="public-reviews__rating-bar" role="progressbar" [attr.aria-valuenow]="ratingPercentage()" aria-valuemin="0" aria-valuemax="100">
+      <div class="public-reviews__rating-bar-fill" [style.inline-size.%]="ratingPercentage()"></div>
+    </div>
+  </header>
+
+  <!-- Horizontally Scrollable Reviews -->
+  <div class="public-reviews__scroll-container" role="presentation">
+    <div class="public-reviews__scroll-track">
+      @for (review of displayReviews(); track review.id) {
+        <article
+          class="public-reviews__card"
+          [class.public-reviews__card--expanded]="isExpanded(review.id)"
+          (mouseenter)="hoveredReviewId.set(review.id)"
+          (mouseleave)="hoveredReviewId.set(null)"
+        >
+          <!-- Card Header: Guest & Date -->
+          <header class="public-reviews__card-header">
+            <div class="public-reviews__card-meta">
+              <h3 class="public-reviews__guest-name">{{ review.guestName }}</h3>
+              <time class="public-reviews__review-date" [dateTime]="review.createdAt">
+                {{ formatDate(review.createdAt) }}
+              </time>
+            </div>
+
+            <!-- Mini Star Rating -->
+            <div class="public-reviews__mini-rating" role="img" [attr.aria-label]="t('تصنيف ' + review.rating + ' من 5 نجوم', 'Rating ' + review.rating + ' out of 5 stars')">
+              @for (_ of getStars(review.rating); let i = $index; track i) {
+                <svg
+                  viewBox="0 0 24 24"
+                  class="public-reviews__mini-star"
+                  [class.public-reviews__mini-star--filled]="i < getFilledStars(review.rating)"
+                  aria-hidden="true"
+                >
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              }
+            </div>
+          </header>
+
+          <!-- Card Body: Comment -->
+          @if (review.comment) {
+            <div class="public-reviews__card-body">
+                <p class="public-reviews__comment" [class.public-reviews__comment--clamped]="!isExpanded(review.id) && hasMoreContent(review)">
+                {{ getDisplayText(review) }}
+              </p>
+
+              @if (hasMoreContent(review)) {
+                <button
+                  type="button"
+                  class="public-reviews__read-more"
+                  (click)="toggleExpanded(review.id)"
+                >
+                  {{ isExpanded(review.id) ? t('إظهار أقل', 'Show less') : t('اقرأ المزيد', 'Read more') }}
+                </button>
+              }
+            </div>
+          }
+
+          <!-- Visual indicator for scroll position -->
+          <div class="public-reviews__card-snap" aria-hidden="true"></div>
+        </article>
+      }
+    </div>
+
+    <!-- Scroll Indicator (subtle fade gradient) -->
+    <div class="public-reviews__scroll-fade-start" aria-hidden="true"></div>
+    <div class="public-reviews__scroll-fade-end" aria-hidden="true"></div>
+  </div>
+
+  <!-- Accessibility: Scroll Hint -->
+  <p class="public-reviews__scroll-hint" aria-live="polite" aria-atomic="false">
+    {{ t('انزلق أفقياً لمشاهدة المزيد من التقييمات', 'Scroll horizontally to see more reviews') }}
+  </p>
+</section>

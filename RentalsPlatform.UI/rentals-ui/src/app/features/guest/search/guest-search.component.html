@@ -1,0 +1,141 @@
+<section class="discover">
+  <header class="discover__header">
+    <button class="search-pill" type="button" (click)="openFilterSheet()">
+      <svg class="search-pill__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <span>{{ t('ابحث عن وجهتك القادمة', 'Search your next destination') }}</span>
+    </button>
+
+    <form class="filter-bar" [formGroup]="filterForm">
+      <label class="filter-bar__field">
+        <span>{{ t('المدينة', 'City') }}</span>
+        <input type="text" formControlName="city" (input)="updateCityInput($any($event.target).value)" />
+      </label>
+      <label class="filter-bar__field">
+        <span>{{ t('الوصول', 'Check-in') }}</span>
+        <input type="date" formControlName="checkIn" />
+      </label>
+      <label class="filter-bar__field">
+        <span>{{ t('المغادرة', 'Check-out') }}</span>
+        <input type="date" formControlName="checkOut" />
+      </label>
+      <label class="filter-bar__field">
+        <span>{{ t('الضيوف', 'Guests') }}</span>
+        <input type="number" formControlName="guests" min="1" />
+      </label>
+    </form>
+  </header>
+
+  @if (isFilterSheetOpen()) {
+    <div class="sheet-backdrop" (click)="closeFilterSheet()"></div>
+    <section class="sheet" role="dialog" aria-modal="true" aria-label="Filters">
+      <div class="sheet__handle" aria-hidden="true"></div>
+
+      <form class="sheet__content" [formGroup]="filterForm">
+        <h2 class="sheet__title">{{ t('تصفية نتائج البحث', 'Refine your search') }}</h2>
+
+        <label class="sheet__field">
+          <span>{{ t('المدينة', 'City') }}</span>
+          <input type="text" formControlName="city" (input)="updateCityInput($any($event.target).value)" />
+        </label>
+
+        @if (filteredCityOptions().length > 0) {
+          <ul class="sheet__autocomplete">
+            @for (city of filteredCityOptions(); track city) {
+              <li>
+                <button type="button" (click)="pickCity(city)">{{ city }}</button>
+              </li>
+            }
+          </ul>
+        }
+
+        <div class="sheet__grid">
+          <label class="sheet__field">
+            <span>{{ t('الوصول', 'Check-in') }}</span>
+            <input type="date" formControlName="checkIn" />
+          </label>
+
+          <label class="sheet__field">
+            <span>{{ t('المغادرة', 'Check-out') }}</span>
+            <input type="date" formControlName="checkOut" />
+          </label>
+        </div>
+
+        <div class="sheet__grid">
+          <label class="sheet__field">
+            <span>{{ t('أقل سعر', 'Min price') }}</span>
+            <input type="range" min="0" max="15000" step="100" formControlName="minPrice" />
+            <small>{{ filterForm.controls.minPrice.value }}</small>
+          </label>
+
+          <label class="sheet__field">
+            <span>{{ t('أعلى سعر', 'Max price') }}</span>
+            <input type="range" min="0" max="30000" step="100" formControlName="maxPrice" />
+            <small>{{ filterForm.controls.maxPrice.value }}</small>
+          </label>
+        </div>
+
+        <label class="sheet__field">
+          <span>{{ t('الضيوف', 'Guests') }}</span>
+          <input type="number" formControlName="guests" min="1" />
+        </label>
+
+        <button class="sheet__close" type="button" (click)="closeFilterSheet()">
+          {{ t('تم', 'Done') }}
+        </button>
+      </form>
+    </section>
+  }
+
+  <main class="discover__content">
+    @if (searchStore.viewMode() === 'list') {
+      <section class="results-grid">
+        @if (searchStore.isLoading()) {
+          @for (_ of [1, 2, 3, 4, 5, 6]; track _) {
+            <article class="result-card result-card--skeleton" aria-hidden="true">
+              <div class="result-card__media"></div>
+              <div class="result-card__line result-card__line--lg"></div>
+              <div class="result-card__line result-card__line--md"></div>
+              <div class="result-card__line result-card__line--sm"></div>
+            </article>
+          }
+        } @else {
+          @for (property of searchStore.results(); track property.id) {
+            <article class="result-card" (click)="selectProperty(property.id)">
+              <div class="result-card__media-wrap">
+                @defer (on viewport) {
+                  <img class="result-card__media" [src]="property.imageUrl" [alt]="propertyName(property)" loading="lazy" decoding="async" />
+                } @placeholder {
+                  <div class="result-card__media result-card__media--placeholder"></div>
+                }
+                <span class="result-card__price">{{ formatPrice(property.price.amount, property.price.currency) }}</span>
+              </div>
+
+              <h3 class="result-card__title">{{ propertyName(property) }}</h3>
+              <p class="result-card__address">{{ propertyAddress(property) }}</p>
+            </article>
+          } @empty {
+            <section class="empty-state">
+              <h3>{{ t('لا توجد نتائج', 'No properties found') }}</h3>
+              <p>{{ t('جرّب تعديل المدينة أو السعر أو التواريخ.', 'Try adjusting city, price, or travel dates.') }}</p>
+            </section>
+          }
+        }
+      </section>
+    } @else {
+      <section class="map-view">
+        <div class="map-view__glass">
+          <h3>{{ t('عرض الخريطة', 'Map View') }}</h3>
+          <p>{{ t('دمج الخريطة التفاعلية يتم هنا (Google Maps / Mapbox).', 'Integrate interactive map here (Google Maps / Mapbox).') }}</p>
+          <p>{{ t('عدد النتائج', 'Results') }}: {{ searchStore.resultsCount() }}</p>
+        </div>
+      </section>
+    }
+  </main>
+
+  <button class="view-fab" type="button" (click)="toggleViewMode()">
+    {{ viewModeLabel() }}
+  </button>
+</section>

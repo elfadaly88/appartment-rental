@@ -1,0 +1,144 @@
+<section class="host-dashboard">
+  <app-push-prompt />
+
+  <header class="host-dashboard__header">
+    <div>
+      <h1 class="host-dashboard__title">{{ t('لوحة تحكم المضيف', 'Host Dashboard') }}</h1>
+      <p class="host-dashboard__subtitle">
+        {{ t('نظرة شاملة على أدائك وعقاراتك الفاخرة', 'A unified view of your performance and luxury listings') }}
+      </p>
+    </div>
+
+    <div class="host-dashboard__header-actions">
+      <a class="host-dashboard__block-btn" routerLink="/host/block-dates">
+        {{ t('حظر التواريخ', 'Block Dates') }}
+      </a>
+      <a class="host-dashboard__add-btn" routerLink="/host/properties/new">
+        <span aria-hidden="true">+</span>
+        {{ t('إضافة عقار جديد', 'Add New Property') }}
+      </a>
+    </div>
+  </header>
+
+  @if (hostStore.error(); as error) {
+    <div class="host-dashboard__error" role="alert">{{ error }}</div>
+  }
+
+  <!-- Analytics Section -->
+  <section class="host-dashboard__analytics">
+    <app-analytics-dashboard />
+  </section>
+
+  <section class="host-dashboard__stats" aria-label="Stats">
+    @if (hostStore.isLoading()) {
+      @for (_ of [1, 2, 3]; track _) {
+        <article class="stat-card stat-card--skeleton" aria-hidden="true">
+          <div class="stat-card__skeleton-line stat-card__skeleton-line--sm"></div>
+          <div class="stat-card__skeleton-line stat-card__skeleton-line--lg"></div>
+        </article>
+      }
+    } @else {
+      @for (card of statCards(); track card.id) {
+        <article class="stat-card">
+          <p class="stat-card__label">{{ card.label }}</p>
+          <p class="stat-card__value">{{ card.value }}</p>
+        </article>
+      }
+    }
+  </section>
+
+  <section class="host-dashboard__main">
+    <section class="panel panel--properties">
+      <header class="panel__header">
+        <h2 class="panel__title">{{ t('عقاراتي', 'My Properties') }}</h2>
+      </header>
+
+      @defer (on viewport) {
+        <div class="properties-grid">
+          @if (hostStore.isLoading()) {
+            @for (_ of [1, 2, 3, 4]; track _) {
+              <article class="property-card property-card--skeleton" aria-hidden="true">
+                <div class="property-card__media"></div>
+                <div class="property-card__line property-card__line--lg"></div>
+                <div class="property-card__line property-card__line--sm"></div>
+              </article>
+            }
+          } @else {
+            @for (property of hostStore.myProperties(); track property.id) {
+              <article class="property-card">
+                <img class="property-card__image" [src]="property.imageUrl" [alt]="property.title" loading="lazy" decoding="async" />
+                <h3 class="property-card__title">{{ property.title }}</h3>
+                <p class="property-card__location">{{ property.location }}</p>
+                <p class="property-card__price">{{ formatCurrency(property.pricePerNight) }}</p>
+              </article>
+            } @empty {
+              <div class="panel__empty">
+                <p>{{ t('لا توجد عقارات حالياً', 'No properties yet') }}</p>
+                <a class="panel__empty-link" routerLink="/host/properties/new">{{ t('إضافة أول عقار', 'Add your first property') }}</a>
+              </div>
+            }
+          }
+        </div>
+      } @placeholder {
+        <div class="properties-grid" aria-hidden="true">
+          @for (_ of [1, 2, 3, 4]; track _) {
+            <article class="property-card property-card--skeleton">
+              <div class="property-card__media"></div>
+              <div class="property-card__line property-card__line--lg"></div>
+              <div class="property-card__line property-card__line--sm"></div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="panel panel--bookings">
+      <header class="panel__header">
+        <h2 class="panel__title">{{ t('آخر الحجوزات', 'Recent Bookings') }}</h2>
+      </header>
+
+      @defer (on viewport) {
+        <ul class="bookings-list">
+          @if (hostStore.isLoading()) {
+            @for (_ of [1, 2, 3, 4]; track _) {
+              <li class="booking-row booking-row--skeleton" aria-hidden="true">
+                <div class="booking-row__line booking-row__line--lg"></div>
+                <div class="booking-row__line booking-row__line--sm"></div>
+              </li>
+            }
+          } @else {
+            @for (booking of hostStore.myBookings(); track booking.id) {
+              <li class="booking-row">
+                <div class="booking-row__top">
+                  <p class="booking-row__property">{{ booking.propertyTitle }}</p>
+                  <span class="booking-row__status" [attr.data-status]="booking.status">{{ bookingStatusLabel(booking.status) }}</span>
+                </div>
+                <p class="booking-row__meta">
+                  {{ booking.guestName }} • {{ formatDate(booking.checkInDate) }} - {{ formatDate(booking.checkOutDate) }}
+                </p>
+                <p class="booking-row__amount">{{ formatCurrency(booking.totalPrice) }}</p>
+              </li>
+            } @empty {
+              <li class="panel__empty">
+                <p>{{ t('لا توجد حجوزات حديثة', 'No recent bookings') }}</p>
+              </li>
+            }
+          }
+        </ul>
+      } @placeholder {
+        <ul class="bookings-list" aria-hidden="true">
+          @for (_ of [1, 2, 3, 4]; track _) {
+            <li class="booking-row booking-row--skeleton">
+              <div class="booking-row__line booking-row__line--lg"></div>
+              <div class="booking-row__line booking-row__line--sm"></div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </section>
+
+  <a class="host-dashboard__fab" routerLink="/host/properties/new" [attr.aria-label]="t('إضافة عقار جديد', 'Add New Property')">
+    +
+  </a>
+</section>

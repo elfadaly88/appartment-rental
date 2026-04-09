@@ -1,0 +1,97 @@
+<section class="media-uploader" [attr.aria-label]="t('رفع صور العقار', 'Property image upload')">
+  <header class="media-uploader__header">
+    <div>
+      <p class="media-uploader__eyebrow">Host Media</p>
+      <h1 class="media-uploader__title">
+        {{ propertyTitle() || t('رفع صور العقار', 'Upload Property Images') }}
+      </h1>
+      <p class="media-uploader__subtitle">
+        {{ t('أضف صوراً واضحة وعالية الجودة لرفع جاذبية العرض.', 'Add clean, high-quality imagery to elevate your listing.') }}
+      </p>
+    </div>
+  </header>
+
+  <div
+    class="dropzone"
+    [class.dropzone--active]="isDragging()"
+    [class.dropzone--disabled]="isUploading()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <input
+      #fileInput
+      class="dropzone__input"
+      type="file"
+      accept="image/*"
+      multiple
+      [disabled]="isUploading()"
+      (change)="onFileSelection($event)"
+    />
+
+    <span class="dropzone__icon" aria-hidden="true">+</span>
+    <span class="dropzone__title">
+      {{ t('اسحب الصور هنا أو ابدأ عبر الزر أدناه', 'Drag images here or start with the button below') }}
+    </span>
+    <span class="dropzone__hint">
+      {{ t('يدعم اختيار عدة صور دفعة واحدة.', 'Multiple image selection is supported.') }}
+    </span>
+    <button
+      type="button"
+      class="dropzone__browse"
+      [disabled]="isUploading()"
+      (click)="fileInput.click()"
+    >
+      {{ t('تصفح الملفات', 'Browse Files') }}
+    </button>
+  </div>
+
+  @if (errorMessage()) {
+    <p class="media-uploader__message media-uploader__message--error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (successMessage()) {
+    <p class="media-uploader__message media-uploader__message--success" role="status">{{ successMessage() }}</p>
+  }
+
+  @if (previews().length) {
+    <section class="preview-grid" [attr.aria-label]="t('معاينة الصور', 'Image previews')">
+      @for (preview of previews(); track trackPreview($index, preview); let index = $index) {
+        <article class="preview-card">
+          <img class="preview-card__image" [src]="preview" [alt]="t('معاينة الصورة', 'Image preview') + ' ' + (index + 1)" />
+          <button
+            type="button"
+            class="preview-card__remove"
+            [disabled]="isUploading()"
+            [attr.aria-label]="t('إزالة الصورة', 'Remove image')"
+            (click)="removeFile(index)"
+          >
+            ×
+          </button>
+        </article>
+      }
+    </section>
+  } @else {
+    <section class="preview-empty">
+      {{ t('ستظهر معاينات الصور هنا قبل الرفع.', 'Image previews will appear here before upload.') }}
+    </section>
+  }
+
+  <footer class="media-uploader__footer">
+    <div class="progress-shell" [class.progress-shell--visible]="isUploading() || uploadProgress() > 0">
+      <div class="progress-shell__track">
+        <div class="progress-shell__fill" [style.inline-size.%]="uploadProgress()"></div>
+      </div>
+      <span class="progress-shell__value">{{ uploadProgress() }}%</span>
+    </div>
+
+    <button
+      type="button"
+      class="media-uploader__submit"
+      [disabled]="!selectedFiles().length || isUploading()"
+      (click)="upload()"
+    >
+      {{ uploadLabel() }}
+    </button>
+  </footer>
+</section>

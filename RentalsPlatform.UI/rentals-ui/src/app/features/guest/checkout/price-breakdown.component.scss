@@ -1,0 +1,143 @@
+:host {
+  display: block;
+}
+
+.price-breakdown {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.price-breakdown__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h2 {
+    margin: 0.25rem 0 0;
+    color: #0f172a;
+    font-size: 1.08rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+}
+
+.price-breakdown__eyebrow {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.54);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.price-breakdown__dates {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.62);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: end;
+}
+
+.price-breakdown__card {
+  border-radius: 1.15rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.06);
+  padding-block: 1rem;
+  padding-inline: 1rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.price-breakdown__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: rgba(15, 23, 42, 0.76);
+  font-size: 0.92rem;
+
+  strong {
+    color: #0f172a;
+    font-weight: 800;
+  }
+}
+
+.price-breakdown__row--total {
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.price-breakdown__divider {
+  block-size: 1px;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.12), rgba(15, 23, 42, 0));
+}
+
+.price-breakdown__adjustment {
+  display: grid;
+  gap: 0.55rem;
+  border-radius: 0.95rem;
+  background: rgba(37, 99, 235, 0.06);
+  padding-block: 0.7rem;
+  padding-inline: 0.75rem;
+}
+
+.price-breakdown__adjustment-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: #1d4ed8;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+  text-align: start;
+}
+
+.price-breakdown__info-icon {
+  inline-size: 18px;
+  block-size: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(37, 99, 235, 0.14);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.price-breakdown__adjustment-panel {
+  display: grid;
+  gap: 0.55rem;
+  color: rgba(15, 23, 42, 0.68);
+  font-size: 0.84rem;
+  line-height: 1.6;
+
+  p {
+    margin: 0;
+  }
+}
+
+.price-breakdown__comparison {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  strong {
+    color: #0f172a;
+  }
+}
+
+@media (max-width: 640px) {
+  .price-breakdown__header {
+    flex-direction: column;
+  }
+
+  .price-breakdown__dates {
+    text-align: start;
+  }
+}

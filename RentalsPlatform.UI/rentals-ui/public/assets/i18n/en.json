@@ -1,0 +1,33 @@
+{
+  "AUTH": {
+    "EYEBROW": "Concierge Access",
+    "TITLE_LOGIN": "Welcome back",
+    "TITLE_REGISTER": "Create your account",
+    "SUBTITLE_LOGIN": "Sign in to manage bookings, favorites, and premium conversations.",
+    "SUBTITLE_REGISTER": "Join our curated community to book or host exceptional stays.",
+    "TAB_LOGIN": "Login",
+    "TAB_REGISTER": "Sign Up",
+    "ROLE_GUEST": "I'm looking to book",
+    "ROLE_HOST": "I want to host",
+    "FIELD_EMAIL": "Email",
+    "FIELD_PASSWORD": "Password",
+    "FIELD_FULLNAME": "Full name",
+    "BTN_CONTINUE": "Continue",
+    "BTN_SIGNING_IN": "Signing in...",
+    "BTN_CREATE_ACCOUNT": "Create account",
+    "BTN_CREATING_ACCOUNT": "Creating account...",
+    "TERMS_LABEL": "I agree to the Host Terms of Service",
+    "ERROR_REQUIRED": "This field is required.",
+    "ERROR_EMAIL": "Enter a valid email address.",
+    "ERROR_MINLENGTH": "Please use at least {{requiredLength}} characters.",
+    "ERROR_TERMS": "You must accept Host Terms of Service.",
+    "ERROR_FALLBACK": "Please review this field."
+  },
+  "NAV": {
+    "LOGIN": "Login",
+    "LOGOUT": "Logout",
+    "WELCOME": "Welcome, {{name}}",
+    "PROPERTIES": "Properties",
+    "TOGGLE_LANG_LABEL": "Switch to Arabic"
+  }
+}

@@ -1,0 +1,87 @@
+<section
+  class="chat-window"
+  role="region"
+  [attr.aria-label]="t('محادثة الحجز', 'Booking Chat')"
+>
+  <header class="chat-window__header">
+    <div class="chat-window__identity">
+      <div class="chat-window__avatar-shell">
+        @if (otherParticipantAvatarUrl()) {
+          <img
+            class="chat-window__avatar"
+            [src]="otherParticipantAvatarUrl()"
+            [alt]="otherParticipantName()"
+          />
+        } @else {
+          <span class="chat-window__avatar-fallback">{{ avatarInitials() || '•' }}</span>
+        }
+      </div>
+
+      <div class="chat-window__identity-copy">
+        <p class="chat-window__property">{{ propertyName() }}</p>
+        <h1 class="chat-window__participant">{{ otherParticipantName() }}</h1>
+      </div>
+    </div>
+
+    <div
+      class="chat-window__status"
+      [class.chat-window__status--connected]="isConnected()"
+    >
+      <span class="chat-window__status-dot" aria-hidden="true"></span>
+      <span>
+        {{ isConnected() ? t('متصل', 'Connected') : t('إعادة الاتصال...', 'Reconnecting...') }}
+      </span>
+    </div>
+  </header>
+
+  <div class="chat-window__body" #messageViewport>
+    @if (isLoading()) {
+      <div class="chat-window__state">{{ t('جارٍ تحميل الرسائل...', 'Loading messages...') }}</div>
+    } @else if (error(); as errorMessage) {
+      <div class="chat-window__state chat-window__state--error" role="alert">
+        {{ errorMessage }}
+      </div>
+    } @else if (!messages().length) {
+      <div class="chat-window__state">
+        {{ t('ابدأ المحادثة الأولى لهذا الحجز.', 'Start the first message for this booking.') }}
+      </div>
+    } @else {
+      <div class="chat-window__messages">
+        @for (message of messages(); track trackByMessage($index, message)) {
+          <article
+            class="chat-window__message"
+            [class.chat-window__message--outgoing]="isOutgoing(message)"
+            [class.chat-window__message--incoming]="!isOutgoing(message)"
+          >
+            <div class="chat-window__bubble">
+              <p class="chat-window__content">{{ message.content }}</p>
+              <time class="chat-window__time" [dateTime]="message.sentAt">
+                {{ formatTime(message.sentAt) }}
+              </time>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+
+  <form class="chat-window__composer" (ngSubmit)="send()">
+    <label class="chat-window__composer-field">
+      <input
+        class="chat-window__input"
+        type="text"
+        [formControl]="composer"
+        [placeholder]="t('اكتب رسالة...', 'Type a message...')"
+        [attr.aria-label]="t('نص الرسالة', 'Message text')"
+      />
+    </label>
+
+    <button
+      type="submit"
+      class="chat-window__send"
+      [disabled]="!composer.value.trim() || !bookingId() || !otherParticipantId()"
+    >
+      {{ t('إرسال', 'Send') }}
+    </button>
+  </form>
+</section>

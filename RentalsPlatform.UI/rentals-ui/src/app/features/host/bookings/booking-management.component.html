@@ -1,0 +1,92 @@
+<section class="booking-page">
+  <header class="booking-page__header">
+    <p class="booking-page__eyebrow">Host Control</p>
+    <h1 class="booking-page__title">{{ t('إدارة الحجوزات', 'Booking Management') }}</h1>
+    <p class="booking-page__subtitle">
+      {{ t('تحكم فوري في الطلبات القادمة وسجل الحجوزات.', 'Instant control over incoming requests and booking history.') }}
+    </p>
+  </header>
+
+  <nav class="tabs" [attr.aria-label]="t('تصنيفات الحجوزات', 'Booking categories')">
+    @for (tab of tabItems(); track tab.key) {
+      <button
+        class="tabs__button"
+        type="button"
+        [class.tabs__button--active]="activeTab() === tab.key"
+        (click)="setTab(tab.key)"
+      >
+        <span>{{ tab.label }}</span>
+        <span class="tabs__count">{{ tab.count }}</span>
+      </button>
+    }
+  </nav>
+
+  @if (bookingStore.isLoading()) {
+    <section class="cards">
+      @for (_ of [1, 2, 3]; track _) {
+        <article class="card card--skeleton" aria-hidden="true">
+          <div class="card__line card__line--lg"></div>
+          <div class="card__line card__line--md"></div>
+          <div class="card__line card__line--sm"></div>
+        </article>
+      }
+    </section>
+  } @else {
+    <section class="cards">
+      @for (booking of visibleBookings(); track booking.id) {
+        <article class="card">
+          <header class="card__top">
+            <div>
+              <p class="card__guest">{{ booking.guestName }}</p>
+              <p class="card__property">{{ booking.propertyName }}</p>
+            </div>
+            <span class="card__status" [attr.data-status]="booking.status">{{ statusLabel(booking.status) }}</span>
+          </header>
+
+          <div class="card__meta">
+            <p>
+              <span>{{ t('التواريخ', 'Dates') }}:</span>
+              <strong>{{ formatDateRange(booking) }}</strong>
+            </p>
+            <p>
+              <span>{{ t('القيمة', 'Total') }}:</span>
+              <strong>{{ formatPrice(booking.totalPrice, booking.currency) }}</strong>
+            </p>
+            @if (booking.guestEmail) {
+              <p>
+                <span>{{ t('الضيف', 'Guest') }}:</span>
+                <strong>{{ booking.guestEmail }}</strong>
+              </p>
+            }
+          </div>
+
+          @if (activeTab() === 'pending') {
+            <footer class="card__actions">
+              <button
+                class="action-btn action-btn--approve"
+                type="button"
+                [disabled]="isActionBusy(booking.id)"
+                (click)="approve(booking.id)"
+              >
+                {{ t('موافقة', 'Approve') }}
+              </button>
+              <button
+                class="action-btn action-btn--decline"
+                type="button"
+                [disabled]="isActionBusy(booking.id)"
+                (click)="reject(booking.id)"
+              >
+                {{ t('رفض', 'Decline') }}
+              </button>
+            </footer>
+          }
+        </article>
+      } @empty {
+        <article class="empty-state">
+          <h3>{{ emptyTitle() }}</h3>
+          <p>{{ emptyHint() }}</p>
+        </article>
+      }
+    </section>
+  }
+</section>

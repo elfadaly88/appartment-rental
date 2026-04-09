@@ -1,0 +1,275 @@
+:host {
+  display: block;
+}
+
+.analytics-dashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  animation: fade-in 400ms ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.analytics-dashboard__error {
+  grid-column: 1 / -1;
+  padding-block: 0.85rem;
+  padding-inline: 1rem;
+  border-radius: 0.85rem;
+  background: rgba(239, 68, 68, 0.12);
+  color: #991b1b;
+  font-size: 0.9rem;
+  border-inline-start: 4px solid #dc2626;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* KPI Cards Section */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.analytics-dashboard__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 1rem;
+}
+
+.kpi-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.64), rgba(246, 250, 255, 0.32));
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  padding-block: 1.25rem;
+  padding-inline: 1.25rem;
+  box-shadow: 0 12px 28px rgba(10, 14, 30, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 200ms ease, box-shadow 220ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(10, 14, 30, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+}
+
+.kpi-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block-end: 0.85rem;
+}
+
+.kpi-card__label {
+  margin: 0;
+  color: rgba(23, 32, 51, 0.72);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.kpi-card__trend {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding-block: 0.25rem;
+  padding-inline: 0.6rem;
+  border-radius: 999px;
+
+  &--positive {
+    color: #047857;
+    background: rgba(16, 185, 129, 0.14);
+  }
+}
+
+.kpi-card__value {
+  margin: 0;
+  color: #172033;
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Charts Grid Section */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.analytics-dashboard__charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: 1.5rem;
+  animation: charts-enter 500ms ease-out;
+}
+
+@keyframes charts-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .analytics-dashboard__charts {
+    grid-template-columns: 1fr;
+  }
+}
+
+.analytics-card {
+  border-radius: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.66), rgba(240, 248, 255, 0.3));
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  padding-block: 1.5rem;
+  padding-inline: 1.5rem;
+  box-shadow:
+    0 16px 36px rgba(12, 29, 63, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+  overflow: hidden;
+  transition: transform 300ms ease, box-shadow 320ms ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 20px 40px rgba(12, 29, 63, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.76);
+  }
+}
+
+.analytics-card__header {
+  margin-block-end: 1.25rem;
+}
+
+.analytics-card__title {
+  margin: 0;
+  color: #172033;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.analytics-card__subtitle {
+  margin: 0.35rem 0 0;
+  color: rgba(23, 32, 51, 0.62);
+  font-size: 0.85rem;
+}
+
+.analytics-card__chart {
+  margin-inline: -0.75rem;
+  margin-block-end: -0.75rem;
+
+  &--radial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 260px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Revenue Chart Styling */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.analytics-card--revenue {
+  grid-column: auto;
+}
+
+.analytics-card--revenue .analytics-card__chart {
+  min-block-size: 300px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Occupancy Chart Styling */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.analytics-card--occupancy {
+  display: flex;
+  flex-direction: column;
+}
+
+.analytics-card--occupancy .analytics-card__chart {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 300px;
+  margin-inline: -0.75rem;
+  margin-block-end: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Loading State */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.analytics-dashboard__loading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 400px;
+}
+
+.spinner {
+  inline-size: 48px;
+  block-size: 48px;
+  border-radius: 50%;
+  border: 3px solid rgba(15, 118, 110, 0.2);
+  border-block-start-color: #0f766e;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* RTL Support & Logical Properties */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .analytics-dashboard,
+  .analytics-card,
+  .kpi-card {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Mobile optimization */
+@media (max-width: 640px) {
+  .analytics-dashboard {
+    gap: 1rem;
+  }
+
+  .analytics-dashboard__kpis {
+    gap: 0.75rem;
+  }
+
+  .kpi-card {
+    padding-block: 1rem;
+    padding-inline: 1rem;
+  }
+
+  .analytics-card {
+    padding-block: 1rem;
+    padding-inline: 1rem;
+  }
+
+  .analytics-card__chart {
+    min-block-size: 240px;
+  }
+}

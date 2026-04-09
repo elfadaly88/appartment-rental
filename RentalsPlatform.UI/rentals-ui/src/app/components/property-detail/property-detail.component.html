@@ -1,0 +1,38 @@
+@if (property(); as prop) {
+  <article class="detail">
+    <header class="detail__header">
+      <a class="detail__back" routerLink="/properties">{{ t('رجوع', 'Back') }}</a>
+      <h1 class="detail__title">{{ prop.name[lang.currentLang()] }}</h1>
+      <p class="detail__address">{{ prop.address[lang.currentLang()] }}</p>
+    </header>
+
+    <section class="detail__booking">
+      <div class="detail__price">{{ formattedPrice() }} / {{ t('ليلة', 'night') }}</div>
+
+      <form class="detail__form" [formGroup]="bookingForm" (ngSubmit)="onBookNow()">
+        <label class="detail__field">
+          <span>{{ t('تاريخ الوصول', 'Check-in Date') }}</span>
+          <input type="date" formControlName="checkInDate" />
+        </label>
+
+        <label class="detail__field">
+          <span>{{ t('تاريخ المغادرة', 'Check-out Date') }}</span>
+          <input type="date" formControlName="checkOutDate" />
+        </label>
+
+        <button class="detail__cta" type="submit">{{ t('احجز الآن', 'Book Now') }}</button>
+      </form>
+    </section>
+
+    <section class="detail__notifications">
+      <h2>{{ t('آخر إشعار', 'Latest Notification') }}</h2>
+      @if (latestNotification(); as n) {
+        <p>{{ n.body }}</p>
+      } @else {
+        <p>{{ t('لا توجد إشعارات بعد', 'No notifications yet') }}</p>
+      }
+    </section>
+  </article>
+} @else {
+  <div class="detail__empty">{{ t('العقار غير موجود', 'Property not found') }}</div>
+}

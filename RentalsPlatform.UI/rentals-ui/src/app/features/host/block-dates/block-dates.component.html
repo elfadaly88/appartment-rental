@@ -1,0 +1,69 @@
+<section class="block-sheet">
+  <header class="block-sheet__header">
+    <p class="block-sheet__eyebrow">Host Control</p>
+    <h2 class="block-sheet__title">{{ t('حظر تواريخ العقار', 'Block Property Dates') }}</h2>
+    <p class="block-sheet__subtitle">
+      {{ t('أغلق التواريخ غير المتاحة بسرعة ووضوح.', 'Close unavailable dates with elegant precision.') }}
+    </p>
+  </header>
+
+  <form class="block-sheet__form" [formGroup]="form" novalidate (ngSubmit)="onSubmit()">
+    <label class="field" [class.field--filled]="isFilled(form.controls.propertyId.value)">
+      <select class="field__control" formControlName="propertyId" aria-label="Property">
+        <option [ngValue]="null" disabled hidden>
+          {{ t('اختر العقار', 'Choose property') }}
+        </option>
+        @for (property of hostProperties(); track property.id) {
+          <option [ngValue]="property.id">{{ propertyLabel(property) }}</option>
+        }
+      </select>
+      <span class="field__label">{{ t('العقار', 'Property') }}</span>
+      <span class="field__chevron" aria-hidden="true"></span>
+    </label>
+
+    <div class="block-sheet__dates">
+      <label class="field" [class.field--filled]="isFilled(form.controls.startDate.value)">
+        <input
+          class="field__control"
+          type="date"
+          [min]="today"
+          formControlName="startDate"
+          aria-label="Start date"
+        />
+        <span class="field__label">{{ t('من تاريخ', 'Start Date') }}</span>
+      </label>
+
+      <label class="field" [class.field--filled]="isFilled(form.controls.endDate.value)">
+        <input
+          class="field__control"
+          type="date"
+          [min]="minEndDate()"
+          formControlName="endDate"
+          aria-label="End date"
+        />
+        <span class="field__label">{{ t('إلى تاريخ', 'End Date') }}</span>
+      </label>
+    </div>
+
+    <label class="field field--textarea" [class.field--filled]="isFilled(form.controls.reason.value)">
+      <textarea
+        class="field__control"
+        rows="4"
+        maxlength="500"
+        formControlName="reason"
+        [placeholder]="' '"
+        aria-label="Reason"
+      ></textarea>
+      <span class="field__label">{{ t('السبب (اختياري)', 'Reason (optional)') }}</span>
+    </label>
+
+    <button class="submit-btn" type="submit" [disabled]="isSubmitting() || form.invalid">
+      @if (isSubmitting()) {
+        <span class="spinner" aria-hidden="true"></span>
+        {{ t('جاري الحفظ...', 'Saving...') }}
+      } @else {
+        {{ t('حظر التواريخ', 'Block Dates') }}
+      }
+    </button>
+  </form>
+</section>

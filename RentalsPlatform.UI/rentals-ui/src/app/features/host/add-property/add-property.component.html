@@ -1,0 +1,184 @@
+<section class="wizard" [attr.data-step]="currentStep()">
+  <header class="wizard__header">
+    <div>
+      <p class="wizard__eyebrow">HOST PANEL</p>
+      <h1 class="wizard__title">Add New Property</h1>
+      <p class="wizard__subtitle">Craft a premium listing in minutes with guided steps.</p>
+    </div>
+  </header>
+
+  <section class="wizard__progress" aria-label="Wizard progress">
+    <div class="wizard__progress-track">
+      <div class="wizard__progress-fill" [style.inline-size.%]="progressPercentage()"></div>
+    </div>
+
+    <ol class="wizard__steps">
+      @for (step of stepItems; track step.id) {
+        <li>
+          <button
+            type="button"
+            class="wizard__step"
+            [class.wizard__step--active]="currentStep() === step.id"
+            [class.wizard__step--done]="currentStep() > step.id"
+            (click)="jumpToStep(step.id)"
+          >
+            <span class="wizard__step-index">{{ step.id }}</span>
+            <span class="wizard__step-label">{{ step.en }}</span>
+          </button>
+        </li>
+      }
+    </ol>
+  </section>
+
+  <form class="wizard__form" [formGroup]="form" novalidate>
+    @if (currentStep() === 1) {
+      <section class="wizard__panel wizard__panel--enter" formGroupName="basicInfo">
+        <h2 class="wizard__panel-title">Basic Information</h2>
+
+        <div class="grid grid--2">
+          <label class="field">
+            <input class="field__input" type="text" formControlName="nameAr" placeholder=" " />
+            <span class="field__label">Arabic Name</span>
+            @if (basicInfoGroup.controls.nameAr.invalid && basicInfoGroup.controls.nameAr.touched) {
+              <span class="field__error">Arabic name is required.</span>
+            }
+          </label>
+
+          <label class="field">
+            <input class="field__input" type="text" formControlName="nameEn" placeholder=" " />
+            <span class="field__label">English Name</span>
+            @if (basicInfoGroup.controls.nameEn.invalid && basicInfoGroup.controls.nameEn.touched) {
+              <span class="field__error">English name is required.</span>
+            }
+          </label>
+        </div>
+
+        <div class="grid grid--1">
+          <label class="field field--textarea">
+            <textarea class="field__input" rows="4" formControlName="descriptionAr" placeholder=" "></textarea>
+            <span class="field__label">Arabic Description</span>
+            @if (basicInfoGroup.controls.descriptionAr.invalid && basicInfoGroup.controls.descriptionAr.touched) {
+              <span class="field__error">Minimum 20 characters required.</span>
+            }
+          </label>
+
+          <label class="field field--textarea">
+            <textarea class="field__input" rows="4" formControlName="descriptionEn" placeholder=" "></textarea>
+            <span class="field__label">English Description</span>
+            @if (basicInfoGroup.controls.descriptionEn.invalid && basicInfoGroup.controls.descriptionEn.touched) {
+              <span class="field__error">Minimum 20 characters required.</span>
+            }
+          </label>
+        </div>
+      </section>
+    }
+
+    @if (currentStep() === 2) {
+      <section class="wizard__panel wizard__panel--enter" formGroupName="location">
+        <h2 class="wizard__panel-title">Location</h2>
+
+        <div class="grid grid--2">
+          <label class="field">
+            <input class="field__input" type="text" formControlName="country" placeholder=" " />
+            <span class="field__label">Country</span>
+            @if (locationGroup.controls.country.invalid && locationGroup.controls.country.touched) {
+              <span class="field__error">Country is required.</span>
+            }
+          </label>
+
+          <label class="field">
+            <input class="field__input" type="text" formControlName="city" placeholder=" " />
+            <span class="field__label">City</span>
+            @if (locationGroup.controls.city.invalid && locationGroup.controls.city.touched) {
+              <span class="field__error">City is required.</span>
+            }
+          </label>
+
+          <label class="field">
+            <input class="field__input" type="text" formControlName="street" placeholder=" " />
+            <span class="field__label">Street</span>
+            @if (locationGroup.controls.street.invalid && locationGroup.controls.street.touched) {
+              <span class="field__error">Street is required.</span>
+            }
+          </label>
+
+          <label class="field">
+            <input class="field__input" type="text" formControlName="zipCode" placeholder=" " />
+            <span class="field__label">Zip Code</span>
+            @if (locationGroup.controls.zipCode.invalid && locationGroup.controls.zipCode.touched) {
+              <span class="field__error">Zip code is required.</span>
+            }
+          </label>
+        </div>
+      </section>
+    }
+
+    @if (currentStep() === 3) {
+      <section class="wizard__panel wizard__panel--enter" formGroupName="pricing">
+        <h2 class="wizard__panel-title">Pricing</h2>
+
+        <div class="grid grid--2">
+          <label class="field">
+            <input class="field__input" type="number" formControlName="pricePerNight" min="1" placeholder=" " />
+            <span class="field__label">Price Per Night (USD)</span>
+            @if (pricingGroup.controls.pricePerNight.invalid && pricingGroup.controls.pricePerNight.touched) {
+              <span class="field__error">Price must be greater than 0.</span>
+            }
+          </label>
+        </div>
+      </section>
+    }
+
+    @if (currentStep() === 4) {
+      <section class="wizard__panel wizard__panel--enter">
+        <h2 class="wizard__panel-title">Images</h2>
+
+        <div
+          class="dropzone"
+          [class.dropzone--active]="isDragOver()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+        >
+          <input class="dropzone__input" type="file" id="images" multiple accept="image/*" (change)="onFileInputChange($event)" />
+          <label class="dropzone__label" for="images">
+            <span class="dropzone__icon">⇪</span>
+            <span class="dropzone__title">Drag & drop images here</span>
+            <span class="dropzone__hint">or tap to browse files</span>
+          </label>
+        </div>
+
+        <ul class="files">
+          @for (file of selectedFiles(); track $index) {
+            <li class="files__item">
+              <span class="files__name">{{ file.name }}</span>
+              <button type="button" class="files__remove" (click)="removeFile($index)">Remove</button>
+            </li>
+          } @empty {
+            <li class="files__empty">No images selected yet.</li>
+          }
+        </ul>
+      </section>
+    }
+  </form>
+
+  <footer class="wizard__actions" [attr.data-step]="currentStep()">
+    <button type="button" class="btn btn--ghost" [disabled]="!canGoPrev() || isSubmitting()" (click)="prevStep()">
+      Previous
+    </button>
+
+    @if (canGoNext()) {
+      <button type="button" class="btn btn--primary" [disabled]="isSubmitting()" (click)="nextStep()">
+        Next
+      </button>
+    } @else {
+      <button type="button" class="btn btn--primary" [disabled]="isSubmitting()" (click)="submitForm()">
+        @if (isSubmitting()) {
+          Submitting...
+        } @else {
+          Submit Property
+        }
+      </button>
+    }
+  </footer>
+</section>

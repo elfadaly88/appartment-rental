@@ -1,0 +1,306 @@
+:host {
+  display: block;
+  min-block-size: 100dvh;
+  background:
+    radial-gradient(circle at 10% 8%, rgba(14, 165, 164, 0.13), transparent 34%),
+    radial-gradient(circle at 92% 0%, rgba(56, 189, 248, 0.12), transparent 28%),
+    #f5f7fb;
+}
+
+.booking-page {
+  --_text-primary: #172033;
+  --_text-secondary: #647087;
+  --_accent: #0f766e;
+  --_surface: rgba(255, 255, 255, 0.7);
+  --_surface-strong: rgba(255, 255, 255, 0.88);
+  --_border: rgba(255, 255, 255, 0.55);
+  --_shadow: 0 16px 38px rgba(8, 13, 26, 0.12), 0 4px 10px rgba(8, 13, 26, 0.08);
+
+  max-inline-size: 82rem;
+  margin-inline: auto;
+  padding-block: calc(1rem + env(safe-area-inset-top, 0px)) calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  padding-inline: max(1rem, env(safe-area-inset-left, 0px)) max(1rem, env(safe-area-inset-right, 0px));
+}
+
+.booking-page__header {
+  margin-block-end: 1rem;
+}
+
+.booking-page__eyebrow {
+  margin: 0;
+  color: var(--_text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.booking-page__title {
+  margin-block: 0.45rem 0;
+  margin-inline: 0;
+  color: var(--_text-primary);
+  font-size: clamp(1.4rem, 1.9vw + 0.8rem, 2rem);
+  letter-spacing: -0.018em;
+}
+
+.booking-page__subtitle {
+  margin: 0;
+  color: var(--_text-secondary);
+  line-height: 1.5;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-block-end: 1rem;
+}
+
+.tabs__button {
+  min-block-size: 48px;
+  min-inline-size: 48px;
+  border: 1px solid var(--_border);
+  border-radius: 0.9rem;
+  background: var(--_surface);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: var(--_shadow);
+  color: var(--_text-primary);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-block: 0.62rem;
+  padding-inline: 0.6rem;
+  cursor: pointer;
+  transition: transform 170ms ease, filter 170ms ease, border-color 170ms ease;
+}
+
+.tabs__button--active {
+  border-color: rgba(15, 118, 110, 0.4);
+  filter: saturate(1.06);
+}
+
+.tabs__button:active {
+  transform: scale(0.985);
+}
+
+.tabs__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 1.5rem;
+  min-block-size: 1.5rem;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.13);
+  color: var(--_accent);
+  font-size: 0.78rem;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 0.85rem;
+}
+
+.card {
+  border: 1px solid var(--_border);
+  border-radius: 1rem;
+  background: var(--_surface);
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+  box-shadow: var(--_shadow);
+  padding-block: 0.9rem;
+  padding-inline: 0.9rem;
+}
+
+.card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block-end: 0.75rem;
+}
+
+.card__guest {
+  margin: 0;
+  color: var(--_text-primary);
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.card__property {
+  margin-block: 0.3rem 0;
+  margin-inline: 0;
+  color: var(--_text-secondary);
+  font-size: 0.88rem;
+}
+
+.card__status {
+  padding-block: 0.25rem;
+  padding-inline: 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.card__status[data-status='pending'] {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.card__status[data-status='approved'],
+.card__status[data-status='active'] {
+  background: rgba(14, 165, 164, 0.18);
+  color: #0f766e;
+}
+
+.card__status[data-status='completed'] {
+  background: rgba(59, 130, 246, 0.18);
+  color: #1d4ed8;
+}
+
+.card__status[data-status='rejected'],
+.card__status[data-status='cancelled'] {
+  background: rgba(239, 68, 68, 0.18);
+  color: #b91c1c;
+}
+
+.card__meta {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.card__meta p {
+  margin: 0;
+  color: var(--_text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.card__meta strong {
+  color: var(--_text-primary);
+  font-weight: 700;
+  margin-inline-start: 0.3rem;
+}
+
+.card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-block-start: 0.85rem;
+}
+
+.action-btn {
+  min-block-size: 48px;
+  min-inline-size: 48px;
+  border-radius: 0.8rem;
+  border: 1px solid transparent;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 170ms ease, filter 170ms ease, opacity 170ms ease;
+}
+
+.action-btn:active {
+  transform: scale(0.985);
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-btn--approve {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #047857;
+}
+
+.action-btn--decline {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.28);
+  color: #b91c1c;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  border: 1px dashed rgba(100, 113, 135, 0.35);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.62);
+  text-align: center;
+  padding-block: 2.2rem;
+  padding-inline: 1rem;
+}
+
+.empty-state h3 {
+  margin: 0;
+  color: var(--_text-primary);
+  font-size: 1.12rem;
+}
+
+.empty-state p {
+  margin-block: 0.5rem 0;
+  margin-inline: 0;
+  color: var(--_text-secondary);
+  line-height: 1.5;
+}
+
+.card--skeleton {
+  position: relative;
+  overflow: hidden;
+}
+
+.card--skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.72) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: shimmer 1.15s linear infinite;
+}
+
+.card__line {
+  block-size: 0.8rem;
+  border-radius: 0.45rem;
+  background: #dbe3ef;
+}
+
+.card__line--lg {
+  inline-size: 66%;
+}
+
+.card__line--md {
+  inline-size: 50%;
+  margin-block-start: 0.65rem;
+}
+
+.card__line--sm {
+  inline-size: 36%;
+  margin-block-start: 0.65rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tabs__button:hover,
+  .action-btn:hover {
+    filter: brightness(1.04);
+  }
+
+  .card:hover {
+    transform: translateY(-1px);
+    transition: transform 180ms ease;
+  }
+}
+
+@media (max-width: 640px) {
+  .tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}

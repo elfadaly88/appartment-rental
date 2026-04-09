@@ -1,0 +1,57 @@
+<section class="location-step">
+  <header class="location-step__header">
+    <p class="location-step__eyebrow">Location</p>
+    <h2 class="location-step__title">
+      {{ currentLang() === 'ar' ? 'اختر المحافظة والمدينة' : 'Select Governorate and City' }}
+    </h2>
+  </header>
+
+  <form class="location-step__form" [formGroup]="locationForm()" novalidate>
+    <div class="field" [class.field--filled]="isGovFilled()">
+      <select class="field__control" formControlName="governorateId" aria-label="Governorate">
+        <option [ngValue]="null" disabled hidden>
+          {{ currentLang() === 'ar' ? 'اختر المحافظة' : 'Choose governorate' }}
+        </option>
+
+        @for (gov of governorates(); track gov.id) {
+          <option [ngValue]="gov.id">
+            {{ currentLang() === 'ar' ? gov.nameAr : gov.nameEn }}
+          </option>
+        }
+      </select>
+
+      <label class="field__label">
+        {{ currentLang() === 'ar' ? 'المحافظة' : 'Governorate' }}
+      </label>
+      <span class="field__chevron" aria-hidden="true"></span>
+    </div>
+
+    <div
+      class="field"
+      [class.field--filled]="isCityFilled()"
+      [class.field--disabled]="isCityDisabled()"
+    >
+      <select
+        class="field__control"
+        formControlName="cityId"
+        [disabled]="isCityDisabled()"
+        aria-label="City"
+      >
+        <option [ngValue]="null" disabled hidden>
+          {{ currentLang() === 'ar' ? 'اختر المدينة' : 'Choose city' }}
+        </option>
+
+        @for (city of availableCities(); track city.id) {
+          <option [ngValue]="city.id">
+            {{ currentLang() === 'ar' ? city.nameAr : city.nameEn }}
+          </option>
+        }
+      </select>
+
+      <label class="field__label">
+        {{ currentLang() === 'ar' ? 'المدينة' : 'City' }}
+      </label>
+      <span class="field__chevron" aria-hidden="true"></span>
+    </div>
+  </form>
+</section>

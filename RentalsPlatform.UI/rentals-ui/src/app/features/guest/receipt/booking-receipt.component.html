@@ -1,0 +1,94 @@
+<section class="receipt-view" role="region" [attr.aria-label]="t('إيصال الحجز', 'Booking Receipt')">
+  <div class="receipt-actions no-print">
+    <button type="button" class="receipt-actions__button receipt-actions__button--primary" [disabled]="isDownloading()" (click)="downloadPdf()">
+      @if (isDownloading()) {
+        <span class="receipt-actions__spinner" aria-hidden="true"></span>
+        {{ t('جارٍ إنشاء PDF...', 'Generating PDF...') }}
+      } @else {
+        {{ t('تنزيل PDF', 'Download PDF') }}
+      }
+    </button>
+
+    <button type="button" class="receipt-actions__button receipt-actions__button--secondary" (click)="printReceipt()">
+      {{ t('طباعة', 'Print') }}
+    </button>
+  </div>
+
+  <div id="receipt-document" class="receipt-paper">
+    <header class="receipt-paper__header">
+      <div>
+        <p class="receipt-paper__brand">LuxeStay</p>
+        <h1>{{ t('إيصال الحجز', 'Booking Receipt') }}</h1>
+      </div>
+
+      <div class="receipt-paper__status">
+        <span class="receipt-paper__paid-badge">{{ t('مدفوع', 'PAID') }}</span>
+        <p>{{ bookingDetails().receiptNumber }}</p>
+      </div>
+    </header>
+
+    <div class="receipt-paper__watermark" aria-hidden="true">PAID</div>
+
+    <section class="receipt-paper__meta-grid">
+      <div class="receipt-paper__meta-card">
+        <span>{{ t('اسم العقار', 'Property') }}</span>
+        <strong>{{ bookingDetails().propertyName }}</strong>
+      </div>
+      <div class="receipt-paper__meta-card">
+        <span>{{ t('المضيف', 'Host') }}</span>
+        <strong>{{ bookingDetails().hostName }}</strong>
+      </div>
+      <div class="receipt-paper__meta-card">
+        <span>{{ t('الضيف', 'Guest') }}</span>
+        <strong>{{ bookingDetails().guestName }}</strong>
+      </div>
+      <div class="receipt-paper__meta-card">
+        <span>{{ t('تاريخ الحجز', 'Booking Date') }}</span>
+        <strong>{{ formatDate(bookingDetails().bookingDate) }}</strong>
+      </div>
+      <div class="receipt-paper__meta-card">
+        <span>{{ t('الوصول', 'Check-in') }}</span>
+        <strong>{{ formatDate(bookingDetails().checkInDate) }}</strong>
+      </div>
+      <div class="receipt-paper__meta-card">
+        <span>{{ t('المغادرة', 'Check-out') }}</span>
+        <strong>{{ formatDate(bookingDetails().checkOutDate) }}</strong>
+      </div>
+      <div class="receipt-paper__meta-card">
+        <span>{{ t('مرجع Paymob', 'Paymob Transaction ID') }}</span>
+        <strong>{{ bookingDetails().paymobTransactionId }}</strong>
+      </div>
+      <div class="receipt-paper__meta-card">
+        <span>{{ t('المدة', 'Duration') }}</span>
+        <strong>{{ nightsLabel() }}</strong>
+      </div>
+    </section>
+
+    <section class="receipt-paper__breakdown">
+      <div class="receipt-paper__breakdown-header">
+        <h2>{{ t('تفاصيل الدفع', 'Payment Breakdown') }}</h2>
+        <div class="receipt-paper__qr-placeholder" aria-label="QR Code placeholder">
+          <span>QR</span>
+        </div>
+      </div>
+
+      <div class="receipt-paper__lines">
+        @for (line of bookingDetails().breakdown; track line.label) {
+          <div class="receipt-paper__line">
+            <span>{{ line.label }}</span>
+            <span>{{ formatCurrency(line.amount, bookingDetails().currency) }}</span>
+          </div>
+        }
+
+        <div class="receipt-paper__line receipt-paper__line--total">
+          <strong>{{ t('الإجمالي', 'Total') }}</strong>
+          <strong>{{ formattedTotal() }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <footer class="receipt-paper__footer">
+      <p>{{ t('شكراً لاختيارك LuxeStay. تم تأكيد الحجز والمدفوعات بنجاح.', 'Thank you for choosing LuxeStay. Your booking and payment have been successfully confirmed.') }}</p>
+    </footer>
+  </div>
+</section>

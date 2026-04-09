@@ -1,0 +1,77 @@
+<section class="analytics-dashboard" [attr.aria-label]="t('لوحة التحليلات', 'Analytics Dashboard')">
+  @if (analyticsStore.error(); as error) {
+    <div class="analytics-dashboard__error" role="alert">
+      {{ error }}
+    </div>
+  }
+
+  <!-- KPI Cards -->
+  <div class="analytics-dashboard__kpis">
+    @for (card of kpiCards(); track card.id) {
+      <article class="kpi-card" [attr.data-id]="card.id">
+        <div class="kpi-card__header">
+          <h3 class="kpi-card__label">{{ card.label }}</h3>
+          @if (card.positive) {
+            <span class="kpi-card__trend kpi-card__trend--positive" aria-label="Trending up">
+              {{ card.trend }}
+            </span>
+          }
+        </div>
+
+        <p class="kpi-card__value">{{ card.value }}</p>
+      </article>
+    }
+  </div>
+
+  <!-- Charts Grid -->
+  @if (analyticsStore.isLoading()) {
+    <div class="analytics-dashboard__loading" aria-busy="true" aria-label="Loading analytics">
+      <div class="spinner"></div>
+    </div>
+  } @else {
+    <div class="analytics-dashboard__charts">
+      <!-- Revenue Chart -->
+      <article class="analytics-card analytics-card--revenue">
+        <header class="analytics-card__header">
+          <h2 class="analytics-card__title">{{ t('الإيرادات', 'Revenue') }}</h2>
+          <p class="analytics-card__subtitle">{{ t('تطور الإيرادات على مدار السنة', 'Revenue trend over the year') }}</p>
+        </header>
+
+        <div class="analytics-card__chart">
+          <apx-chart
+            [series]="revenueChartSeries()"
+            [chart]="$any(revenueChartOptions().chart)"
+            [colors]="$any(revenueChartOptions().colors)"
+            [stroke]="$any(revenueChartOptions().stroke)"
+            [fill]="$any(revenueChartOptions().fill)"
+            [xaxis]="$any(revenueChartOptions().xaxis)"
+            [yaxis]="$any(revenueChartOptions().yaxis)"
+            [grid]="$any(revenueChartOptions().grid)"
+            [tooltip]="$any(revenueChartOptions().tooltip)"
+            [dataLabels]="$any(revenueChartOptions().dataLabels)"
+            [markers]="$any(revenueChartOptions().markers)"
+          />
+        </div>
+      </article>
+
+      <!-- Occupancy Chart -->
+      <article class="analytics-card analytics-card--occupancy">
+        <header class="analytics-card__header">
+          <h2 class="analytics-card__title">{{ t('معدل الإشغال', 'Occupancy Rate') }}</h2>
+          <p class="analytics-card__subtitle">{{ t('نسبة الوحدات المشغولة', 'Units occupied percentage') }}</p>
+        </header>
+
+        <div class="analytics-card__chart analytics-card__chart--radial">
+          <apx-chart
+            [series]="occupancyChartSeries()"
+            [chart]="$any(occupancyChartOptions().chart)"
+            [colors]="$any(occupancyChartOptions().colors)"
+            [plotOptions]="$any(occupancyChartOptions().plotOptions)"
+            [labels]="$any(occupancyChartOptions().labels)"
+            [tooltip]="$any(occupancyChartOptions().tooltip)"
+          />
+        </div>
+      </article>
+    </div>
+  }
+</section>

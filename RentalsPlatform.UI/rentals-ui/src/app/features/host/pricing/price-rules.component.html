@@ -1,0 +1,99 @@
+<section class="price-rules" role="region" [attr.aria-label]="t('إدارة التسعير الموسمي', 'Seasonal Pricing Manager')">
+  <header class="price-rules__header">
+    <div>
+      <p class="price-rules__eyebrow">Revenue Control</p>
+      <h1 class="price-rules__title">{{ t('إدارة التسعير الموسمي', 'Seasonal Pricing Manager') }}</h1>
+      <p class="price-rules__subtitle">
+        {{ t('أنشئ فترات سعرية دقيقة لزيادة العائد خلال المواسم والعطلات.', 'Create precise pricing windows to maximize yield during peak seasons and special dates.') }}
+      </p>
+    </div>
+  </header>
+
+  @if (error(); as err) {
+    <div class="price-rules__error" role="alert">{{ err }}</div>
+  }
+
+  <div class="price-rules__layout">
+    <section class="price-rules__panel price-rules__panel--list">
+      <div class="price-rules__panel-head">
+        <h2>{{ t('القواعد النشطة', 'Active Rules') }}</h2>
+        <span class="price-rules__count">{{ rules().length }}</span>
+      </div>
+
+      @if (isLoading()) {
+        <div class="price-rules__state">{{ t('جارٍ تحميل القواعد...', 'Loading pricing rules...') }}</div>
+      } @else if (!hasRules()) {
+        <div class="price-rules__state">
+          {{ t('لا توجد قواعد حالياً. أضف أول فترة سعرية مخصصة.', 'No rules yet. Add your first custom pricing window.') }}
+        </div>
+      } @else {
+        <div class="price-rules__list">
+          @for (rule of rules(); track trackRule($index, rule)) {
+            <article class="rule-card" [class.rule-card--pending]="isPending(rule.id)">
+              <div class="rule-card__content">
+                <p class="rule-card__label">{{ t('الفترة', 'Date Range') }}</p>
+                <h3 class="rule-card__range">{{ formatDateRange(rule.startDate, rule.endDate) }}</h3>
+                <p class="rule-card__price">{{ formatCurrency(rule.customPrice) }}</p>
+              </div>
+
+              <button
+                type="button"
+                class="rule-card__delete"
+                [disabled]="isPending(rule.id)"
+                [attr.aria-label]="t('حذف القاعدة', 'Delete rule')"
+                (click)="remove(rule.id)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                </svg>
+              </button>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="price-rules__panel price-rules__panel--form">
+      <div class="price-rules__panel-head">
+        <h2>{{ t('إضافة قاعدة جديدة', 'Add New Rule') }}</h2>
+      </div>
+
+      <form class="rule-form" [formGroup]="form" (ngSubmit)="submit()">
+        <label class="rule-form__field">
+          <span>{{ t('تاريخ البداية', 'Start Date') }}</span>
+          <input type="date" formControlName="startDate" [min]="today" />
+        </label>
+        @if (showFieldError('startDate')) {
+          <p class="rule-form__error">{{ t('تاريخ البداية مطلوب', 'Start date is required') }}</p>
+        }
+
+        <label class="rule-form__field">
+          <span>{{ t('تاريخ النهاية', 'End Date') }}</span>
+          <input type="date" formControlName="endDate" [min]="today" />
+        </label>
+        @if (showFieldError('endDate')) {
+          <p class="rule-form__error">{{ t('تاريخ النهاية مطلوب', 'End date is required') }}</p>
+        }
+        @if (showDateRangeError()) {
+          <p class="rule-form__error">{{ t('يجب أن يكون تاريخ النهاية بعد تاريخ البداية', 'End date must be strictly after start date') }}</p>
+        }
+
+        <label class="rule-form__field">
+          <span>{{ t('السعر المخصص', 'Custom Price') }}</span>
+          <input type="number" min="1" step="1" formControlName="customPrice" />
+        </label>
+        @if (showFieldError('customPrice')) {
+          <p class="rule-form__error">{{ t('أدخل سعراً صحيحاً أكبر من صفر', 'Enter a valid price greater than zero') }}</p>
+        }
+
+        <button type="submit" class="rule-form__submit">
+          {{ t('حفظ القاعدة', 'Save Rule') }}
+        </button>
+      </form>
+    </section>
+  </div>
+</section>
