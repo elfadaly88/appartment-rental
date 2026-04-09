@@ -1,0 +1,12 @@
+E:\RentalApp\RentalsPlatform.Domain\bin\Debug\net10.0\RentalsPlatform.Domain.deps.json
+E:\RentalApp\RentalsPlatform.Domain\bin\Debug\net10.0\RentalsPlatform.Domain.dll
+E:\RentalApp\RentalsPlatform.Domain\bin\Debug\net10.0\RentalsPlatform.Domain.pdb
+E:\RentalApp\RentalsPlatform.Domain\obj\Debug\net10.0\RentalsPlatform.Domain.GeneratedMSBuildEditorConfig.editorconfig
+E:\RentalApp\RentalsPlatform.Domain\obj\Debug\net10.0\RentalsPlatform.Domain.AssemblyInfoInputs.cache
+E:\RentalApp\RentalsPlatform.Domain\obj\Debug\net10.0\RentalsPlatform.Domain.AssemblyInfo.cs
+E:\RentalApp\RentalsPlatform.Domain\obj\Debug\net10.0\RentalsPlatform.Domain.csproj.CoreCompileInputs.cache
+E:\RentalApp\RentalsPlatform.Domain\obj\Debug\net10.0\RentalsPlatform.Domain.dll
+E:\RentalApp\RentalsPlatform.Domain\obj\Debug\net10.0\refint\RentalsPlatform.Domain.dll
+E:\RentalApp\RentalsPlatform.Domain\obj\Debug\net10.0\RentalsPlatform.Domain.pdb
+E:\RentalApp\RentalsPlatform.Domain\obj\Debug\net10.0\ref\RentalsPlatform.Domain.dll
+E:\RentalApp\RentalsPlatform.Domain\obj\Debug\net10.0\RentalsPlatform.Domain.csproj.AssemblyReference.cache
