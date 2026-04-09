@@ -1,40 +1,39 @@
 {
   "format": 1,
   "restore": {
-    "E:\\RentalApp\\RentalsPlatform.Infrastructure\\RentalsPlatform.Infrastructure.csproj": {}
+    "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Infrastructure\\RentalsPlatform.Infrastructure.csproj": {}
   },
   "projects": {
-    "E:\\RentalApp\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj": {
+    "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\RentalApp\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj",
+        "projectUniqueName": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj",
         "projectName": "RentalsPlatform.Application",
-        "projectPath": "E:\\RentalApp\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj",
-        "packagesPath": "C:\\Users\\mostafa.sayed\\.nuget\\packages\\",
-        "outputPath": "E:\\RentalApp\\RentalsPlatform.Application\\obj\\",
+        "projectPath": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj",
+        "packagesPath": "C:\\Users\\ElFadaly\\.nuget\\packages\\",
+        "outputPath": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\mostafa.sayed\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\ElFadaly\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net10.0"
+          "net9.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net10.0": {
-            "targetAlias": "net10.0",
+          "net9.0": {
+            "targetAlias": "net9.0",
             "projectReferences": {
-              "E:\\RentalApp\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj": {
-                "projectPath": "E:\\RentalApp\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj"
+              "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj": {
+                "projectPath": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj"
               }
             }
           }
@@ -47,13 +46,13 @@
         "restoreAuditProperties": {
           "enableAudit": "true",
           "auditLevel": "low",
-          "auditMode": "all"
+          "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net10.0": {
-          "targetAlias": "net10.0",
+        "net9.0": {
+          "targetAlias": "net9.0",
           "dependencies": {
             "FluentValidation": {
               "target": "Package",
@@ -84,38 +83,37 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "E:\\RentalApp\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj": {
+    "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\RentalApp\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj",
+        "projectUniqueName": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj",
         "projectName": "RentalsPlatform.Domain",
-        "projectPath": "E:\\RentalApp\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj",
-        "packagesPath": "C:\\Users\\mostafa.sayed\\.nuget\\packages\\",
-        "outputPath": "E:\\RentalApp\\RentalsPlatform.Domain\\obj\\",
+        "projectPath": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Domain\\RentalsPlatform.Domain.csproj",
+        "packagesPath": "C:\\Users\\ElFadaly\\.nuget\\packages\\",
+        "outputPath": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\mostafa.sayed\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\ElFadaly\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net10.0"
+          "net9.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net10.0": {
-            "targetAlias": "net10.0",
+          "net9.0": {
+            "targetAlias": "net9.0",
             "projectReferences": {}
           }
         },
@@ -127,13 +125,13 @@
         "restoreAuditProperties": {
           "enableAudit": "true",
           "auditLevel": "low",
-          "auditMode": "all"
+          "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net10.0": {
-          "targetAlias": "net10.0",
+        "net9.0": {
+          "targetAlias": "net9.0",
           "dependencies": {
             "Microsoft.Extensions.Identity.Stores": {
               "target": "Package",
@@ -156,41 +154,40 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "E:\\RentalApp\\RentalsPlatform.Infrastructure\\RentalsPlatform.Infrastructure.csproj": {
+    "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Infrastructure\\RentalsPlatform.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\RentalApp\\RentalsPlatform.Infrastructure\\RentalsPlatform.Infrastructure.csproj",
+        "projectUniqueName": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Infrastructure\\RentalsPlatform.Infrastructure.csproj",
         "projectName": "RentalsPlatform.Infrastructure",
-        "projectPath": "E:\\RentalApp\\RentalsPlatform.Infrastructure\\RentalsPlatform.Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\mostafa.sayed\\.nuget\\packages\\",
-        "outputPath": "E:\\RentalApp\\RentalsPlatform.Infrastructure\\obj\\",
+        "projectPath": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Infrastructure\\RentalsPlatform.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\ElFadaly\\.nuget\\packages\\",
+        "outputPath": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\mostafa.sayed\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\ElFadaly\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net10.0"
+          "net9.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net10.0": {
-            "targetAlias": "net10.0",
+          "net9.0": {
+            "targetAlias": "net9.0",
             "projectReferences": {
-              "E:\\RentalApp\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj": {
-                "projectPath": "E:\\RentalApp\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj"
+              "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj": {
+                "projectPath": "F:\\PrivateWork\\Rentals\\appartment-rental\\RentalsPlatform.Application\\RentalsPlatform.Application.csproj"
               }
             }
           }
@@ -203,13 +200,13 @@
         "restoreAuditProperties": {
           "enableAudit": "true",
           "auditLevel": "low",
-          "auditMode": "all"
+          "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net10.0": {
-          "targetAlias": "net10.0",
+        "net9.0": {
+          "targetAlias": "net9.0",
           "dependencies": {
             "ClosedXML": {
               "target": "Package",
@@ -229,7 +226,7 @@
             },
             "Microsoft.AspNetCore.Authorization": {
               "target": "Package",
-              "version": "[10.0.5, )"
+              "version": "[9.0.5, )"
             },
             "Microsoft.AspNetCore.Http.Abstractions": {
               "target": "Package",
@@ -237,7 +234,7 @@
             },
             "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[10.0.5, )"
+              "version": "[9.0.5, )"
             },
             "Microsoft.AspNetCore.SignalR.Core": {
               "target": "Package",
@@ -245,7 +242,7 @@
             },
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
-              "version": "[10.0.1, )"
+              "version": "[9.0.1, )"
             },
             "QuestPDF": {
               "target": "Package",
@@ -280,7 +277,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -1,0 +1,13 @@
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\bin\Debug\net9.0\RentalsPlatform.Domain.deps.json
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\bin\Debug\net9.0\RentalsPlatform.Domain.dll
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\bin\Debug\net9.0\RentalsPlatform.Domain.pdb
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\RentalsPlatform.Domain.csproj.AssemblyReference.cache
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\RentalsPlatform.Domain.GeneratedMSBuildEditorConfig.editorconfig
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\RentalsPlatform.Domain.AssemblyInfoInputs.cache
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\RentalsPlatform.Domain.AssemblyInfo.cs
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\RentalsPlatform.Domain.csproj.CoreCompileInputs.cache
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\RentalsPlatform.Domain.sourcelink.json
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\RentalsPlatform.Domain.dll
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\refint\RentalsPlatform.Domain.dll
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\RentalsPlatform.Domain.pdb
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Domain\obj\Debug\net9.0\ref\RentalsPlatform.Domain.dll

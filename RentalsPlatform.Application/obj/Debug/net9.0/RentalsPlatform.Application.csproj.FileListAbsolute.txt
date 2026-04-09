@@ -1,0 +1,16 @@
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\bin\Debug\net9.0\RentalsPlatform.Application.deps.json
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\bin\Debug\net9.0\RentalsPlatform.Application.dll
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\bin\Debug\net9.0\RentalsPlatform.Application.pdb
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\bin\Debug\net9.0\RentalsPlatform.Domain.dll
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\bin\Debug\net9.0\RentalsPlatform.Domain.pdb
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\RentalsPlatform.Application.csproj.AssemblyReference.cache
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\RentalsPlatform.Application.GeneratedMSBuildEditorConfig.editorconfig
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\RentalsPlatform.Application.AssemblyInfoInputs.cache
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\RentalsPlatform.Application.AssemblyInfo.cs
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\RentalsPlatform.Application.csproj.CoreCompileInputs.cache
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\RentalsPlatform.Application.sourcelink.json
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\RentalsP.4BFFEE7A.Up2Date
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\RentalsPlatform.Application.dll
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\refint\RentalsPlatform.Application.dll
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\RentalsPlatform.Application.pdb
+F:\PrivateWork\Rentals\appartment-rental\RentalsPlatform.Application\obj\Debug\net9.0\ref\RentalsPlatform.Application.dll

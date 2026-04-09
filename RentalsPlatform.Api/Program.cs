@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Hangfire;
@@ -174,7 +175,32 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
     Authorization = new[] { new HangfireAdminAuthorizationFilter() }
 });
 
-app.MapControllers();
+try
+{
+    app.MapControllers();
+}
+catch (ReflectionTypeLoadException ex)
+{
+    var sb = new StringBuilder();
+    foreach (Exception? loaderEx in ex.LoaderExceptions)
+    {
+        sb.AppendLine(loaderEx?.Message);
+        if (loaderEx is FileNotFoundException fileNotFound)
+        {
+            if (!string.IsNullOrEmpty(fileNotFound.FusionLog))
+            {
+                sb.AppendLine("Fusion Log:");
+                sb.AppendLine(fileNotFound.FusionLog);
+            }
+        }
+    }
+    
+    var errorMessage = sb.ToString();
+    Console.WriteLine("ReflectionTypeLoadException details:");
+    Console.WriteLine(errorMessage);
+    throw new Exception($"Failed to load controllers. Details: {errorMessage}", ex);
+}
+
 app.MapHub<NotificationHub>("/hubs/notifications");
 
 using (var scope = app.Services.CreateScope())
