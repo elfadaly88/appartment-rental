@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -112,6 +112,7 @@ builder.Services.AddSingleton<WebPushClient>();
 builder.Services.AddTransient<IPayoutService, PayoutService>();
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 builder.Services.AddScoped<IImageService, CloudinaryImageService>();
+builder.Services.AddScoped<ICloudStorageService, CloudStorageService>();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ILookupService, LookupService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
@@ -194,7 +195,7 @@ catch (ReflectionTypeLoadException ex)
             }
         }
     }
-    
+
     var errorMessage = sb.ToString();
     Console.WriteLine("ReflectionTypeLoadException details:");
     Console.WriteLine(errorMessage);
@@ -213,12 +214,17 @@ using (var scope = app.Services.CreateScope())
             "daily-payouts",
             service => service.ProcessDailyPayoutsAsync(),
             Cron.Daily);
+        // Expire approved bookings whose 24-hour payment window has lapsed
+        recurringJobManager.AddOrUpdate<IBookingService>(
+            "expire-approved-bookings",
+            service => service.ExpireApprovedBookingsAsync(),
+            "*/15 * * * *"); // every 15 minutes
         var dbContext = services.GetRequiredService<ApplicationDbContext>();
 
         // 1. هذا السطر ينشئ قاعدة البيانات إذا لم تكن موجودة، ويطبق أي Migrations جديدة
         await dbContext.Database.MigrateAsync();
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         await DatabaseSeeder.SeedAsync(roleManager, userManager);
     }
     catch (Exception ex)

@@ -40,6 +40,17 @@ export class AuthPageComponent {
 
   constructor() {
     effect(() => {
+      if (this.authService.isAuthenticated()) {
+        if (this.authService.isAdmin()) {
+          this.router.navigateByUrl('/admin/dashboard').catch(() => {});
+        } else if (this.authService.isHost()) {
+          this.router.navigateByUrl('/host/dashboard').catch(() => {});
+        } else {
+          this.router.navigateByUrl('/properties').catch(() => {});
+        }
+        return;
+      }
+
       const hostTermsControl = this.registerForm.controls.acceptedHostTerms;
       if (this.registerRole() === 'host') {
         hostTermsControl.addValidators(Validators.requiredTrue);

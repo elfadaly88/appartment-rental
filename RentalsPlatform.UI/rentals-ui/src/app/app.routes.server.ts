@@ -18,15 +18,15 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
-    path: 'host/dashboard',
+    path: 'host/**',
     renderMode: RenderMode.Client,
   },
   {
-    path: 'host/properties/new',
+    path: 'admin',
     renderMode: RenderMode.Client,
   },
   {
-    path: 'host/block-dates',
+    path: 'admin/**',
     renderMode: RenderMode.Client,
   },
   {

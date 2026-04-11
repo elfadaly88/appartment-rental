@@ -62,4 +62,11 @@ export class AnalyticsStore {
       this._isLoading.set(false);
     }
   }
+
+  reset(): void {
+    this._dashboardStats.set(null);
+    this._error.set(null);
+    this._isLoading.set(false);
+    this._selectedYear.set(new Date().getFullYear());
+  }
 }

@@ -10,7 +10,7 @@ export class PropertyService {
   private readonly baseUrl = `${environment.apiUrl}/properties`;
 
   getAll(): Observable<Property[]> {
-    return this.http.get<Property[]>(this.baseUrl);
+    return this.http.get<Property[]>(`${this.baseUrl}/search`);
   }
 
   getById(id: string): Observable<Property> {

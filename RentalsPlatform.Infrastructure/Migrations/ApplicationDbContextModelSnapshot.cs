@@ -17,7 +17,7 @@ namespace RentalsPlatform.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasAnnotation("ProductVersion", "9.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -162,6 +162,9 @@ namespace RentalsPlatform.Infrastructure.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("BanReason")
                         .HasColumnType("text");
 
@@ -170,12 +173,19 @@ namespace RentalsPlatform.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Bio")
+                        .HasColumnType("text");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -191,6 +201,9 @@ namespace RentalsPlatform.Infrastructure.Migrations
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime>("JoinedDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -253,6 +266,9 @@ namespace RentalsPlatform.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("timestamp with time zone");
@@ -778,7 +794,7 @@ namespace RentalsPlatform.Infrastructure.Migrations
 
             modelBuilder.Entity("RentalsPlatform.Domain.Entities.Booking", b =>
                 {
-                    b.HasOne("RentalsPlatform.Domain.Entities.Property", null)
+                    b.HasOne("RentalsPlatform.Domain.Entities.Property", "Property")
                         .WithMany("Bookings")
                         .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -806,6 +822,8 @@ namespace RentalsPlatform.Infrastructure.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("BookingId");
                         });
+
+                    b.Navigation("Property");
 
                     b.Navigation("TotalPrice")
                         .IsRequired();

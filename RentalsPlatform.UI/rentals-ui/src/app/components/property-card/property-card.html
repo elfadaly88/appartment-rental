@@ -1,5 +1,5 @@
-<article class="card">
-  <div class="card__media">
+<article class="card cursor-pointer group hover:ring-2 hover:ring-teal-500 transition-all duration-300" (click)="clicked.emit(property().id)" tabindex="0" (keyup.enter)="clicked.emit(property().id)">
+  <div class="card__media overflow-hidden relative">
     @defer (on viewport) {
       <img
         class="card__image"
@@ -32,9 +32,10 @@
 
   <div class="card__actions">
     <a
-      class="card__map-btn"
+      class="card__map-btn relative z-10"
       [href]="mapUrl()"
       target="_blank"
+      (click)="$event.stopPropagation()"
       rel="noopener noreferrer"
     >
       <svg class="card__icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

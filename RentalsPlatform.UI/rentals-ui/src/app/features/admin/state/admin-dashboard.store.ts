@@ -49,4 +49,10 @@ export class AdminDashboardStore {
       this._isLoading.set(false);
     }
   }
+
+  reset(): void {
+    this._masterStats.set(null);
+    this._error.set(null);
+    this._isLoading.set(false);
+  }
 }

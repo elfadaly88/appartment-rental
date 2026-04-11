@@ -63,6 +63,7 @@ public class AuthService : IAuthService
             FullName = user.FullName,
             Roles = roles.ToArray()
         };
+    
     }
 
     private async Task<AuthResult> RegisterAsync(RegisterDto dto, string role)

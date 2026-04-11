@@ -43,4 +43,18 @@ public class AdminController : ControllerBase
 
         return Ok(new { result.Message });
     }
+
+    [HttpGet("bookings")]
+    public async Task<IActionResult> GetAllBookings()
+    {
+        var bookings = await _adminService.GetAllBookingsAsync();
+        return Ok(bookings);
+    }
+
+    [HttpGet("financial-summary")]
+    public async Task<IActionResult> GetFinancialSummary()
+    {
+        var summary = await _adminService.GetFinancialSummaryAsync();
+        return Ok(summary);
+    }
 }

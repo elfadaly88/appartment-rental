@@ -79,4 +79,8 @@ export class NotificationStore {
       isRead: payload.isRead ?? false,
     };
   }
+
+  reset(): void {
+    this._notifications.set([]);
+  }
 }

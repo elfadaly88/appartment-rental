@@ -1,4 +1,4 @@
-﻿using RentalsPlatform.Domain.Enums;
+using RentalsPlatform.Domain.Enums;
 using RentalsPlatform.Domain.ValueObjects;
 
 namespace RentalsPlatform.Domain.Entities;
@@ -17,6 +17,11 @@ public class Booking
     public string? Reason { get; private set; }
     public DateTime CreatedOnUtc { get; private set; }
     public Review? Review { get; private set; }
+
+    /// <summary>Timestamp when the host approved. Used for the 24-hour payment window.</summary>
+    public DateTime? ApprovedAt { get; private set; }
+
+    public Property Property { get; private set; } = null!;
 
     private Booking() { }
 
@@ -64,6 +69,14 @@ public class Booking
         PaymobOrderId = paymobOrderId.Trim();
     }
 
+    public void SetTotalPrice(decimal amount, string currency)
+    {
+        if (amount < 0)
+            throw new ArgumentOutOfRangeException(nameof(amount), "Total amount cannot be negative.");
+
+        TotalPrice = new Money(amount, currency);
+    }
+
     public void MarkPaymentPaid()
     {
         PaymentStatus = PaymentStatus.Paid;
@@ -74,16 +87,46 @@ public class Booking
         PaymentStatus = PaymentStatus.Failed;
     }
 
-    public void Confirm()
+    /// <summary>Host approves → soft-blocks dates & opens 24 h payment window.</summary>
+    public void Approve()
     {
         if (Status != BookingStatus.Pending)
-            throw new InvalidOperationException("Only pending bookings can be confirmed");
+            throw new InvalidOperationException("Only pending bookings can be approved.");
+
+        Status = BookingStatus.Approved;
+        ApprovedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>Guest completes payment → booking fully Confirmed.</summary>
+    public void Confirm()
+    {
+        if (Status != BookingStatus.Approved && Status != BookingStatus.Pending)
+            throw new InvalidOperationException("Only approved or pending bookings can be confirmed.");
 
         Status = BookingStatus.Confirmed;
     }
 
+    /// <summary>Host rejects or otherwise cancels the booking.</summary>
     public void Cancel()
     {
         Status = BookingStatus.Cancelled;
+    }
+
+    /// <summary>Guest cancels a Pending or Approved booking.</summary>
+    public void GuestCancel()
+    {
+        if (Status != BookingStatus.Pending && Status != BookingStatus.Approved)
+            throw new InvalidOperationException("Only pending or approved bookings can be cancelled by the guest.");
+
+        Status = BookingStatus.Cancelled;
+    }
+
+    /// <summary>System expires an Approved booking when 24 h pass without payment.</summary>
+    public void Expire()
+    {
+        if (Status != BookingStatus.Approved)
+            throw new InvalidOperationException("Only approved bookings can be expired.");
+
+        Status = BookingStatus.Expired;
     }
 }

@@ -46,7 +46,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasMany(p => p.Bookings)
-                .WithOne()
+                .WithOne(b => b.Property)
                 .HasForeignKey(b => b.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -129,6 +129,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(b => b.Reason).HasMaxLength(500);
             entity.Property(b => b.PaymobOrderId).HasMaxLength(100);
             entity.Property(b => b.PaymentStatus).IsRequired();
+
+            entity.HasOne(b => b.Property)
+                .WithMany(p => p.Bookings)
+                .HasForeignKey(b => b.PropertyId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.OwnsOne(b => b.TotalPrice, price =>
             {

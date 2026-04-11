@@ -2,13 +2,18 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { StateCleanupService } from '../services/state-cleanup.service';
 
 export interface User {
   id: string;
   email: string;
   role: string;
   fullName?: string;
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
 }
 
 export interface LoginCredentials {
@@ -40,10 +45,14 @@ interface AuthResponse {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly stateCleanup = inject(StateCleanupService);
+  private readonly router = inject(Router);
   private readonly authApiUrl = `${environment.apiUrl}/auth`;
 
   readonly currentUser = signal<User | null>(null);
   readonly isAuthenticated = computed(() => !!this.currentUser());
+  readonly isAdmin = computed(() => this.normalizeRole(this.currentUser()?.role) === 'admin');
+  readonly isHost = computed(() => this.normalizeRole(this.currentUser()?.role) === 'host');
 
   constructor() {
     this.restoreSessionFromStorage();
@@ -51,10 +60,10 @@ export class AuthService {
 
   async login(credentials: LoginCredentials): Promise<User> {
     const response = await firstValueFrom(
-    this.http.post<AuthResponse>(`${this.authApiUrl}/login`, credentials),
-  );
-  // نمرر الـ token فقط للفك والتخزين
-  return this.persistAndDecodeToken(response.token);
+      this.http.post<AuthResponse>(`${this.authApiUrl}/login`, credentials),
+    );
+
+    return this.persistAndDecodeToken(response.token);
   }
 
   async registerGuest(data: RegisterGuestPayload): Promise<User> {
@@ -76,8 +85,16 @@ export class AuthService {
   logout(): void {
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('jwtToken');
+      this.clearAllStorage();
     }
+
     this.currentUser.set(null);
+    this.stateCleanup.resetAllStores();
+
+    // Redirect to login safely after logout
+    if (isPlatformBrowser(this.platformId)) {
+      void this.router.navigate(['/auth']);
+    }
   }
 
   getToken(): string | null {
@@ -112,7 +129,7 @@ export class AuthService {
     return user;
   }
 
- private decodeUserFromToken(token: string): User {
+  private decodeUserFromToken(token: string): User {
     const payload = this.decodeJwtPayload(token);
 
     const exp = payload['exp'];
@@ -120,38 +137,47 @@ export class AuthService {
       throw new Error('Token expired');
     }
 
-    const id = this.readClaim(payload, [
-      'sub',
-      'nameid',
-      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
-    ]) ?? '';
+    const id =
+      this.readClaim(payload, [
+        'sub',
+        'nameid',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier',
+      ]) ?? '';
 
-    const email = this.readClaim(payload, [
-      'email',
-      'unique_name',
-      'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
-    ]) ?? '';
+    const email =
+      this.readClaim(payload, [
+        'email',
+        'unique_name',
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+      ]) ?? '';
 
-    const role = this.readClaim(payload, [
-      'role',
-      'roles',
-      'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
-    ]) ?? 'guest';
+    const role =
+      this.readClaim(payload, [
+        'role',
+        'roles',
+        'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+      ]) ?? 'guest';
 
-    // ✅ سطر واحد فقط لتعريف fullName يقرأ من كل المصادر الممكنة
-    const fullName = this.readClaim(payload, [
-      'FullName',      // الكليم اللي إنت ضفته في C#
-      'unique_name',   // كليم إضافي احتياطي
-      'name', 
-      'given_name'
-    ]) ?? undefined;
+    const fullName =
+      this.readClaim(payload, ['FullName', 'unique_name', 'name', 'given_name']) ?? undefined;
 
-    return {
-      id,
-      email,
-      role,
-      fullName, // استخدام المتغير اللي عرفناه فوق
-    };
+    const displayName = this.readClaim(payload, ['DisplayName']) ?? undefined;
+    const avatarUrl = this.readClaim(payload, ['AvatarUrl', 'ProfilePictureUrl']) ?? undefined;
+    const bio = this.readClaim(payload, ['Bio']) ?? undefined;
+
+    return { id, email, role, fullName, displayName, avatarUrl, bio };
+  }
+
+  updateProfileData(data: { displayName?: string; bio?: string; avatarUrl?: string }): void {
+    this.currentUser.update(user => {
+      if (!user) return user;
+      return {
+        ...user,
+        displayName: data.displayName ?? user.displayName,
+        bio: data.bio ?? user.bio,
+        avatarUrl: data.avatarUrl ?? user.avatarUrl
+      };
+    });
   }
 
   private readClaim(payload: Record<string, unknown>, keys: string[]): string | null {
@@ -184,5 +210,23 @@ export class AuthService {
     const json = atob(padded);
 
     return JSON.parse(json) as Record<string, unknown>;
+  }
+
+  private normalizeRole(role: string | undefined): string {
+    return (role ?? '').trim().toLowerCase();
+  }
+
+  private clearAllStorage(): void {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && !key.startsWith('ngx-translate')) {
+        keysToRemove.push(key);
+      }
+    }
+
+    for (const key of keysToRemove) {
+      localStorage.removeItem(key);
+    }
   }
 }

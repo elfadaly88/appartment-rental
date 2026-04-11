@@ -98,5 +98,19 @@ export class SearchStore {
     params = params.set('guests', String(criteria.guests));
 
     return params;
+    }
+
+    reset(): void {
+      this._searchCriteria.set({
+        city: '',
+        checkIn: '',
+        checkOut: '',
+        minPrice: 0,
+        maxPrice: 15000,
+        guests: 1,
+      });
+      this._results.set([]);
+      this._isLoading.set(false);
+      this._viewMode.set('list');
   }
 }

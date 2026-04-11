@@ -1,103 +1,81 @@
-:host {
+@use 'sass:color';
+
+// ── Design Tokens ──────────────────────────────────────────────────
+$teal:      #0f766e;
+$teal-lt:   #ccfbf1;
+$slate-900: #0f172a;
+$slate-600: #475569;
+$slate-200: #e2e8f0;
+$white:     #ffffff;
+$radius-xl: 1.5rem; // 24px
+
+// ─── Shared Surface Card ──────────────────────────────────────────
+.card-surface {
+  background: $white;
+  border-radius: $radius-xl;
+  border: 1px solid $slate-200;
+}
+
+// ─── Amenity Pills ────────────────────────────────────────────────
+.amenity-pill {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            0.4rem;
+  padding:        0.35rem 0.85rem;
+  background:     #f0fdf4;
+  color:          $teal;
+  border:         1px solid #bbf7d0;
+  border-radius:  9999px;
+  font-size:      0.75rem;
+  font-weight:    600;
+  white-space:    nowrap;
+}
+
+// ── Gallery ────────────────────────────────────────────────────────
+.gallery-wrapper img {
   display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
 }
 
-.detail {
-  max-inline-size: 72rem;
-  margin-inline: auto;
-  padding-block: 2rem;
-  padding-inline: max(1rem, env(safe-area-inset-left, 0px));
-  display: grid;
-  gap: 1.5rem;
+// ── Scrollbar hide ─────────────────────────────────────────────────
+.hide-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
 
-.detail__header {
-  display: grid;
-  gap: 0.5rem;
-}
+// ── Date Inputs ────────────────────────────────────────────────────
+input[type="date"] {
+  color-scheme: light;
+  cursor: pointer;
 
-.detail__back {
-  inline-size: fit-content;
-  min-block-size: 48px;
-  display: inline-flex;
-  align-items: center;
-  color: var(--accent, #0f766e);
-  text-decoration: none;
-}
-
-.detail__title {
-  margin: 0;
-  color: var(--text-primary, #1a1a2e);
-}
-
-.detail__address {
-  margin: 0;
-  color: var(--text-secondary, #6b7280);
-}
-
-.detail__booking {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 1rem;
-  backdrop-filter: blur(14px) saturate(1.6);
-  -webkit-backdrop-filter: blur(14px) saturate(1.6);
-  padding-block: 1rem;
-  padding-inline: 1rem;
-}
-
-.detail__price {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-block-end: 1rem;
-}
-
-.detail__form {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.detail__field {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.detail__field input {
-  min-block-size: 48px;
-  padding-inline: 0.75rem;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 0.6rem;
-}
-
-.detail__cta {
-  min-block-size: 48px;
-  border: none;
-  border-radius: 0.7rem;
-  background: var(--accent, #0f766e);
-  color: #fff;
-  font-weight: 700;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .detail__cta:hover {
-    background: var(--accent-hover, #115e59);
+  &::-webkit-calendar-picker-indicator {
+    opacity: 0.5;
+    cursor: pointer;
   }
 }
 
-.detail__cta:active {
-  transform: scale(0.97);
+// ── Skeleton shimmer ───────────────────────────────────────────────
+@keyframes shimmer {
+  0%   { background-position: -800px 0; }
+  100% { background-position: 800px 0; }
 }
 
-.detail__notifications {
-  padding-block: 1rem;
-  padding-inline: 1rem;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 0.75rem;
+.animate-pulse [class*="bg-slate"] {
+  background-image: linear-gradient(
+    90deg,
+    #e2e8f0 25%,
+    #f1f5f9 50%,
+    #e2e8f0 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
 }
 
-.detail__empty {
-  min-block-size: 60vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary, #6b7280);
+// ── Responsive ─────────────────────────────────────────────────────
+@media (max-width: 1023px) {
+  .card-surface {
+    border-radius: 1.25rem;
+  }
 }

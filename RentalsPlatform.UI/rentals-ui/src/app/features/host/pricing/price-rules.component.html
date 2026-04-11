@@ -7,6 +7,19 @@
         {{ t('أنشئ فترات سعرية دقيقة لزيادة العائد خلال المواسم والعطلات.', 'Create precise pricing windows to maximize yield during peak seasons and special dates.') }}
       </p>
     </div>
+
+    <label class="price-rules__property-select">
+      <span>{{ t('اختر العقار', 'Select Property') }}</span>
+      <select
+        [value]="selectedPropertyId() ?? ''"
+        (change)="selectProperty(($any($event.target)).value)"
+      >
+        <option value="">{{ t('اختر عقاراً', 'Choose a property') }}</option>
+        @for (property of hostProperties(); track property.id) {
+          <option [value]="property.id">{{ property.title }}</option>
+        }
+      </select>
+    </label>
   </header>
 
   @if (error(); as err) {
@@ -22,6 +35,8 @@
 
       @if (isLoading()) {
         <div class="price-rules__state">{{ t('جارٍ تحميل القواعد...', 'Loading pricing rules...') }}</div>
+      } @else if (!canManageRules()) {
+        <div class="price-rules__state">{{ t('اختر عقاراً لإدارة التسعير الموسمي.', 'Select a property to manage seasonal pricing.') }}</div>
       } @else if (!hasRules()) {
         <div class="price-rules__state">
           {{ t('لا توجد قواعد حالياً. أضف أول فترة سعرية مخصصة.', 'No rules yet. Add your first custom pricing window.') }}
@@ -62,7 +77,7 @@
         <h2>{{ t('إضافة قاعدة جديدة', 'Add New Rule') }}</h2>
       </div>
 
-      <form class="rule-form" [formGroup]="form" (ngSubmit)="submit()">
+  <form class="rule-form" [formGroup]="form" (ngSubmit)="submit()">
         <label class="rule-form__field">
           <span>{{ t('تاريخ البداية', 'Start Date') }}</span>
           <input type="date" formControlName="startDate" [min]="today" />
@@ -90,7 +105,7 @@
           <p class="rule-form__error">{{ t('أدخل سعراً صحيحاً أكبر من صفر', 'Enter a valid price greater than zero') }}</p>
         }
 
-        <button type="submit" class="rule-form__submit">
+        <button type="submit" class="rule-form__submit" [disabled]="!canManageRules()">
           {{ t('حفظ القاعدة', 'Save Rule') }}
         </button>
       </form>

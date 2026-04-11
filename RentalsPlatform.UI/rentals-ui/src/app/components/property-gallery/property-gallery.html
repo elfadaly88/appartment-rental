@@ -1,0 +1,111 @@
+<div class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 sm:p-6 backdrop-blur-sm transition-all shadow-2xl">
+  <div class="relative w-full max-w-5xl rounded-3xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    
+    <!-- Close Header -->
+    <div class="absolute top-4 end-4 z-10 flex gap-2">
+      @if (details()?.address?.mapUrl) {
+      <a 
+        [href]="details().address.mapUrl" 
+        target="_blank" 
+        class="flex h-10 items-center justify-center rounded-xl bg-white/90 backdrop-blur-sm px-4 font-semibold text-slate-800 shadow-sm hover:bg-white hover:text-teal-600 transition"
+      >
+        <svg class="w-4 h-4 me-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        {{ locale() === 'ar' ? 'الخريطة' : 'Map' }}
+      </a>
+      }
+      <button 
+        (click)="close.emit()" 
+        class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/90 backdrop-blur-sm text-slate-800 shadow-sm hover:bg-rose-50 hover:text-rose-600 transition"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <div class="flex flex-1 items-center justify-center p-24">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-teal-500 border-t-transparent"></div>
+      </div>
+    } @else if (details()) {
+      <div class="flex flex-col md:flex-row h-full overflow-hidden">
+        
+        <!-- Gallery Section -->
+        <div class="w-full md:w-3/5 bg-black flex flex-col">
+          <div class="flex-1 relative flex items-center justify-center p-4 min-h-[300px]">
+             @if (mainImage()) {
+                <img [src]="mainImage()" class="max-h-full max-w-full object-contain rounded-lg shadow-lg" alt="Main property view">
+             } @else {
+                <span class="text-slate-500">No images available</span>
+             }
+          </div>
+          
+          <!-- Thumbnails -->
+          @if (details().images?.length > 1) {
+            <div class="flex gap-2 overflow-x-auto p-4 bg-slate-900 hide-scrollbar items-center">
+              @for (img of details().images; track img) {
+                <button 
+                  (click)="setMainImage(img)"
+                  class="flex-shrink-0 relative h-20 w-24 rounded-lg overflow-hidden border-2 transition-all"
+                  [class.border-teal-400]="mainImage() === img"
+                  [class.border-transparent]="mainImage() !== img"
+                  [class.opacity-50]="mainImage() !== img"
+                  [class.hover:opacity-100]="mainImage() !== img"
+                >
+                  <img [src]="img" class="h-full w-full object-cover">
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Details Sidebar -->
+        <div class="w-full md:w-2/5 flex flex-col bg-white overflow-y-auto">
+          <div class="p-6 sm:p-8 flex-1">
+            <div class="mb-4 inline-block rounded-lg bg-teal-50 px-3 py-1 font-mono text-sm font-semibold tracking-tight text-teal-800">
+              {{ details().price.amount | currency:details().price.currency:'symbol':'1.0-0' }} / {{ locale() === 'ar' ? 'ليلة' : 'night' }}
+            </div>
+            
+            <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 leading-tight mb-2">
+              {{ locale() === 'ar' ? details().name.ar : details().name.en }}
+            </h2>
+            
+            <p class="flex items-center text-slate-500 font-medium mb-8 text-sm">
+              <svg class="h-4 w-4 me-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              {{ locale() === 'ar' ? details().address.ar : details().address.en }}, {{ details().address.country }}
+            </p>
+
+            <div class="prose prose-slate max-w-none text-slate-600 mb-8 whitespace-pre-wrap leading-relaxed text-sm">
+              {{ locale() === 'ar' ? details().description.ar : details().description.en }}
+            </div>
+
+            <!-- Features -->
+            <div class="border-t border-slate-100 pt-6">
+              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">
+                {{ locale() === 'ar' ? 'المرافق' : 'Amenities' }}
+              </h3>
+              <ul class="grid grid-cols-2 gap-y-3">
+                <li class="flex items-center text-sm text-slate-700 font-medium">
+                  <svg class="h-5 w-5 me-2 text-teal-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  {{ details().maxGuests }} {{ locale() === 'ar' ? 'ضيوف' : 'Guests max' }}
+                </li>
+                <li class="flex items-center text-sm text-slate-700 font-medium">
+                  <svg class="h-5 w-5 me-2 text-teal-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>
+                  {{ locale() === 'ar' ? 'شاملاً' : 'Inclusive Space' }}
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="p-6 bg-slate-50 border-t border-slate-100">
+             <button 
+               (click)="bookNow()"
+               class="w-full flex items-center justify-center rounded-xl bg-teal-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-teal-500/30 hover:bg-teal-500 transition-all active:scale-95"
+             >
+                {{ locale() === 'ar' ? 'البدء في الحجز' : 'Proceed to Booking' }}
+             </button>
+          </div>
+        </div>
+
+      </div>
+    }
+  </div>
+</div>

@@ -1,74 +1,69 @@
-// ---------------------------------------------------------------------------
-// Properties List — Fluid Grid Container
-// BEM: .list, .list__header, .list__heading, .list__grid, .list__empty
-// ---------------------------------------------------------------------------
-
-:host {
-  display: block;
-  contain: layout style;
-}
-
-// ── Design Tokens (scoped) ──────────────────────────────────────────────────
+:host { display: block; }
 
 .list {
-  --_max-width: var(--list-max-width, 88rem);
-  --_gap: var(--list-gap, 2rem);
-  --_heading-color: var(--text-primary, #1a1a2e);
-  --_empty-color: var(--text-secondary, #6b7280);
-  --_bg: var(--surface-bg, transparent);
-
-  max-inline-size: var(--_max-width);
+  --_gap: 1.5rem;
+  width: 100%;
+  max-width: var(--container-max, 80rem);
   margin-inline: auto;
-  padding-block-start: calc(1.5rem + env(safe-area-inset-top, 0px));
-  padding-block-end: calc(2rem + env(safe-area-inset-bottom, 0px));
-  padding-inline: max(1.25rem, env(safe-area-inset-left, 0px));
-  background: var(--_bg);
-  overscroll-behavior-y: contain;
+  padding-block: 2rem 3rem;
+  padding-inline: max(1rem, env(safe-area-inset-left, 0px));
 }
 
-// ── Header ──────────────────────────────────────────────────────────────────
+@media (min-width: 640px)  { .list { padding-inline: 1.5rem; } }
+@media (min-width: 1024px) { .list { padding-inline: 2rem; } }
 
-.list__header {
-  padding-block-end: 1.5rem;
-}
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.list__header { margin-bottom: 1.75rem; }
 
 .list__heading {
-  margin: 0;
-  font-size: clamp(1.5rem, 2vw + 1rem, 2rem);
-  font-weight: 700;
-  line-height: 1.2;
-  color: var(--_heading-color);
-  letter-spacing: -0.01em;
+  margin: 0 0 .35rem;
+  font-size: clamp(1.5rem, 2.5vw + .75rem, 2rem);
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -.03em;
 }
 
-// ── Grid ────────────────────────────────────────────────────────────────────
-
+/* ── Responsive Grid ────────────────────────────────────────────────────── */
 .list__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   gap: var(--_gap);
+  grid-template-columns: 1fr;
 }
 
-// ── Empty State ─────────────────────────────────────────────────────────────
+/* 2 columns: 480px + */
+@media (min-width: 480px) {
+  .list__grid { grid-template-columns: repeat(2, 1fr); }
+}
 
+/* 3 columns: 960px + */
+@media (min-width: 960px) {
+  .list__grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* 4 columns: 1280px + */
+@media (min-width: 1280px) {
+  .list__grid {
+    grid-template-columns: repeat(4, 1fr);
+    --_gap: 2rem;
+  }
+}
+
+/* ── Empty State ─────────────────────────────────────────────────────────── */
 .list__empty {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 1rem;
-  padding-block: 5rem;
+  padding-block: 6rem;
   text-align: center;
-}
+  color: var(--text-secondary, #64748b);
 
-.list__empty-icon {
-  color: var(--_empty-color);
-  opacity: 0.45;
+  svg { opacity: .35; }
 }
 
 .list__empty-text {
   margin: 0;
-  font-size: 1.125rem;
-  color: var(--_empty-color);
+  font-size: 1.0625rem;
+  font-weight: 500;
 }

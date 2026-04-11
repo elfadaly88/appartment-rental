@@ -158,4 +158,11 @@ export class BookingStore {
       return next;
     });
   }
+
+  reset(): void {
+    this._bookings.set([]);
+    this._error.set(null);
+    this._isLoading.set(false);
+    this._actionInFlightIds.set(new Set<string>());
+  }
 }

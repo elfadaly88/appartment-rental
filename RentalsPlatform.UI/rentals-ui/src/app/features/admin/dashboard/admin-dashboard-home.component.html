@@ -1,0 +1,29 @@
+<section class="admin-home">
+  <header class="admin-home__header">
+    <h1>{{ 'ADMIN.DASHBOARD.TITLE' | translate }}</h1>
+    <p>{{ 'ADMIN.DASHBOARD.SUBTITLE' | translate }}</p>
+  </header>
+
+  @if (isLoading()) {
+    <p>{{ 'ADMIN.COMMON.LOADING' | translate }}</p>
+  } @else if (error(); as err) {
+    <p class="admin-home__error">{{ err | translate }}</p>
+  } @else {
+    <div class="admin-home__stats">
+      <article class="stat-card">
+        <h3>{{ 'ADMIN.DASHBOARD.TOTAL_REVENUE' | translate }}</h3>
+        <p>{{ totalRevenue() | number:'1.0-2' }}</p>
+      </article>
+
+      <article class="stat-card">
+        <h3>{{ 'ADMIN.DASHBOARD.ACTIVE_USERS' | translate }}</h3>
+        <p>{{ activeUsers() }}</p>
+      </article>
+
+      <article class="stat-card">
+        <h3>{{ 'ADMIN.DASHBOARD.PENDING_APPROVALS' | translate }}</h3>
+        <p>{{ pendingApprovals() }}</p>
+      </article>
+    </div>
+  }
+</section>

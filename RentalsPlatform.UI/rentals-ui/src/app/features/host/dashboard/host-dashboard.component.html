@@ -1,11 +1,9 @@
 <section class="host-dashboard">
-  <app-push-prompt />
-
   <header class="host-dashboard__header">
     <div>
       <h1 class="host-dashboard__title">{{ t('لوحة تحكم المضيف', 'Host Dashboard') }}</h1>
       <p class="host-dashboard__subtitle">
-        {{ t('نظرة شاملة على أدائك وعقاراتك الفاخرة', 'A unified view of your performance and luxury listings') }}
+        {{ t('تابع الأداء المالي والإشغال والحجوزات من شاشة واحدة.', 'Track revenue, occupancy, and guest demand from one screen.') }}
       </p>
     </div>
 
@@ -20,18 +18,14 @@
     </div>
   </header>
 
-  @if (hostStore.error(); as error) {
+  @if (propertyService.error(); as error) {
     <div class="host-dashboard__error" role="alert">{{ error }}</div>
   }
 
-  <!-- Analytics Section -->
-  <section class="host-dashboard__analytics">
-    <app-analytics-dashboard />
-  </section>
-
+  <!-- ═══ STAT CARDS ══════════════════════════════════════════════ -->
   <section class="host-dashboard__stats" aria-label="Stats">
-    @if (hostStore.isLoading()) {
-      @for (_ of [1, 2, 3]; track _) {
+    @if (propertyService.isLoading()) {
+      @for (_ of [1, 2, 3, 4]; track _) {
         <article class="stat-card stat-card--skeleton" aria-hidden="true">
           <div class="stat-card__skeleton-line stat-card__skeleton-line--sm"></div>
           <div class="stat-card__skeleton-line stat-card__skeleton-line--lg"></div>
@@ -40,6 +34,7 @@
     } @else {
       @for (card of statCards(); track card.id) {
         <article class="stat-card">
+          <span class="stat-card__icon">{{ card.icon }}</span>
           <p class="stat-card__label">{{ card.label }}</p>
           <p class="stat-card__value">{{ card.value }}</p>
         </article>
@@ -48,14 +43,17 @@
   </section>
 
   <section class="host-dashboard__main">
+
+    <!-- ═══ MY PROPERTIES ══════════════════════════════════════════ -->
     <section class="panel panel--properties">
       <header class="panel__header">
         <h2 class="panel__title">{{ t('عقاراتي', 'My Properties') }}</h2>
+        <a routerLink="/host/properties/new" class="panel__link">{{ t('+ إضافة', '+ Add') }}</a>
       </header>
 
       @defer (on viewport) {
         <div class="properties-grid">
-          @if (hostStore.isLoading()) {
+          @if (propertyService.isLoading()) {
             @for (_ of [1, 2, 3, 4]; track _) {
               <article class="property-card property-card--skeleton" aria-hidden="true">
                 <div class="property-card__media"></div>
@@ -64,12 +62,21 @@
               </article>
             }
           } @else {
-            @for (property of hostStore.myProperties(); track property.id) {
+            @for (property of propertyService.properties(); track property.id) {
               <article class="property-card">
-                <img class="property-card__image" [src]="property.imageUrl" [alt]="property.title" loading="lazy" decoding="async" />
+                <img class="property-card__image" [src]="property.thumbnailUrl || 'https://placehold.co/800x600?text=Luxe+Rental'" [alt]="property.title" loading="lazy" decoding="async" />
                 <h3 class="property-card__title">{{ property.title }}</h3>
-                <p class="property-card__location">{{ property.location }}</p>
-                <p class="property-card__price">{{ formatCurrency(property.pricePerNight) }}</p>
+                <p class="property-card__location">{{ property.city }} • {{ property.country }}</p>
+                <p class="property-card__price">{{ formatCurrency(property.pricePerNight, property.currency) }}</p>
+                <span class="property-card__status">{{ propertyStatusLabel(property.status) }}</span>
+                <a
+                  class="property-card__edit"
+                  [class.property-card__edit--disabled]="!property.id"
+                  [routerLink]="property.id ? ['/host/properties', property.id, 'edit'] : null"
+                  [attr.aria-disabled]="!property.id"
+                >
+                  {{ t('تعديل العقار', 'Edit Property') }}
+                </a>
               </article>
             } @empty {
               <div class="panel__empty">
@@ -92,48 +99,161 @@
       }
     </section>
 
+    <!-- ═══ BOOKING PIPELINE (Decision Hub) ════════════════════════ -->
     <section class="panel panel--bookings">
       <header class="panel__header">
-        <h2 class="panel__title">{{ t('آخر الحجوزات', 'Recent Bookings') }}</h2>
+        <div>
+          <h2 class="panel__title">{{ t('مسار الحجوزات', 'Booking Pipeline') }}</h2>
+          <p class="panel__subtitle">{{ t('راجع الضيف واتخذ قرارك قبل الموافقة', 'Review the guest and decide before approving') }}</p>
+        </div>
+        <div class="panel__toolbar">
+          <input
+            class="panel__search"
+            type="search"
+            [value]="bookingSearch()"
+            (input)="updateSearch(($any($event.target)).value)"
+            [placeholder]="t('ابحث باسم الضيف أو العقار', 'Search by guest or property')"
+          />
+        </div>
       </header>
 
-      @defer (on viewport) {
-        <ul class="bookings-list">
-          @if (hostStore.isLoading()) {
-            @for (_ of [1, 2, 3, 4]; track _) {
-              <li class="booking-row booking-row--skeleton" aria-hidden="true">
-                <div class="booking-row__line booking-row__line--lg"></div>
-                <div class="booking-row__line booking-row__line--sm"></div>
-              </li>
-            }
-          } @else {
-            @for (booking of hostStore.myBookings(); track booking.id) {
-              <li class="booking-row">
-                <div class="booking-row__top">
-                  <p class="booking-row__property">{{ booking.propertyTitle }}</p>
-                  <span class="booking-row__status" [attr.data-status]="booking.status">{{ bookingStatusLabel(booking.status) }}</span>
-                </div>
-                <p class="booking-row__meta">
-                  {{ booking.guestName }} • {{ formatDate(booking.checkInDate) }} - {{ formatDate(booking.checkOutDate) }}
-                </p>
-                <p class="booking-row__amount">{{ formatCurrency(booking.totalPrice) }}</p>
-              </li>
-            } @empty {
-              <li class="panel__empty">
-                <p>{{ t('لا توجد حجوزات حديثة', 'No recent bookings') }}</p>
-              </li>
-            }
-          }
-        </ul>
-      } @placeholder {
-        <ul class="bookings-list" aria-hidden="true">
+      <!-- Status legend -->
+      <div class="pipeline-legend">
+        <span class="status-badge status-badge--pending">{{ t('بانتظار الموافقة', 'Pending') }}</span>
+        <span class="status-badge status-badge--approved">{{ t('بانتظار الدفع', 'Approved') }}</span>
+        <span class="status-badge status-badge--confirmed">{{ t('مؤكد', 'Confirmed') }}</span>
+        <span class="status-badge status-badge--arriving">{{ t('وصول اليوم', 'Arriving') }}</span>
+      </div>
+
+      @if (propertyService.isPipelineLoading()) {
+        <div class="pipeline-skeleton" aria-hidden="true">
           @for (_ of [1, 2, 3, 4]; track _) {
-            <li class="booking-row booking-row--skeleton">
-              <div class="booking-row__line booking-row__line--lg"></div>
-              <div class="booking-row__line booking-row__line--sm"></div>
-            </li>
+            <article class="pipeline-card pipeline-card--skeleton">
+              <div class="pipeline-card__line pipeline-card__line--lg"></div>
+              <div class="pipeline-card__line pipeline-card__line--md"></div>
+              <div class="pipeline-card__line pipeline-card__line--sm"></div>
+              <div class="pipeline-card__actions-placeholder"></div>
+            </article>
           }
-        </ul>
+        </div>
+      } @else {
+        <div class="pipeline-grid" role="list">
+          @for (booking of filteredBookings(); track booking.id) {
+            <article class="pipeline-card" role="listitem" [class.pipeline-card--approved]="booking.pipelineStatus === 'Approved'">
+
+              <!-- Header: property title + status badge -->
+              <header class="pipeline-card__header">
+                <p class="pipeline-card__property">{{ booking.propertyTitle }}</p>
+                <span [class]="bookingStatusClass(booking.pipelineStatus)">{{ bookingStatusLabel(booking.pipelineStatus) }}</span>
+              </header>
+
+              <!-- Guest Profile Row -->
+              <div class="pipeline-card__guest-row">
+                <div class="guest-avatar">
+                  @if (booking.guestAvatarUrl) {
+                    <img [src]="booking.guestAvatarUrl" [alt]="booking.guestName" class="guest-avatar__img">
+                  } @else {
+                    <span class="guest-avatar__initials">{{ booking.guestName.charAt(0).toUpperCase() }}</span>
+                  }
+                </div>
+                <div class="guest-info">
+                  <p class="guest-info__name">{{ booking.guestName }}</p>
+                  <a [routerLink]="['/user', booking.guestId]" class="guest-info__link">
+                    {{ t('عرض الملف الشخصي والتقييمات', 'View Profile & Ratings') }} →
+                  </a>
+                </div>
+              </div>
+
+              <!-- Stay Dates -->
+              <p class="pipeline-card__stay">
+                <svg class="inline h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                {{ formatDate(booking.checkInDate) }} → {{ formatDate(booking.checkOutDate) }}
+              </p>
+
+              <!-- Earnings Breakdown -->
+              <div class="earnings-breakdown">
+                <div class="earnings-row">
+                  <span>{{ t('إجمالي الحجز', 'Booking Total') }}</span>
+                  <span class="font-semibold">{{ formatCurrency(booking.totalPrice, booking.currency) }}</span>
+                </div>
+                <div class="earnings-row earnings-row--fee">
+                  <span>{{ t('رسوم المنصة (10%)', 'Platform Fee (10%)') }}</span>
+                  <span class="text-red-500">- {{ formatCurrency(booking.totalPrice - booking.netProfit, booking.currency) }}</span>
+                </div>
+                <div class="earnings-row earnings-row--net">
+                  <span class="font-bold">{{ t('صافي الربح', 'Net Profit') }}</span>
+                  <span class="font-bold text-teal-700">{{ formatCurrency(booking.netProfit, booking.currency) }}</span>
+                </div>
+              </div>
+
+              <!-- Soft-block countdown (Approved) -->
+              @if (booking.pipelineStatus === 'Approved' && booking.softBlockUntil) {
+                @let hrs = softBlockHours(booking.softBlockUntil);
+                @if (hrs !== null) {
+                  <div class="soft-block-badge">
+                    ⏱ {{ t('التواريخ محظورة تلقائياً — ' + hrs + ' ساعة للدفع', 'Dates soft-blocked — ' + hrs + 'h payment window') }}
+                  </div>
+                }
+              }
+
+              <!-- Actions -->
+              <div class="pipeline-card__actions">
+                @if (booking.pipelineStatus === 'Pending') {
+                  <button
+                    id="approve-{{ booking.id }}"
+                    class="pipeline-card__action pipeline-card__action--approve"
+                    type="button"
+                    [disabled]="processingId() === booking.id"
+                    (click)="approveBooking(booking.id)"
+                  >
+                    @if (processingId() === booking.id) { ⏳ } @else { ✅ }
+                    {{ t('موافقة', 'Approve') }}
+                  </button>
+                  <button
+                    id="reject-{{ booking.id }}"
+                    class="pipeline-card__action pipeline-card__action--reject"
+                    type="button"
+                    [disabled]="processingId() === booking.id"
+                    (click)="rejectBooking(booking.id)"
+                  >
+                    {{ t('رفض', 'Reject') }}
+                  </button>
+                }
+                @if (booking.pipelineStatus === 'Approved' || booking.pipelineStatus === 'Confirmed') {
+                  <a
+                    class="pipeline-card__action"
+                    [routerLink]="['/chat', booking.id, booking.guestId]"
+                  >
+                    💬 {{ t('مراسلة', 'Message') }}
+                  </a>
+                }
+                @if (booking.pipelineStatus === 'Confirmed' || booking.pipelineStatus === 'Arriving') {
+                  <button
+                    class="pipeline-card__action pipeline-card__action--primary"
+                    type="button"
+                    [disabled]="booking.pipelineStatus === 'Arriving' || processingId() === booking.id"
+                    (click)="confirmCheckIn(booking.id)"
+                  >
+                    {{ booking.pipelineStatus === 'Arriving' ? t('وصل بالفعل', 'Checked-in') : t('تأكيد الوصول', 'Confirm Check-in') }}
+                  </button>
+                }
+                <a
+                  class="pipeline-card__action"
+                  [routerLink]="['/host/bookings']"
+                >
+                  {{ t('التفاصيل', 'Details') }}
+                </a>
+              </div>
+
+            </article>
+          } @empty {
+            <div class="panel__empty">
+              <p>{{ t('لا توجد حجوزات نشطة أو قادمة حالياً', 'No active or upcoming bookings right now') }}</p>
+            </div>
+          }
+        </div>
       }
     </section>
   </section>

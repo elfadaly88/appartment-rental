@@ -28,6 +28,17 @@ public class HostBookingsController : ControllerBase
         return Ok(bookings);
     }
 
+    [HttpGet("pipeline")]
+    public async Task<IActionResult> GetHostPipeline()
+    {
+        var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(hostId))
+            return Unauthorized();
+
+        var bookings = await _bookingService.GetHostPipelineAsync(hostId);
+        return Ok(bookings);
+    }
+
     [HttpPatch("{id:guid}/approve")]
     public async Task<IActionResult> Approve(Guid id)
     {
@@ -50,6 +61,20 @@ public class HostBookingsController : ControllerBase
             return Unauthorized();
 
         var result = await _bookingService.RejectBookingAsync(id, hostId);
+        if (!result.IsSuccess)
+            return BadRequest(new { result.Message });
+
+        return Ok(new { result.Message });
+    }
+
+    [HttpPatch("{id:guid}/confirm-checkin")]
+    public async Task<IActionResult> ConfirmCheckIn(Guid id)
+    {
+        var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(hostId))
+            return Unauthorized();
+
+        var result = await _bookingService.ConfirmCheckInAsync(id, hostId);
         if (!result.IsSuccess)
             return BadRequest(new { result.Message });
 

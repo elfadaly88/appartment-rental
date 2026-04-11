@@ -78,4 +78,8 @@ export class CheckoutStore {
     this._error.set(null);
     this._isLoading.set(false);
   }
+
+  reset(): void {
+    this.clear();
+  }
 }

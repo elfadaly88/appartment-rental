@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
+import { adminGuard } from './features/admin/admin.guard';
 
 export const routes: Routes = [
   {
@@ -22,6 +23,25 @@ export const routes: Routes = [
       import('./components/property-detail/property-detail.component').then(
         (m) => m.PropertyDetailComponent,
       ),
+  },
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+  },
+  {
+    path: 'my-bookings',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/guest/my-bookings/my-bookings.component').then(
+        (m) => m.MyBookingsComponent,
+      ),
+  },
+  {
+    path: 'user/:id',
+    loadComponent: () =>
+      import('./features/profile/public-profile/public-profile.component').then((m) => m.PublicProfileComponent),
   },
   {
     path: 'checkout/:bookingId',
@@ -56,28 +76,53 @@ export const routes: Routes = [
       ),
   },
   {
-    path: 'host/dashboard',
+    path: 'host',
     canActivate: [authGuard, roleGuard(['host', 'admin'])],
     loadComponent: () =>
-      import('./features/host/dashboard/host-dashboard.component').then(
-        (m) => m.HostDashboardComponent,
+      import('./features/host/layout/host-layout.component').then(
+        (m) => m.HostLayoutComponent,
       ),
+    loadChildren: () =>
+      import('./features/host/host.routes').then((m) => m.HOST_ROUTES),
   },
   {
-    path: 'host/properties/new',
-    canActivate: [authGuard, roleGuard(['host', 'admin'])],
+    path: 'admin',
+    canActivate: [adminGuard],
     loadComponent: () =>
-      import('./features/properties/add-property/add-property.component').then(
-        (m) => m.AddPropertyComponent,
+      import('./features/admin/layout/admin-layout.component').then(
+        (m) => m.AdminLayoutComponent,
       ),
-  },
-  {
-    path: 'host/block-dates',
-    canActivate: [authGuard, roleGuard(['host', 'admin'])],
-    loadComponent: () =>
-      import('./features/host/block-dates/block-dates.component').then(
-        (m) => m.BlockDatesComponent,
-      ),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/admin/dashboard/admin-dashboard-home.component').then(
+            (m) => m.AdminDashboardHomeComponent,
+          ),
+      },
+      {
+        path: 'approvals',
+        loadComponent: () =>
+          import('./features/admin/approvals/property-approvals.component').then(
+            (m) => m.PropertyApprovalsComponent,
+          ),
+      },
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('./features/admin/bookings/admin-bookings.component').then(
+            (m) => m.AdminBookingsComponent,
+          ),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/users/user-management.component').then(
+            (m) => m.UserManagementComponent,
+          ),
+      },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
   },
   { path: '', redirectTo: 'properties', pathMatch: 'full' },
   { path: '**', redirectTo: 'properties' },

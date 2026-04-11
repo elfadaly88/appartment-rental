@@ -44,4 +44,11 @@ export class HostStore {
       this._isLoading.set(false);
     }
   }
+
+  reset(): void {
+    this._myProperties.set([]);
+    this._myBookings.set([]);
+    this._error.set(null);
+    this._isLoading.set(false);
+  }
 }

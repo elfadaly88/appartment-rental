@@ -53,4 +53,10 @@ export class PropertyStore {
   invalidateCache(): void {
     this._properties.set([]);
   }
+
+  reset(): void {
+    this._properties.set([]);
+    this._error.set(null);
+    this._isLoading.set(false);
+  }
 }

@@ -3,8 +3,8 @@ using RentalsPlatform.Application.Common;
 using RentalsPlatform.Application.DTOs.Admin;
 using RentalsPlatform.Application.Interfaces;
 using RentalsPlatform.Application.Services;
-using RentalsPlatform.Domain.Entities;
 using RentalsPlatform.Domain.Enums;
+using RentalsPlatform.Domain.Entities;
 using RentalsPlatform.Infrastructure.Data;
 
 namespace RentalsPlatform.Infrastructure.Services;
@@ -29,21 +29,38 @@ public class AdminService : IAdminService
                 _dbContext.Users.AsNoTracking(),
                 property => property.HostId.ToString(),
                 user => user.Id,
-                (property, user) => new AdminPropertyDto
+                (property, user) => new
                 {
                     Id = property.Id,
-                    HostName = string.Join(" ", new[] { user.FirstName, user.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))).Trim(),
-                    Title = string.IsNullOrWhiteSpace(property.Name.En) ? property.Name.Ar : property.Name.En,
-                    Description = string.IsNullOrWhiteSpace(property.Description.En) ? property.Description.Ar : property.Description.En,
-                    Price = property.PricePerNight.Amount,
-                    Images = Array.Empty<string>(),
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    TitleEn = property.Name.En,
+                    TitleAr = property.Name.Ar,
+                    DescriptionEn = property.Description.En,
+                    DescriptionAr = property.Description.Ar,
+                    PriceAmount = property.PricePerNight.Amount,
+                    PriceCurrency = property.PricePerNight.Currency,
                     Status = property.Status,
                     SubmittedAt = property.SubmittedAt
                 })
             .OrderBy(p => p.SubmittedAt)
             .ToListAsync();
 
-        return pendingProperties;
+        return pendingProperties.Select(property => new AdminPropertyDto
+        {
+            Id = property.Id,
+            HostName = !string.IsNullOrWhiteSpace(property.FirstName) || !string.IsNullOrWhiteSpace(property.LastName)
+                ? string.Join(" ", new[] { property.FirstName, property.LastName }.Where(x => !string.IsNullOrWhiteSpace(x))).Trim()
+                : property.Email ?? string.Empty,
+            Title = string.IsNullOrWhiteSpace(property.TitleEn) ? property.TitleAr ?? string.Empty : property.TitleEn,
+            Description = string.IsNullOrWhiteSpace(property.DescriptionEn) ? property.DescriptionAr ?? string.Empty : property.DescriptionEn,
+            PriceAmount = property.PriceAmount,
+            PriceCurrency = property.PriceCurrency,
+            Images = Array.Empty<string>(),
+            Status = property.Status,
+            SubmittedAt = property.SubmittedAt
+        });
     }
 
     public async Task<Result> ApprovePropertyAsync(Guid propertyId)
@@ -88,5 +105,125 @@ public class AdminService : IAdminService
                 $"/host/properties/{property.Id}"));
 
         return Result.Success("Property rejected successfully.");
+    }
+
+    public async Task<IEnumerable<AdminBookingDto>> GetAllBookingsAsync()
+    {
+        var bookings = await _dbContext.Bookings
+            .AsNoTracking()
+            .OrderByDescending(b => b.CreatedOnUtc)
+            .ToListAsync();
+
+        if (bookings.Count == 0)
+            return [];
+
+        var propertyIds = bookings.Select(b => b.PropertyId).Distinct().ToList();
+        var properties = await _dbContext.Properties
+            .AsNoTracking()
+            .Where(p => propertyIds.Contains(p.Id))
+            .ToListAsync();
+
+        var propertyById = properties.ToDictionary(p => p.Id);
+
+        var guestIdSet = bookings
+            .Select(b => b.GuestId)
+            .Where(id => id != Guid.Empty)
+            .Select(id => id.ToString())
+            .ToHashSet();
+
+        var hostIdSet = properties
+            .Select(p => p.HostId)
+            .Where(id => id != Guid.Empty)
+            .Select(id => id.ToString())
+            .ToHashSet();
+
+        var userIds = guestIdSet.Union(hostIdSet).ToList();
+        var users = await _dbContext.Users
+            .AsNoTracking()
+            .Where(u => userIds.Contains(u.Id))
+            .ToListAsync();
+
+        var userById = users.ToDictionary(u => u.Id);
+
+        var transactions = await _dbContext.Transactions
+            .AsNoTracking()
+            .Where(t => bookings.Select(b => b.Id).Contains(t.BookingId))
+            .ToListAsync();
+
+        var transactionIdByBookingId = transactions
+            .GroupBy(t => t.BookingId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.CreatedOnUtc).First().Id.ToString());
+
+        var result = new List<AdminBookingDto>(bookings.Count);
+
+        foreach (var booking in bookings)
+        {
+            propertyById.TryGetValue(booking.PropertyId, out var property);
+
+            var guestEmail = string.Empty;
+            var hostName = string.Empty;
+
+            if (booking.GuestId != Guid.Empty && userById.TryGetValue(booking.GuestId.ToString(), out var guest))
+                guestEmail = guest.Email ?? string.Empty;
+
+            if (property is not null && userById.TryGetValue(property.HostId.ToString(), out var host))
+            {
+                hostName = string.Join(" ", new[] { host.FirstName, host.LastName }
+                    .Where(x => !string.IsNullOrWhiteSpace(x))).Trim();
+
+                if (string.IsNullOrWhiteSpace(hostName))
+                    hostName = host.Email ?? string.Empty;
+            }
+
+            var transactionId = transactionIdByBookingId.GetValueOrDefault(booking.Id);
+            if (string.IsNullOrWhiteSpace(transactionId) && !string.IsNullOrWhiteSpace(booking.PaymobOrderId))
+                transactionId = booking.PaymobOrderId;
+
+            result.Add(new AdminBookingDto
+            {
+                Id = booking.Id,
+                PropertyId = booking.PropertyId,
+                PropertyTitle = property is null
+                    ? string.Empty
+                    : (string.IsNullOrWhiteSpace(property.Name.En) ? property.Name.Ar : property.Name.En),
+                HostName = hostName,
+                GuestEmail = guestEmail,
+                StartDate = booking.StartDate,
+                EndDate = booking.EndDate,
+                TotalPrice = booking.TotalPrice.Amount,
+                Currency = booking.TotalPrice.Currency,
+                BookingStatus = booking.Status,
+                PaymentStatus = booking.PaymentStatus,
+                IsPaid = booking.PaymentStatus == PaymentStatus.Paid,
+                PaymentProvider = string.IsNullOrWhiteSpace(booking.PaymobOrderId) ? string.Empty : "Paymob",
+                TransactionId = transactionId,
+                CreatedOnUtc = booking.CreatedOnUtc
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<AdminFinancialSummaryDto> GetFinancialSummaryAsync()
+    {
+        var totalRevenue = await _dbContext.Bookings
+            .AsNoTracking()
+            .Where(b => b.PaymentStatus == PaymentStatus.Paid)
+            .SumAsync(b => (decimal?)b.TotalPrice.Amount) ?? 0m;
+
+        var activeUsers = await _dbContext.Users
+            .AsNoTracking()
+            .CountAsync(u => string.IsNullOrWhiteSpace(u.BanReason));
+
+        var pendingApprovals = await _dbContext.Properties
+            .AsNoTracking()
+            .CountAsync(p => p.Status == PropertyStatus.Pending);
+
+        return new AdminFinancialSummaryDto
+        {
+            TotalRevenue = totalRevenue,
+            ActiveUsers = activeUsers,
+            PendingApprovals = pendingApprovals
+        };
     }
 }

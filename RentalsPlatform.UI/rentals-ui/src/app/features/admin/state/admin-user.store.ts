@@ -50,6 +50,13 @@ export class AdminUserStore {
     }
   }
 
+  reset(): void {
+    this._users.set([]);
+    this._error.set(null);
+    this._isLoading.set(false);
+    this._isSubmitting.set(false);
+  }
+
   async banUser(id: string, reason: string): Promise<void> {
     const trimmedReason = reason.trim();
     if (!id || !trimmedReason || this._isSubmitting()) {

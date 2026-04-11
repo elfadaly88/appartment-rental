@@ -35,8 +35,19 @@ export class AdminPropertyStore {
 
     try {
       const url = `${environment.apiUrl}/admin/properties/pending`;
-      const response = await firstValueFrom(this.http.get<PendingPropertyDto[]>(url));
-      this._pendingProperties.set(Array.isArray(response) ? response : []);
+      const response = await firstValueFrom(this.http.get<any[]>(url));
+      
+      const mappedItems = (Array.isArray(response) ? response : []).map(item => ({
+        id: item.id,
+        title: item.title,
+        hostName: (item.hostName && item.hostName.trim() !== '') ? item.hostName : (item.email || 'Unknown Host'),
+        priceAmount: item.priceAmount ?? item.price ?? 0,
+        priceCurrency: item.priceCurrency || 'EGP',
+        images: item.images || [],
+        createdAt: item.createdAt || item.submittedAt
+      }));
+      
+      this._pendingProperties.set(mappedItems);
     } catch (err) {
       console.error('[AdminPropertyStore] loadPending failed', err);
       this._error.set('Failed to load pending properties.');
@@ -60,7 +71,7 @@ export class AdminPropertyStore {
 
     try {
       const url = `${environment.apiUrl}/admin/properties/${encodeURIComponent(id)}/approve`;
-      await firstValueFrom(this.http.post(url, {}));
+      await firstValueFrom(this.http.patch(url, {}));
     } catch (err) {
       console.error('[AdminPropertyStore] approve failed', err);
       this._pendingProperties.set(previous);
@@ -86,7 +97,7 @@ export class AdminPropertyStore {
     try {
       const url = `${environment.apiUrl}/admin/properties/${encodeURIComponent(id)}/reject`;
       await firstValueFrom(
-        this.http.post(url, {
+        this.http.patch(url, {
           reason: trimmedReason,
         }),
       );
@@ -97,5 +108,12 @@ export class AdminPropertyStore {
     } finally {
       this._isSubmitting.set(false);
     }
+  }
+
+  reset(): void {
+    this._pendingProperties.set([]);
+    this._error.set(null);
+    this._isLoading.set(false);
+    this._isSubmitting.set(false);
   }
 }

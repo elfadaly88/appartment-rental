@@ -1,0 +1,8 @@
+::ng-deep .mat-mdc-paginator {
+  background: transparent !important;
+}
+
+::ng-deep .mat-mdc-paginator-container {
+  min-height: 48px;
+  justify-content: space-between;
+}

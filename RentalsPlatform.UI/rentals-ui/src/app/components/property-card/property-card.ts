@@ -2,6 +2,7 @@ import {
   Component,
   ChangeDetectionStrategy,
   input,
+  output,
   computed,
 } from '@angular/core';
 import { Property } from '../../models/property.model';
@@ -15,6 +16,7 @@ import { Property } from '../../models/property.model';
 export class PropertyCard {
   readonly property = input.required<Property>();
   readonly locale = input<'ar' | 'en'>('en');
+  readonly clicked = output<string>();
 
   protected readonly name = computed(() => {
     const lang = this.locale();
@@ -27,7 +29,9 @@ export class PropertyCard {
   });
 
   protected readonly formattedPrice = computed(() => {
-    const { amount, currency } = this.property().price;
+    const price = this.property()?.price;
+    const amount = price?.amount ?? 0;
+    const currency = price?.currency || 'EGP';
     const lang = this.locale();
     try {
       return new Intl.NumberFormat(lang === 'ar' ? 'ar-SA' : 'en-US', {

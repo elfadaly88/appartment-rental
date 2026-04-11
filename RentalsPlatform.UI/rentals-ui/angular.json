@@ -17,6 +17,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
               "zone.js"
@@ -31,7 +32,8 @@
             ],
             "styles": [
               "src/styles.scss",
-              "node_modules/mapbox-gl/dist/mapbox-gl.css"
+              "node_modules/mapbox-gl/dist/mapbox-gl.css",
+              "@angular/material/prebuilt-themes/indigo-pink.css"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",
@@ -101,12 +103,16 @@
               }
             ],
             "styles": [
-              "src/styles.scss", 
-              "node_modules/mapbox-gl/dist/mapbox-gl.css"
+              "src/styles.scss",
+              "node_modules/mapbox-gl/dist/mapbox-gl.css",
+              "@angular/material/prebuilt-themes/indigo-pink.css"
             ]
           }
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "62f7dfdb-4928-44b9-840e-cf942b1eb7b4"
   }
 }

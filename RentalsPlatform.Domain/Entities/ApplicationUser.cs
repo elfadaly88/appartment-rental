@@ -8,6 +8,10 @@ public class ApplicationUser : IdentityUser
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string? ProfilePictureUrl { get; set; }
+    public string DisplayName { get; set; } = string.Empty;
+    public string? AvatarUrl { get; set; }
+    public string? Bio { get; set; }
+    public DateTime JoinedDate { get; set; } = DateTime.UtcNow;
     public string? BanReason { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? PaymobSubMerchantId { get; set; }

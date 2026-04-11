@@ -1,0 +1,44 @@
+.admin-home__header h1 {
+  margin: 0;
+}
+
+.admin-home__header p {
+  margin: 0.35rem 0 1.2rem;
+  color: #4b5563;
+}
+
+.admin-home__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 0.9rem;
+  padding: 1rem;
+}
+
+.stat-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+.stat-card p {
+  margin: 0.45rem 0 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.admin-home__error {
+  color: #b91c1c;
+}
+
+@media (max-width: 960px) {
+  .admin-home__stats {
+    grid-template-columns: 1fr;
+  }
+}

@@ -62,6 +62,26 @@ public class Property
         BasePricePerNight = newPrice.Amount;
     }
 
+    public void UpdateDetails(LocalizedText name, LocalizedText description, Address location, Money newPrice, int maxGuests)
+    {
+        if (maxGuests <= 0)
+            throw new ArgumentException("Max guests must be greater than zero.");
+
+        Name = name;
+        Description = description;
+        Location = location;
+        MaxGuests = maxGuests;
+        UpdatePrice(newPrice);
+        Version = Guid.NewGuid();
+
+        if (Status == PropertyStatus.Rejected)
+        {
+            Status = PropertyStatus.Pending;
+            RejectionReason = null;
+            SubmittedAt = DateTime.UtcNow;
+        }
+    }
+
     // Business Behavior: دالة لموافقة الـ Admin على الشقة
     public void Approve()
     {

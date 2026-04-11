@@ -15,41 +15,31 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { LanguageService } from '../../../core/services/language.service';
-import { environment } from '../../../../environments/environment';
-
-interface PriceRuleDto {
-  id: string;
-  startDate: string;
-  endDate: string;
-  customPrice: number;
-}
-
-interface CreatePriceRuleDto {
-  startDate: string;
-  endDate: string;
-  customPrice: number;
-}
+import {
+  CreatePriceRuleDto,
+  PriceRuleDto,
+  PropertyService,
+} from '../services/property.service';
 
 @Injectable()
 class PriceRulesStore {
-  private readonly http = inject(HttpClient);
+  private readonly propertyService = inject(PropertyService);
 
   readonly rules = signal<PriceRuleDto[]>([]);
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
   readonly pendingIds = signal<Set<string>>(new Set<string>());
 
-  async load(): Promise<void> {
+  async load(propertyId: string): Promise<void> {
     this.isLoading.set(true);
     this.error.set(null);
 
     try {
       const response = await firstValueFrom(
-        this.http.get<PriceRuleDto[]>(`${environment.apiUrl}/host/pricing-rules`),
+        this.propertyService.getPriceRules(propertyId),
       );
 
       this.rules.set(
@@ -65,7 +55,7 @@ class PriceRulesStore {
     }
   }
 
-  async addRule(payload: CreatePriceRuleDto): Promise<boolean> {
+  async addRule(propertyId: string, payload: CreatePriceRuleDto): Promise<boolean> {
     const optimisticId = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const optimisticRule: PriceRuleDto = {
       id: optimisticId,
@@ -78,7 +68,7 @@ class PriceRulesStore {
 
     try {
       const saved = await firstValueFrom(
-        this.http.post<PriceRuleDto>(`${environment.apiUrl}/host/pricing-rules`, payload),
+        this.propertyService.addPriceRule(propertyId, payload),
       );
 
       this.rules.update((current) =>
@@ -97,7 +87,7 @@ class PriceRulesStore {
     }
   }
 
-  async removeRule(ruleId: string): Promise<void> {
+  async removeRule(propertyId: string, ruleId: string): Promise<void> {
     const existing = this.rules().find((rule) => rule.id === ruleId);
     if (!existing) {
       return;
@@ -108,9 +98,7 @@ class PriceRulesStore {
     this.rules.update((current) => current.filter((rule) => rule.id !== ruleId));
 
     try {
-      await firstValueFrom(
-        this.http.delete(`${environment.apiUrl}/host/pricing-rules/${encodeURIComponent(ruleId)}`),
-      );
+      await firstValueFrom(this.propertyService.removePriceRule(propertyId, ruleId));
     } catch (error) {
       console.error('[PriceRulesStore] removeRule failed', error);
       this.rules.update((current) => this.sortRules([...current, existing]));
@@ -157,9 +145,11 @@ class PriceRulesStore {
 export class PriceRulesComponent {
   protected readonly fb = inject(FormBuilder);
   protected readonly lang = inject(LanguageService);
+  protected readonly propertyService = inject(PropertyService);
   protected readonly store = inject(PriceRulesStore);
 
   protected readonly today = new Date().toISOString().split('T')[0];
+  protected readonly selectedPropertyId = signal<string | null>(null);
 
   protected readonly form = this.fb.group(
     {
@@ -173,20 +163,23 @@ export class PriceRulesComponent {
   protected readonly rules = this.store.rules;
   protected readonly isLoading = this.store.isLoading;
   protected readonly error = this.store.error;
+  protected readonly hostProperties = this.propertyService.properties;
   protected readonly hasRules = computed(() => this.rules().length > 0);
+  protected readonly canManageRules = computed(() => Boolean(this.selectedPropertyId()));
 
   constructor() {
-    void this.store.load();
+    void this.initialize();
   }
 
   protected async submit(): Promise<void> {
     this.form.markAllAsTouched();
-    if (this.form.invalid) {
+    const propertyId = this.selectedPropertyId();
+    if (this.form.invalid || !propertyId) {
       return;
     }
 
     const raw = this.form.getRawValue();
-    const saved = await this.store.addRule({
+    const saved = await this.store.addRule(propertyId, {
       startDate: raw.startDate ?? '',
       endDate: raw.endDate ?? '',
       customPrice: Number(raw.customPrice ?? 0),
@@ -202,7 +195,23 @@ export class PriceRulesComponent {
   }
 
   protected async remove(ruleId: string): Promise<void> {
-    await this.store.removeRule(ruleId);
+    const propertyId = this.selectedPropertyId();
+    if (!propertyId) {
+      return;
+    }
+
+    await this.store.removeRule(propertyId, ruleId);
+  }
+
+  protected async selectProperty(propertyId: string): Promise<void> {
+    this.selectedPropertyId.set(propertyId || null);
+
+    if (!propertyId) {
+      this.store.rules.set([]);
+      return;
+    }
+
+    await this.store.load(propertyId);
   }
 
   protected formatDateRange(startDate: string, endDate: string): string {
@@ -246,6 +255,20 @@ export class PriceRulesComponent {
 
   protected t(ar: string, en: string): string {
     return this.lang.currentLang() === 'ar' ? ar : en;
+  }
+
+  private async initialize(): Promise<void> {
+    if (!this.propertyService.dashboard()) {
+      await this.propertyService.loadDashboard();
+    }
+
+    const firstPropertyId = this.hostProperties()[0]?.id;
+    if (!firstPropertyId) {
+      return;
+    }
+
+    this.selectedPropertyId.set(firstPropertyId);
+    await this.store.load(firstPropertyId);
   }
 }
 

@@ -1,69 +1,198 @@
-<section class="block-sheet">
-  <header class="block-sheet__header">
-    <p class="block-sheet__eyebrow">Host Control</p>
-    <h2 class="block-sheet__title">{{ t('حظر تواريخ العقار', 'Block Property Dates') }}</h2>
-    <p class="block-sheet__subtitle">
-      {{ t('أغلق التواريخ غير المتاحة بسرعة ووضوح.', 'Close unavailable dates with elegant precision.') }}
-    </p>
-  </header>
+<section class="max-w-4xl mx-auto rounded-[2.5rem] bg-white shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden" dir="auto">
+  
+  <div class="h-32 w-full bg-gradient-to-r from-teal-500 to-emerald-600"></div>
 
-  <form class="block-sheet__form" [formGroup]="form" novalidate (ngSubmit)="onSubmit()">
-    <label class="field" [class.field--filled]="isFilled(form.controls.propertyId.value)">
-      <select class="field__control" formControlName="propertyId" aria-label="Property">
-        <option [ngValue]="null" disabled hidden>
-          {{ t('اختر العقار', 'Choose property') }}
-        </option>
-        @for (property of hostProperties(); track property.id) {
-          <option [ngValue]="property.id">{{ propertyLabel(property) }}</option>
-        }
-      </select>
-      <span class="field__label">{{ t('العقار', 'Property') }}</span>
-      <span class="field__chevron" aria-hidden="true"></span>
-    </label>
+  <div class="px-6 md:px-12 pb-12 -mt-16">
+    <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 mb-8 relative">
+      <header class="mb-8">
+        <p class="text-xs font-bold uppercase tracking-widest text-emerald-600 mb-2">Host Control</p>
+        <h2 class="text-3xl font-extrabold tracking-tight text-slate-900">{{ t('حظر تواريخ العقار', 'Block Property Dates') }}</h2>
+        <p class="mt-2 text-base text-slate-500">
+          {{ t('أغلق التواريخ غير المتاحة بسرعة ووضوح.', 'Close unavailable dates with elegant precision.') }}
+        </p>
+      </header>
 
-    <div class="block-sheet__dates">
-      <label class="field" [class.field--filled]="isFilled(form.controls.startDate.value)">
-        <input
-          class="field__control"
-          type="date"
-          [min]="today"
-          formControlName="startDate"
-          aria-label="Start date"
-        />
-        <span class="field__label">{{ t('من تاريخ', 'Start Date') }}</span>
-      </label>
+      <form [formGroup]="form" novalidate (ngSubmit)="onSubmit()">
+        <div class="group mb-6">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">{{ t('العقار', 'Property') }}</label>
+          <div class="relative">
+            <select 
+              formControlName="propertyId"
+              class="block w-full appearance-none rounded-2xl border-0 py-4 ps-4 pe-10 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-base transition-shadow duration-300 bg-slate-50 focus:bg-white cursor-pointer"
+            >
+              <option [value]="null" disabled>{{ t('اختر العقار', 'Choose property') }}</option>
+              @for (property of properties(); track property.id) {
+                <option [value]="property.id">{{ propertyLabel(property) }}</option>
+              }
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-4 text-slate-500">
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+            </div>
+          </div>
+          @if (showPropertyRequiredError()) {
+            <p class="mt-2 text-sm font-medium text-red-600">{{ tr('BLOCK_DATES.VALIDATION_PROPERTY_REQUIRED') }}</p>
+          }
+        </div>
 
-      <label class="field" [class.field--filled]="isFilled(form.controls.endDate.value)">
-        <input
-          class="field__control"
-          type="date"
-          [min]="minEndDate()"
-          formControlName="endDate"
-          aria-label="End date"
-        />
-        <span class="field__label">{{ t('إلى تاريخ', 'End Date') }}</span>
-      </label>
+        <div class="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="group">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">{{ t('من تاريخ', 'Start Date') }}</label>
+            <input 
+              type="date" 
+              [min]="today" 
+              formControlName="startDate"
+              class="block w-full rounded-2xl border-0 py-4 px-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-base transition-shadow duration-300 bg-slate-50 focus:bg-white" 
+            />
+          </div>
+
+          <div class="group">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">{{ t('إلى تاريخ', 'End Date') }}</label>
+            <input 
+              type="date" 
+              [min]="minEndDate()" 
+              formControlName="endDate"
+              class="block w-full rounded-2xl border-0 py-4 px-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-base transition-shadow duration-300 bg-slate-50 focus:bg-white" 
+            />
+          </div>
+        </div>
+
+        <div class="group mb-8">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">{{ t('السبب (اختياري)', 'Reason (optional)') }}</label>
+          <textarea 
+            rows="4" 
+            maxlength="500" 
+            formControlName="reason"
+            class="block w-full rounded-2xl border-0 py-4 px-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-base transition-shadow duration-300 bg-slate-50 focus:bg-white resize-y"
+            placeholder="{{ t('اكتب سبب الإغلاق...', 'Enter reason for block...') }}"
+          ></textarea>
+        </div>
+
+        <button 
+          type="submit" 
+          [disabled]="isSubmitting() || form.invalid"
+          class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-slate-900/20 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+        >
+          @if (isSubmitting()) {
+            <svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <span>{{ t('جاري الحفظ...', 'Saving...') }}</span>
+          } @else {
+            {{ t('حظر التواريخ', 'Block Dates') }}
+          }
+        </button>
+      </form>
     </div>
 
-    <label class="field field--textarea" [class.field--filled]="isFilled(form.controls.reason.value)">
-      <textarea
-        class="field__control"
-        rows="4"
-        maxlength="500"
-        formControlName="reason"
-        [placeholder]="' '"
-        aria-label="Reason"
-      ></textarea>
-      <span class="field__label">{{ t('السبب (اختياري)', 'Reason (optional)') }}</span>
-    </label>
+    <!-- Pricing Rules Section -->
+    <section class="mt-12">
+      <header class="mb-6">
+        <h3 class="text-2xl font-bold tracking-tight text-slate-900">{{ tr('BLOCK_DATES.PRICE_RULES_TITLE') }}</h3>
+        <p class="mt-1 text-sm text-slate-500">{{ tr('BLOCK_DATES.PRICE_RULES_SUBTITLE') }}</p>
+      </header>
 
-    <button class="submit-btn" type="submit" [disabled]="isSubmitting() || form.invalid">
-      @if (isSubmitting()) {
-        <span class="spinner" aria-hidden="true"></span>
-        {{ t('جاري الحفظ...', 'Saving...') }}
-      } @else {
-        {{ t('حظر التواريخ', 'Block Dates') }}
+      @if (rulesError(); as rulesErrorMsg) {
+        <div class="mb-6 rounded-2xl bg-red-50 p-4 border border-red-100 flex items-center text-red-800 text-sm font-medium">
+          <svg class="h-5 w-5 me-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+          {{ rulesErrorMsg }}
+        </div>
       }
-    </button>
-  </form>
+
+      <div class="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+        <form class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end mb-6" [formGroup]="priceRuleForm" (ngSubmit)="onAddRule()">
+          
+          <div class="md:col-span-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ tr('BLOCK_DATES.PRICE_RULES_START_DATE') }}</label>
+            <input 
+              type="date" 
+              [min]="today" 
+              formControlName="startDate"
+              class="block w-full rounded-xl border-0 py-3 px-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm transition-shadow duration-300 bg-white" 
+            />
+          </div>
+
+          <div class="md:col-span-3">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ tr('BLOCK_DATES.PRICE_RULES_END_DATE') }}</label>
+            <input 
+              type="date" 
+              [min]="today" 
+              formControlName="endDate"
+              class="block w-full rounded-xl border-0 py-3 px-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm transition-shadow duration-300 bg-white" 
+            />
+          </div>
+
+          <div class="md:col-span-4">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ tr('BLOCK_DATES.PRICE_RULES_PRICE') }}</label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3 text-slate-400">#</div>
+              <input 
+                type="number" 
+                min="1" 
+                step="1" 
+                formControlName="customPrice"
+                class="block w-full rounded-xl border-0 py-3 ps-8 pe-4 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm transition-shadow duration-300 bg-white" 
+              />
+            </div>
+          </div>
+
+          <div class="md:col-span-2">
+            <button 
+              type="submit" 
+              [disabled]="isRuleSaving() || !selectedPropertyId()"
+              class="w-full inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:focus-visible:outline-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              @if(isRuleSaving()) {
+                <svg class="animate-spin h-4 w-4 me-2 text-white" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              }
+              {{ tr('BLOCK_DATES.PRICE_RULES_ADD') }}
+            </button>
+          </div>
+        </form>
+
+        @if (isRulesLoading()) {
+          <div class="py-8 flex justify-center items-center text-slate-500 font-medium animate-pulse">
+            {{ tr('BLOCK_DATES.PRICE_RULES_LOADING') }}
+          </div>
+        } @else if (!selectedPropertyId()) {
+          <div class="py-8 text-center text-slate-400 font-medium">
+            <svg class="mx-auto h-12 w-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+            {{ tr('BLOCK_DATES.PRICE_RULES_SELECT_PROPERTY') }}
+          </div>
+        } @else if (priceRules().length === 0) {
+           <div class="py-8 text-center text-slate-400 font-medium">
+            {{ tr('BLOCK_DATES.PRICE_RULES_EMPTY') }}
+          </div>
+        } @else {
+          <div class="mt-4 overflow-x-auto rounded-2xl bg-white border border-slate-200">
+            <table class="w-full text-start whitespace-nowrap">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200">
+                  <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-start">{{ tr('BLOCK_DATES.PRICE_RULES_COLUMN_RANGE') }}</th>
+                  <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-start">{{ tr('BLOCK_DATES.PRICE_RULES_COLUMN_PRICE') }}</th>
+                  <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-end">{{ tr('BLOCK_DATES.PRICE_RULES_COLUMN_ACTIONS') }}</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (rule of priceRules(); track rule.id) {
+                  <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="px-6 py-4 text-sm font-medium text-slate-900">{{ formatRuleRange(rule.startDate, rule.endDate) }}</td>
+                    <td class="px-6 py-4 text-sm font-bold text-emerald-600">{{ formatCurrency(rule.customPrice) }}</td>
+                    <td class="px-6 py-4 text-end">
+                      <button 
+                        type="button" 
+                        class="inline-flex items-center gap-1.5 rounded-lg text-red-600 bg-red-50 px-3 py-1.5 text-xs font-semibold hover:bg-red-100 transition-colors disabled:opacity-50"
+                        [disabled]="isRulePending(rule.id)"
+                        (click)="removeRule(rule.id)"
+                      >
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        {{ tr('BLOCK_DATES.PRICE_RULES_DELETE') }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </section>
+  </div>
 </section>

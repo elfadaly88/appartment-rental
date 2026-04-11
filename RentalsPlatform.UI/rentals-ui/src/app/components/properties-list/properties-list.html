@@ -8,6 +8,7 @@
       <app-property-card
         [property]="property"
         [locale]="locale()"
+        (clicked)="selectedPropertyId.set($event)"
       />
     } @empty {
       <div class="list__empty">
@@ -22,3 +23,11 @@
     }
   </div>
 </section>
+
+@if (selectedPropertyId()) {
+  <app-property-gallery 
+    [propertyId]="selectedPropertyId()!" 
+    [locale]="locale()" 
+    (close)="selectedPropertyId.set(null)"
+  />
+}

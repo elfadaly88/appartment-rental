@@ -6,10 +6,12 @@ import {
 } from '@angular/core';
 import { Property } from '../../models/property.model';
 import { PropertyCard } from '../property-card/property-card';
+import { PropertyGallery } from '../property-gallery/property-gallery';
+import { signal } from '@angular/core';
 
 @Component({
   selector: 'app-properties-list',
-  imports: [PropertyCard],
+  imports: [PropertyCard, PropertyGallery],
   templateUrl: './properties-list.html',
   styleUrl: './properties-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -17,6 +19,8 @@ import { PropertyCard } from '../property-card/property-card';
 export class PropertiesList {
   readonly properties = input.required<Property[]>();
   readonly locale = input<'ar' | 'en'>('en');
+
+  protected readonly selectedPropertyId = signal<string | null>(null);
 
   protected readonly heading = computed(() =>
     this.locale() === 'ar' ? 'العقارات المميزة' : 'Featured Properties'
