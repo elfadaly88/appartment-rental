@@ -112,6 +112,15 @@ public class Booking
         Status = BookingStatus.Cancelled;
     }
 
+    public void Reject(string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("Rejection reason is required.", nameof(reason));
+
+        Status = BookingStatus.Cancelled;
+        Reason = reason.Trim();
+    }
+
     /// <summary>Guest cancels a Pending or Approved booking.</summary>
     public void GuestCancel()
     {

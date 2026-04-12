@@ -26,25 +26,13 @@
 /* ── Responsive Grid ────────────────────────────────────────────────────── */
 .list__grid {
   display: grid;
-  gap: var(--_gap);
-  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 
-/* 2 columns: 480px + */
-@media (min-width: 480px) {
-  .list__grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* 3 columns: 960px + */
-@media (min-width: 960px) {
-  .list__grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-/* 4 columns: 1280px + */
-@media (min-width: 1280px) {
+@media (min-width: 768px) {
   .list__grid {
-    grid-template-columns: repeat(4, 1fr);
-    --_gap: 2rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

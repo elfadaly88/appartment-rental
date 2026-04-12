@@ -24,16 +24,21 @@
     "ERROR_FALLBACK": "يرجى مراجعة هذا الحقل."
   },
   "NAV": {
+    "HOME": "الرئيسية",
     "LOGIN": "دخول",
+    "REGISTER": "إنشاء حساب",
     "LOGOUT": "تسجيل خروج",
     "WELCOME": "مرحباً، {{name}}",
     "PROPERTIES": "العقارات",
     "ADD_PROPERTY": "إضافة عقار",
+    "POST_PROPERTY": "نشر عقار",
     "CALENDAR": "التقويم",
     "TOGGLE_LANG_LABEL": "التبديل للإنجليزية",
     "REPORTS": "التقارير",
     "DASHBOARD": "لوحة التحكم",
-    "BOOKINGS": "الحجوزات"
+    "BOOKINGS": "الحجوزات",
+    "MY_BOOKINGS": "حجوزاتي",
+    "MY_PROPERTIES": "عقاراتي"
     ,"OPEN_MENU": "فتح القائمة"
     ,"CLOSE_MENU": "إغلاق القائمة"
   },
@@ -97,6 +102,10 @@
     "ZIP": "الرمز البريدي",
     "MAP_URL": "رابط الخريطة",
     "PRICE": "السعر لكل ليلة",
+    "ADVANCED_PRICING": "التسعير المتقدم",
+    "ADVANCED_PRICING_HINT": "فعّل هذا الخيار فقط إذا كنت تريد إضافة رسوم خدمة أو ضرائب.",
+    "SERVICE_FEE": "رسوم الخدمة % (اختياري)",
+    "TAX": "الضريبة % (اختياري)",
     "MAX_GUESTS": "الحد الأقصى للضيوف",
     "AMENITIES": "المرافق",
     "RULES": "قواعد الإقامة",
@@ -115,6 +124,7 @@
     "ERROR_UPLOAD": "تعذر إضافة ملف أو أكثر من الملفات المختارة.",
     "VALIDATION_REQUIRED": "هذا الحقل مطلوب.",
     "VALIDATION_MIN": "يجب أن تكون القيمة {{min}} أو أكثر.",
+    "VALIDATION_MAX": "يجب ألا تتجاوز القيمة {{max}}.",
     "VALIDATION_MIN_LENGTH": "يرجى إدخال {{min}} أحرف على الأقل.",
     "VALIDATION_URL": "يرجى إدخال رابط صحيح.",
     "VALIDATION_INVALID": "يرجى إدخال قيمة صحيحة.",

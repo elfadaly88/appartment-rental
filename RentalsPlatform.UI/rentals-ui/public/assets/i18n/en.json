@@ -24,16 +24,21 @@
     "ERROR_FALLBACK": "Please review this field."
   },
   "NAV": {
+    "HOME": "Home",
     "LOGIN": "Login",
+    "REGISTER": "Register",
     "LOGOUT": "Logout",
     "WELCOME": "Welcome, {{name}}",
     "PROPERTIES": "Properties",
     "ADD_PROPERTY": "Add Property",
+    "POST_PROPERTY": "Post a Property",
     "CALENDAR": "Calendar",
     "TOGGLE_LANG_LABEL": "Switch to Arabic",
     "REPORTS": "Reports",
     "DASHBOARD": "Dashboard",
-    "BOOKINGS": "Bookings"
+    "BOOKINGS": "Bookings",
+    "MY_BOOKINGS": "My Bookings",
+    "MY_PROPERTIES": "My Properties"
     ,"OPEN_MENU": "Open menu"
     ,"CLOSE_MENU": "Close menu"
   },
@@ -97,6 +102,10 @@
     "ZIP": "ZIP code",
     "MAP_URL": "Map URL",
     "PRICE": "Price per night",
+    "ADVANCED_PRICING": "Advanced pricing",
+    "ADVANCED_PRICING_HINT": "Enable this only if you want to add service fees or taxes.",
+    "SERVICE_FEE": "Service fee % (optional)",
+    "TAX": "Tax % (optional)",
     "MAX_GUESTS": "Max guests",
     "AMENITIES": "Amenities",
     "RULES": "House rules",
@@ -115,6 +124,7 @@
     "ERROR_UPLOAD": "One or more selected files could not be added.",
     "VALIDATION_REQUIRED": "This field is required.",
     "VALIDATION_MIN": "Value must be at least {{min}}.",
+    "VALIDATION_MAX": "Value must be at most {{max}}.",
     "VALIDATION_MIN_LENGTH": "Use at least {{min}} characters.",
     "VALIDATION_URL": "Please provide a valid URL.",
     "VALIDATION_INVALID": "Please enter a valid value.",

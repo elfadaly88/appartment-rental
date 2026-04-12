@@ -1,33 +1,35 @@
-<section class="list" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'">
-  <header class="list__header">
-    <h2 class="list__heading">{{ heading() }}</h2>
-  </header>
+<div class="container mx-auto px-4 py-12 md:px-6 lg:px-8">
+  <section class="list" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'">
+    <header class="mb-10 flex items-center justify-between border-b border-slate-100 pb-6">
+      <h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-5xl">
+        {{ heading() }}
+      </h2>
+    </header>
 
-  <div class="list__grid">
-    @for (property of properties(); track property.id) {
-      <app-property-card
-        [property]="property"
-        [locale]="locale()"
-        (clicked)="selectedPropertyId.set($event)"
-      />
-    } @empty {
-      <div class="list__empty">
-        <svg class="list__empty-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="3" width="7" height="7" rx="1"/>
-          <rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <rect x="14" y="14" width="7" height="7" rx="1"/>
-        </svg>
-        <p class="list__empty-text">{{ emptyMessage() }}</p>
-      </div>
-    }
-  </div>
-</section>
+    <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      @for (property of properties(); track property.id) {
+        <app-property-card
+          class="group transition-all duration-500 hover:-translate-y-2"
+          [property]="property"
+          [locale]="locale()"
+          (clicked)="selectedPropertyId.set($event)"
+        />
+      } @empty {
+        <div class="col-span-full py-24 text-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
+          <div class="inline-flex p-6 rounded-full bg-white shadow-sm mb-4 text-slate-300">
+            <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-width="1.5"/></svg>
+          </div>
+          <p class="text-xl font-bold text-slate-400">{{ emptyMessage() }}</p>
+        </div>
+      }
+    </div>
+  </section>
+</div>
 
 @if (selectedPropertyId()) {
-  <app-property-gallery 
-    [propertyId]="selectedPropertyId()!" 
-    [locale]="locale()" 
+  <app-property-gallery
+    [propertyId]="selectedPropertyId()!"
+    [locale]="locale()"
     (close)="selectedPropertyId.set(null)"
   />
 }

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { LanguageService } from '../../../core/services/language.service';
 import { PropertyService } from '../services/property.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-host-dashboard',
@@ -120,9 +121,25 @@ export class HostDashboardComponent implements OnInit {
   }
 
   protected async rejectBooking(bookingId: string): Promise<void> {
-    if (!confirm(this.t('هل أنت متأكد من رفض هذا الحجز؟', 'Are you sure you want to reject this booking?'))) return;
+    const { value: reason, isConfirmed } = await Swal.fire({
+      title: this.t('سبب رفض الحجز', 'Reason for rejection'),
+      input: 'textarea',
+      inputPlaceholder: this.t('اكتب سبب الرفض هنا...', 'Write the rejection reason here...'),
+      showCancelButton: true,
+      confirmButtonText: this.t('تأكيد الرفض', 'Confirm rejection'),
+      cancelButtonText: this.t('إلغاء', 'Cancel'),
+      inputValidator: (value) => {
+        if (!value?.trim()) {
+          return this.t('سبب الرفض مطلوب', 'Rejection reason is required.');
+        }
+        return null;
+      },
+    });
+
+    if (!isConfirmed || !reason?.trim()) return;
+
     this.processingId.set(bookingId);
-    await this.propertyService.rejectBooking(bookingId);
+    await this.propertyService.rejectBooking(bookingId, reason.trim());
     this.processingId.set(null);
   }
 

@@ -226,6 +226,60 @@
             }
           </label>
 
+          <div class="space-y-4 rounded-3xl border border-slate-200/80 bg-white/70 p-5 md:col-span-2">
+            <button
+              type="button"
+              class="flex w-full items-center justify-between gap-4 text-start"
+              (click)="toggleAdvancedPricing()">
+              <div class="space-y-1">
+                <p class="text-sm font-semibold text-slate-900">{{ 'HOST_FORM.ADVANCED_PRICING' | translate }}</p>
+                <p class="text-xs text-slate-600">{{ 'HOST_FORM.ADVANCED_PRICING_HINT' | translate }}</p>
+              </div>
+              <span class="inline-flex h-7 min-w-14 items-center rounded-full p-1 transition"
+                [ngClass]="advancedPricingEnabled() ? 'bg-teal-500 justify-end' : 'bg-slate-300 justify-start'">
+                <span class="h-5 w-5 rounded-full bg-white shadow-sm"></span>
+              </span>
+            </button>
+
+            @if (advancedPricingEnabled()) {
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <label class="space-y-2">
+                  <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.SERVICE_FEE' | translate }}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    formControlName="serviceFeePercentage"
+                    class="h-12 w-full rounded-2xl border bg-white/80 px-4 text-sm text-slate-900 outline-none transition"
+                    [placeholder]="'0'"
+                    [ngClass]="hasControlError('serviceFeePercentage') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+                  />
+                  @if (hasControlError('serviceFeePercentage')) {
+                    <p class="text-xs font-semibold text-rose-600">{{ getControlError('serviceFeePercentage') }}</p>
+                  }
+                </label>
+
+                <label class="space-y-2">
+                  <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.TAX' | translate }}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    formControlName="taxPercentage"
+                    class="h-12 w-full rounded-2xl border bg-white/80 px-4 text-sm text-slate-900 outline-none transition"
+                    [placeholder]="'0'"
+                    [ngClass]="hasControlError('taxPercentage') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+                  />
+                  @if (hasControlError('taxPercentage')) {
+                    <p class="text-xs font-semibold text-rose-600">{{ getControlError('taxPercentage') }}</p>
+                  }
+                </label>
+              </div>
+            }
+          </div>
+
           <label class="space-y-2 md:col-span-2">
             <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.AMENITIES' | translate }}</span>
             <textarea

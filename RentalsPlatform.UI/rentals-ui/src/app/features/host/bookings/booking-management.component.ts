@@ -92,7 +92,26 @@ export class BookingManagementComponent implements OnInit {
   }
 
   protected async reject(id: string): Promise<void> {
-    await this.bookingStore.rejectBooking(id);
+    const { value: reason, isConfirmed } = await Swal.fire({
+      title: this.t('سبب رفض الحجز', 'Reason for rejection'),
+      input: 'textarea',
+      inputPlaceholder: this.t('اكتب سبب الرفض هنا...', 'Write the rejection reason here...'),
+      showCancelButton: true,
+      confirmButtonText: this.t('تأكيد الرفض', 'Confirm rejection'),
+      cancelButtonText: this.t('إلغاء', 'Cancel'),
+      inputValidator: (value) => {
+        if (!value?.trim()) {
+          return this.t('سبب الرفض مطلوب', 'Rejection reason is required.');
+        }
+        return null;
+      },
+    });
+
+    if (!isConfirmed || !reason?.trim()) {
+      return;
+    }
+
+    await this.bookingStore.rejectBooking(id, reason.trim());
 
     if (!this.bookingStore.error()) {
       void Swal.fire({

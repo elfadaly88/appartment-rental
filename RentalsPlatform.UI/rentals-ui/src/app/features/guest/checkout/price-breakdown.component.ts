@@ -28,7 +28,11 @@ export class PriceBreakdownComponent {
   readonly totalPrice = input.required<number>();
   readonly baseNightlyPrice = input<number | null>(null);
   readonly currency = input<string>('USD');
-  readonly platformFeeRate = input<number>(0.1);
+  readonly serviceFeeAmount = input<number | null>(null);
+  readonly taxAmount = input<number | null>(null);
+  readonly serviceFeeRate = input<number | null>(null);
+  readonly taxRate = input<number | null>(null);
+  readonly platformFeeRate = input<number | null>(null);
 
   protected readonly lang = inject(LanguageService);
   protected readonly isAdjustmentExpanded = signal(false);
@@ -40,15 +44,35 @@ export class PriceBreakdownComponent {
     return Math.max(1, diff || 1);
   });
 
-  protected readonly subtotal = computed(() => {
-    const rate = this.platformFeeRate();
+  protected readonly resolvedServiceFee = computed(() => {
+    const explicitAmount = this.serviceFeeAmount();
+    if (explicitAmount != null) {
+      return Math.max(0, explicitAmount);
+    }
+
+    const legacyRate = this.platformFeeRate() ?? 0;
     const total = this.totalPrice();
-    return rate >= 1 ? total : total / (1 + rate);
+    if (legacyRate <= 0 || legacyRate >= 1 || total <= 0) {
+      return 0;
+    }
+
+    const inferredSubtotal = total / (1 + legacyRate);
+    return Math.max(0, total - inferredSubtotal);
   });
 
-  protected readonly platformFee = computed(() => {
-    const amount = this.totalPrice() - this.subtotal();
-    return Math.max(0, amount);
+  protected readonly resolvedTax = computed(() => {
+    const explicitAmount = this.taxAmount();
+    if (explicitAmount == null) {
+      return 0;
+    }
+
+    return Math.max(0, explicitAmount);
+  });
+
+  protected readonly subtotal = computed(() => {
+    const total = this.totalPrice();
+    const subtotal = total - this.resolvedServiceFee() - this.resolvedTax();
+    return Math.max(0, subtotal);
   });
 
   protected readonly expectedBaseTotal = computed(() => {
@@ -70,6 +94,8 @@ export class PriceBreakdownComponent {
   });
 
   protected readonly averageNightlyRate = computed(() => this.subtotal() / this.totalNights());
+  protected readonly hasServiceFee = computed(() => this.resolvedServiceFee() > 0);
+  protected readonly hasTax = computed(() => this.resolvedTax() > 0);
 
   protected toggleAdjustment(): void {
     this.isAdjustmentExpanded.update((current) => !current);
@@ -93,8 +119,12 @@ export class PriceBreakdownComponent {
     }).format(new Date(value));
   }
 
-  protected percentageLabel(): string {
-    return `${Math.round(this.platformFeeRate() * 100)}%`;
+  protected percentageLabel(rate: number | null): string {
+    if (rate == null || rate <= 0) {
+      return '';
+    }
+
+    return `${Math.round(rate * 100)}%`;
   }
 
   protected t(ar: string, en: string): string {

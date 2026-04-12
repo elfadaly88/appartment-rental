@@ -14,6 +14,8 @@ public sealed record HostPropertyDetailsDto(
     string ZipCode,
     string MapUrl,
     decimal PricePerNight,
+    decimal? ServiceFeePercentage,
+    decimal? TaxPercentage,
     string Currency,
     int MaxGuests,
     PropertyStatus Status,

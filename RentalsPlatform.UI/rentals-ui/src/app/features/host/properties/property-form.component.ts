@@ -43,6 +43,8 @@ interface PropertyDraft {
   zipCode: string;
   mapUrl: string;
   pricePerNight: number;
+  serviceFeePercentage: number;
+  taxPercentage: number;
   maxGuests: number;
   houseRules: string;
   amenitiesText: string;
@@ -81,6 +83,7 @@ export class PropertyFormComponent implements OnDestroy {
   readonly totalSteps = 4;
   readonly isDragOver = signal(false);
   readonly mediaTouched = signal(false);
+  readonly advancedPricingEnabled = signal(false);
   readonly existingImages = signal<HostPropertyDetails['images']>([]);
   private readonly hydratedPropertyId = signal<string | null>(null);
 
@@ -98,6 +101,8 @@ export class PropertyFormComponent implements OnDestroy {
       zipCode: '',
       mapUrl: '',
       pricePerNight: 1,
+      serviceFeePercentage: 0,
+      taxPercentage: 0,
       maxGuests: 1,
       houseRules: '',
       amenitiesText: 'Wi-Fi, Pool, Parking',
@@ -124,6 +129,8 @@ export class PropertyFormComponent implements OnDestroy {
     zipCode: this.fb.control('', [Validators.required]),
     mapUrl: this.fb.control('', [Validators.pattern(/^$|https?:\/\/.+/i)]),
     pricePerNight: this.fb.control(1, [Validators.required, Validators.min(1)]),
+    serviceFeePercentage: this.fb.control(0, [Validators.min(0), Validators.max(100)]),
+    taxPercentage: this.fb.control(0, [Validators.min(0), Validators.max(100)]),
     maxGuests: this.fb.control(1, [Validators.required, Validators.min(1)]),
     houseRules: this.fb.control(''),
     amenitiesText: this.fb.control('Wi-Fi, Pool, Parking'),
@@ -161,6 +168,8 @@ export class PropertyFormComponent implements OnDestroy {
 
     if (step === 3) {
       return this.form.controls.pricePerNight.valid
+        && this.form.controls.serviceFeePercentage.valid
+        && this.form.controls.taxPercentage.valid
         && this.form.controls.maxGuests.valid
         && this.form.controls.houseRules.valid
         && this.form.controls.amenitiesText.valid;
@@ -188,6 +197,8 @@ export class PropertyFormComponent implements OnDestroy {
             zipCode: value.zipCode ?? '',
             mapUrl: value.mapUrl ?? '',
             pricePerNight: value.pricePerNight ?? 1,
+            serviceFeePercentage: value.serviceFeePercentage ?? 0,
+            taxPercentage: value.taxPercentage ?? 0,
             maxGuests: value.maxGuests ?? 1,
             houseRules: value.houseRules ?? '',
             amenitiesText: value.amenitiesText ?? '',
@@ -265,6 +276,18 @@ export class PropertyFormComponent implements OnDestroy {
     input.value = '';
   }
 
+  toggleAdvancedPricing(): void {
+    const enabled = !this.advancedPricingEnabled();
+    this.advancedPricingEnabled.set(enabled);
+
+    if (!enabled) {
+      this.form.patchValue({
+        serviceFeePercentage: 0,
+        taxPercentage: 0,
+      });
+    }
+  }
+
   removeFile(index: number): void {
     const preview = this.previews()[index];
     URL.revokeObjectURL(preview.previewUrl);
@@ -297,7 +320,7 @@ export class PropertyFormComponent implements OnDestroy {
       return;
     }
 
-    const payload = this.wizardState().draft;
+    const payload = this.getSanitizedDraft();
     const formData = new FormData();
 
     formData.append('nameAr', payload.nameAr);
@@ -310,6 +333,8 @@ export class PropertyFormComponent implements OnDestroy {
     formData.append('zipCode', payload.zipCode);
     formData.append('mapUrl', payload.mapUrl);
     formData.append('pricePerNight', String(payload.pricePerNight));
+    formData.append('serviceFeePercentage', String(payload.serviceFeePercentage));
+    formData.append('taxPercentage', String(payload.taxPercentage));
     formData.append('maxGuests', String(payload.maxGuests));
     formData.append('category', payload.category);
     formData.append('houseRules', payload.houseRules);
@@ -386,6 +411,12 @@ export class PropertyFormComponent implements OnDestroy {
       });
     }
 
+    if (control.errors['max']) {
+      return this.tr('HOST_FORM.VALIDATION_MAX', {
+        max: control.errors['max'].max,
+      });
+    }
+
     if (control.errors['pattern']) {
       return this.tr('HOST_FORM.VALIDATION_URL');
     }
@@ -412,6 +443,9 @@ export class PropertyFormComponent implements OnDestroy {
 
   private applyPropertyData(property: HostPropertyDetails): void {
     this.hydratedPropertyId.set(property.id);
+    const serviceFeePercentage = property.serviceFeePercentage ?? 0;
+    const taxPercentage = property.taxPercentage ?? 0;
+    this.advancedPricingEnabled.set(serviceFeePercentage > 0 || taxPercentage > 0);
 
     this.form.patchValue({
       nameAr: property.nameAr,
@@ -424,6 +458,8 @@ export class PropertyFormComponent implements OnDestroy {
       zipCode: property.zipCode,
       mapUrl: property.mapUrl,
       pricePerNight: property.pricePerNight,
+      serviceFeePercentage,
+      taxPercentage,
       maxGuests: property.maxGuests,
     });
     this.existingImages.set(property.images);
@@ -442,6 +478,8 @@ export class PropertyFormComponent implements OnDestroy {
         zipCode: property.zipCode,
         mapUrl: property.mapUrl,
         pricePerNight: property.pricePerNight,
+        serviceFeePercentage,
+        taxPercentage,
         maxGuests: property.maxGuests,
       },
     }));
@@ -451,7 +489,7 @@ export class PropertyFormComponent implements OnDestroy {
     const fieldGroups = [
       ['nameAr', 'nameEn', 'descriptionAr', 'descriptionEn', 'category'],
       ['country', 'city', 'street', 'zipCode', 'mapUrl'],
-      ['pricePerNight', 'maxGuests', 'houseRules', 'amenitiesText'],
+      ['pricePerNight', 'serviceFeePercentage', 'taxPercentage', 'maxGuests', 'houseRules', 'amenitiesText'],
       [],
     ] as const;
 
@@ -491,5 +529,30 @@ export class PropertyFormComponent implements OnDestroy {
     }));
 
     this.mediaTouched.set(false);
+  }
+
+  private getSanitizedDraft(): PropertyDraft {
+    const draft = this.wizardState().draft;
+    const serviceFeePercentage = this.advancedPricingEnabled()
+      ? this.normalizePercentageValue(draft.serviceFeePercentage)
+      : 0;
+    const taxPercentage = this.advancedPricingEnabled()
+      ? this.normalizePercentageValue(draft.taxPercentage)
+      : 0;
+
+    return {
+      ...draft,
+      serviceFeePercentage,
+      taxPercentage,
+    };
+  }
+
+  private normalizePercentageValue(value: number | null | undefined): number {
+    const parsed = Number(value ?? 0);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return 0;
+    }
+
+    return parsed;
   }
 }

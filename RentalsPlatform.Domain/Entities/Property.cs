@@ -18,6 +18,8 @@ public class Property
     public Address Location { get; private set; }
     public Money PricePerNight { get; private set; }
     public decimal BasePricePerNight { get; private set; }
+    public decimal? ServiceFeePercentage { get; private set; } = 0m;
+    public decimal? TaxPercentage { get; private set; } = 0m;
 
     public int MaxGuests { get; private set; }
     public PropertyStatus Status { get; private set; } // تحديث هنا لإضافة الحالة
@@ -34,7 +36,15 @@ public class Property
     private Property() { }
 
     // الـ Constructor اللي هنستخدمه وقت إنشاء شقة جديدة
-    public Property(Guid hostId, LocalizedText name, LocalizedText description, Address location, Money pricePerNight, int maxGuests)
+    public Property(
+        Guid hostId,
+        LocalizedText name,
+        LocalizedText description,
+        Address location,
+        Money pricePerNight,
+        int maxGuests,
+        decimal? serviceFeePercentage = 0m,
+        decimal? taxPercentage = 0m)
     {
         //if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name cannot be empty");
         if (!pricePerNight.IsGreaterThanZero()) throw new ArgumentException("Price must be greater than zero");
@@ -47,6 +57,8 @@ public class Property
         PricePerNight = pricePerNight;
         BasePricePerNight = pricePerNight.Amount;
         MaxGuests = maxGuests;
+        ServiceFeePercentage = NormalizeOptionalPercentage(serviceFeePercentage, nameof(serviceFeePercentage));
+        TaxPercentage = NormalizeOptionalPercentage(taxPercentage, nameof(taxPercentage));
         Status = PropertyStatus.Pending; // الحالة الافتراضية تكون Pending
         RejectionReason = null;
         SubmittedAt = DateTime.UtcNow; // تسجيل وقت التقديم
@@ -62,7 +74,14 @@ public class Property
         BasePricePerNight = newPrice.Amount;
     }
 
-    public void UpdateDetails(LocalizedText name, LocalizedText description, Address location, Money newPrice, int maxGuests)
+    public void UpdateDetails(
+        LocalizedText name,
+        LocalizedText description,
+        Address location,
+        Money newPrice,
+        int maxGuests,
+        decimal? serviceFeePercentage = 0m,
+        decimal? taxPercentage = 0m)
     {
         if (maxGuests <= 0)
             throw new ArgumentException("Max guests must be greater than zero.");
@@ -71,6 +90,8 @@ public class Property
         Description = description;
         Location = location;
         MaxGuests = maxGuests;
+        ServiceFeePercentage = NormalizeOptionalPercentage(serviceFeePercentage, nameof(serviceFeePercentage));
+        TaxPercentage = NormalizeOptionalPercentage(taxPercentage, nameof(taxPercentage));
         UpdatePrice(newPrice);
         Version = Guid.NewGuid();
 
@@ -102,5 +123,16 @@ public class Property
     public void MarkAsBooked()
     {
         Version = Guid.NewGuid();
+    }
+
+    private static decimal NormalizeOptionalPercentage(decimal? percentage, string parameterName)
+    {
+        if (!percentage.HasValue || percentage.Value <= 0m)
+            return 0m;
+
+        if (percentage.Value > 100m)
+            throw new ArgumentOutOfRangeException(parameterName);
+
+        return percentage.Value;
     }
 }

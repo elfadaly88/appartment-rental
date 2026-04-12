@@ -29,6 +29,9 @@ export interface Property {
   bathrooms?: number;
   area?: number;
   amenities?: BilingualText[];
+  maxGuests?: number;
+  serviceFeePercentage?: number | null;
+  taxPercentage?: number | null;
 }
 
 export interface BookingPayload {

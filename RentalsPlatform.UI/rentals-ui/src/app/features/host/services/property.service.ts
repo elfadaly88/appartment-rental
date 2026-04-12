@@ -14,6 +14,8 @@ export interface HostPropertySummary {
   city: string;
   country: string;
   pricePerNight: number;
+  serviceFeePercentage: number | null;
+  taxPercentage: number | null;
   currency: string;
   maxGuests: number;
   status: PropertyStatus;
@@ -89,6 +91,8 @@ export interface HostPropertyDetails {
   zipCode: string;
   mapUrl: string;
   pricePerNight: number;
+  serviceFeePercentage: number | null;
+  taxPercentage: number | null;
   currency: string;
   maxGuests: number;
   status: PropertyStatus;
@@ -200,10 +204,10 @@ export class PropertyService {
     }
   }
 
-  async rejectBooking(bookingId: string): Promise<boolean> {
+  async rejectBooking(bookingId: string, reason: string): Promise<boolean> {
     try {
       await firstValueFrom(
-        this.http.patch(`${environment.apiUrl}/host/bookings/${encodeURIComponent(bookingId)}/reject`, {}),
+        this.http.patch(`${environment.apiUrl}/host/bookings/${encodeURIComponent(bookingId)}/reject`, { reason }),
       );
       // Remove from pipeline after rejection (optimistic update)
       this._pipelineBookings.update((current) => current.filter((b) => b.id !== bookingId));

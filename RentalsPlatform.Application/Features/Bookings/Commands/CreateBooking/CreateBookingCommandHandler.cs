@@ -17,6 +17,7 @@ public class CreateBookingCommandHandler : IRequestHandler<CreateBookingCommand,
         return await _bookingService.CreateGuestBookingAsync(
             request.PropertyId,
             request.GuestId,
+            request.GuestCount,
             request.CheckInDate,
             request.CheckOutDate,
             cancellationToken);

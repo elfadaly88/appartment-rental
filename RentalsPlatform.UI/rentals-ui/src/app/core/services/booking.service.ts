@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 export interface CreateBookingDto {
   propertyId: string;
   guestId: string; // في الواقع هنجيبه من التوكن، بس حالياً هنبعته
+  guestCount: number;
   checkInDate: string; // YYYY-MM-DD
   checkOutDate: string;
 }

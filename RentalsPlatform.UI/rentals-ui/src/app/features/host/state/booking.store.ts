@@ -116,9 +116,9 @@ export class BookingStore {
     }
   }
 
-  async rejectBooking(id: string): Promise<void> {
+  async rejectBooking(id: string, reason: string): Promise<void> {
     const previous = this._bookings().find((booking) => booking.id === id);
-    if (!previous || this.isActionInProgress(id)) {
+    if (!previous || this.isActionInProgress(id) || !reason.trim()) {
       return;
     }
 
@@ -126,7 +126,7 @@ export class BookingStore {
     this.patchBookingStatus(id, 'rejected');
 
     try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/host/bookings/${encodeURIComponent(id)}/reject`, {}));
+      await firstValueFrom(this.http.patch(`${environment.apiUrl}/host/bookings/${encodeURIComponent(id)}/reject`, { reason: reason.trim() }));
     } catch {
       this.patchBookingStatus(id, previous.status);
       this._error.set('Failed to reject booking. Please retry.');

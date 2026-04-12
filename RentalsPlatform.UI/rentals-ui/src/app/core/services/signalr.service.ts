@@ -26,6 +26,7 @@ export interface RealtimeNotification {
   propertyName?: string;
   title?: string;
   message?: string;
+  targetLink?: string;
   createdAt: string;
   raw: unknown;
 }
@@ -136,7 +137,7 @@ export class SignalrService implements OnDestroy {
           this.composeDefaultMessage(notification.guestName, notification.propertyName),
         createdAt: notification.createdAt,
         isRead: false,
-        targetLink: '/host/bookings',
+        targetLink: notification.targetLink || '/host/bookings',
       });
     });
 
@@ -196,6 +197,8 @@ export class SignalrService implements OnDestroy {
       propertyName,
       title,
       message,
+      targetLink:
+        this.readString(source, ['targetLink', 'TargetLink', 'link']) || undefined,
       createdAt: new Date().toISOString(),
       raw: payload,
     };

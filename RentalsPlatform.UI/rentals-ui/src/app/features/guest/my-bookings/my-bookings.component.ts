@@ -6,7 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { GuestBookingService, GuestBooking } from './guest-booking.service';
 import { LanguageService } from '../../../core/services/language.service';
@@ -22,6 +22,7 @@ import { LanguageService } from '../../../core/services/language.service';
 export class MyBookingsComponent implements OnInit {
   private readonly guestBookingService = inject(GuestBookingService);
   protected readonly lang = inject(LanguageService);
+  private readonly route = inject(ActivatedRoute);
 
   // ── State signals ────────────────────────────────────────────────
   protected readonly bookings = signal<GuestBooking[]>([]);
@@ -29,6 +30,8 @@ export class MyBookingsComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly activeTab = signal<'upcoming' | 'history'>('upcoming');
   protected readonly cancellingId = signal<string | null>(null);
+  /** Set from ?highlight=<bookingId> query param – drives the pulsing CTA on the matching card. */
+  protected readonly highlightedBookingId = signal<string | null>(null);
 
   // ── Today (string) for date comparisons ──────────────────────────
   protected readonly today = new Date().toISOString().split('T')[0];
@@ -58,6 +61,10 @@ export class MyBookingsComponent implements OnInit {
 
   // ── Lifecycle ─────────────────────────────────────────────────────
   ngOnInit(): void {
+    const highlight = this.route.snapshot.queryParamMap.get('highlight');
+    if (highlight) {
+      this.highlightedBookingId.set(highlight);
+    }
     this.load();
   }
 
@@ -67,6 +74,14 @@ export class MyBookingsComponent implements OnInit {
       next: (data) => {
         this.bookings.set(data);
         this.isLoading.set(false);
+        const id = this.highlightedBookingId();
+        if (id) {
+          // Switch to the "Upcoming" tab so the card is visible, then scroll to it.
+          this.activeTab.set('upcoming');
+          requestAnimationFrame(() => {
+            document.getElementById(`booking-card-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          });
+        }
       },
       error: () => {
         this.error.set(this.t('تعذر تحميل حجوزاتك', 'Failed to load bookings'));
@@ -120,6 +135,10 @@ export class MyBookingsComponent implements OnInit {
   /** True if guest can cancel (Pending or Approved). */
   protected canCancel(b: GuestBooking): boolean {
     return b.status === 1 || b.status === 6;
+  }
+
+  protected hasRejectionReason(b: GuestBooking): boolean {
+    return b.status === 3 && !!b.rejectionReason?.trim();
   }
 
   /** True if booking is fully confirmed and paid (can show directions/chat). */

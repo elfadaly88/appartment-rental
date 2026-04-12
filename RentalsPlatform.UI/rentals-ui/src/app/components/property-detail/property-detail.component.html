@@ -92,6 +92,8 @@
             <div class="flex gap-2 p-3 bg-slate-900 overflow-x-auto hide-scrollbar">
               @for (img of getAllImages(); track img) {
                 <button
+                  type="button"
+                  (click)="selectImage(img)"
                   class="flex-shrink-0 h-16 w-20 sm:h-20 sm:w-24 rounded-xl overflow-hidden border-2 transition-all duration-200 hover:opacity-100"
                   [class.border-teal-400]="getMainImage() === img"
                   [class.border-transparent]="getMainImage() !== img"
@@ -177,6 +179,23 @@
               </div>
             </div>
 
+            <div class="border border-slate-200 rounded-2xl p-3 sm:p-4">
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5" for="guestCount">
+                {{ t('عدد الضيوف', 'Guest count') }}
+              </label>
+              <input
+                type="number"
+                min="1"
+                [max]="maxGuests()"
+                formControlName="guestCount"
+                class="block w-full text-sm font-semibold text-slate-800 bg-transparent border-none outline-none focus:ring-0 p-0"
+                id="guestCount"
+              >
+              <p class="mt-1 text-xs text-slate-500">
+                {{ t('السعة القصوى', 'Maximum capacity') }}: {{ maxGuests() }}
+              </p>
+            </div>
+
             <!-- Validation messages -->
             @if (bookingForm.controls.checkInDate.invalid && bookingForm.controls.checkInDate.touched) {
               <p class="text-rose-500 text-xs font-medium flex gap-1.5 items-center">
@@ -190,6 +209,34 @@
                 {{ t('تاريخ المغادرة مطلوب', 'Check-out date is required') }}
               </p>
             }
+            @if (guestCapacityError()) {
+              <p class="text-rose-600 text-xs font-semibold flex gap-1.5 items-center" role="alert">
+                <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                {{ guestCapacityError() }}
+              </p>
+            }
+            @if (conflictWarning()) {
+              <p class="text-amber-600 text-xs font-semibold flex gap-1.5 items-center" role="alert">
+                <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.6c.75 1.335-.213 2.998-1.742 2.998H3.48c-1.53 0-2.492-1.663-1.743-2.998l6.52-11.6zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-6a1 1 0 00-1 1v3a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                {{ conflictWarning() }}
+              </p>
+            }
+
+            @if (unavailableRanges().length > 0) {
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  {{ t('تواريخ غير متاحة (مظللة بالرمادي)', 'Unavailable dates (grayed out)') }}
+                </p>
+                <div class="space-y-1.5 max-h-28 overflow-auto">
+                  @for (range of unavailableRanges(); track range.startDate + range.endDate + range.label) {
+                    <div class="rounded-lg bg-slate-200 text-slate-700 text-xs font-medium px-2 py-1 flex items-center justify-between">
+                      <span>{{ range.label }}</span>
+                      <span>{{ formatRangeDate(range.startDate) }} - {{ formatRangeDate(range.endDate) }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
 
             <!-- Dynamic Price Breakdown (only when dates selected) -->
             @if (nights() > 0) {
@@ -198,14 +245,18 @@
                   <span>{{ formattedNightlyRate() }} × {{ nights() }} {{ t('ليلة', nights() === 1 ? 'night' : 'nights') }}</span>
                   <span class="font-semibold text-slate-800">{{ formatCurrency(subtotal(), currency()) }}</span>
                 </div>
-                <div class="flex justify-between text-slate-600">
-                  <span>{{ t('رسوم الخدمة (12%)', 'Service fee (12%)') }}</span>
-                  <span class="font-semibold text-slate-800">{{ formatCurrency(serviceFee(), currency()) }}</span>
-                </div>
-                <div class="flex justify-between text-slate-600">
-                  <span>{{ t('ضرائب (14%)', 'Taxes (14%)') }}</span>
-                  <span class="font-semibold text-slate-800">{{ formatCurrency(taxes(), currency()) }}</span>
-                </div>
+                @if (serviceFee() > 0) {
+                  <div class="flex justify-between text-slate-600">
+                    <span>{{ t('رسوم الخدمة', 'Service fee') }} ({{ (serviceFeeRate() * 100).toFixed(0) }}%)</span>
+                    <span class="font-semibold text-slate-800">{{ formatCurrency(serviceFee(), currency()) }}</span>
+                  </div>
+                }
+                @if (taxes() > 0) {
+                  <div class="flex justify-between text-slate-600">
+                    <span>{{ t('ضرائب', 'Taxes') }} ({{ (taxRate() * 100).toFixed(0) }}%)</span>
+                    <span class="font-semibold text-slate-800">{{ formatCurrency(taxes(), currency()) }}</span>
+                  </div>
+                }
                 <div class="border-t border-slate-200 pt-3 flex justify-between">
                   <span class="font-bold text-slate-900 text-base">{{ t('الإجمالي', 'Total') }}</span>
                   <span class="font-bold text-teal-700 text-base">{{ formatCurrency(grandTotal(), currency()) }}</span>
@@ -216,10 +267,12 @@
             <!-- Book Now Button -->
             <button
               type="submit"
-              [disabled]="isBooking()"
+              [disabled]="!canSubmitBooking()"
               [@bookBtnPulse]="bookBtnState()"
               class="w-full flex items-center justify-center gap-3 rounded-2xl bg-teal-700 px-6 py-4 text-base font-bold text-white shadow-lg shadow-teal-700/30 hover:bg-teal-600 active:scale-95 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
             >
+
+
               @if (isBooking()) {
                 <svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
@@ -228,7 +281,8 @@
                 {{ t('جارٍ تأكيد الحجز...', 'Processing booking...') }}
               } @else {
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <path stroke-linecap="round"
+                  stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 {{ nights() > 0
                    ? t('احجز الآن — ' + formatCurrency(grandTotal(), currency()), 'Reserve — ' + formatCurrency(grandTotal(), currency()))
@@ -283,7 +337,7 @@
     </div>
     <button
       (click)="onBookNow()"
-      [disabled]="isBooking()"
+      [disabled]="!canSubmitBooking()"
       class="flex items-center gap-2 rounded-xl bg-teal-700 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-teal-600 active:scale-95 transition-all disabled:opacity-60"
     >
       {{ isBooking() ? t('...جاري', 'Processing...') : t('احجز الآن', 'Reserve now') }}

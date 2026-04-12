@@ -98,19 +98,51 @@ public class WebhooksController : ControllerBase
         {
             booking.MarkPaymentPaid();
 
+            var guestFullName = guest is null
+                ? "A guest"
+                : string.Join(" ", new[] { guest.FirstName, guest.LastName }
+                      .Where(x => !string.IsNullOrWhiteSpace(x))).Trim();
+            if (string.IsNullOrWhiteSpace(guestFullName)) guestFullName = "A guest";
+
             if (property is not null)
             {
                 var propertyName = string.IsNullOrWhiteSpace(property.Name.En) ? property.Name.Ar : property.Name.En;
-                var message = $"Payment received for booking on {propertyName}.";
+                var hostBookingLink = $"/host/bookings/{booking.Id}";
 
+                // Notify host: payment confirmed
+                var hostMessage = $"{guestFullName} completed payment for \"{propertyName}\". The booking is now fully confirmed.";
                 await _notificationService.CreateNotificationAsync(new Domain.Entities.Notification(
                     property.HostId.ToString(),
-                    "Booking Paid",
-                    message,
-                    $"/host/bookings/{booking.Id}"));
+                    "Payment Confirmed – Booking Secure",
+                    hostMessage,
+                    hostBookingLink));
 
                 await _hubContext.Clients.User(property.HostId.ToString())
-                    .SendAsync("ReceiveNotification", new { BookingId = booking.Id, Message = message });
+                    .SendAsync("ReceiveNotification", new
+                    {
+                        BookingId = booking.Id,
+                        Title = "Payment Confirmed – Booking Secure",
+                        Message = hostMessage,
+                        TargetLink = hostBookingLink
+                    });
+
+                // Notify guest: payment success
+                var guestReceiptLink = $"/receipt/{booking.Id}";
+                var guestMessage = $"Your payment for \"{propertyName}\" was received. Your stay is now confirmed!";
+                await _notificationService.CreateNotificationAsync(new Domain.Entities.Notification(
+                    booking.GuestId.ToString(),
+                    "Payment Successful – Booking Confirmed!",
+                    guestMessage,
+                    guestReceiptLink));
+
+                await _hubContext.Clients.User(booking.GuestId.ToString())
+                    .SendAsync("ReceiveNotification", new
+                    {
+                        BookingId = booking.Id,
+                        Title = "Payment Successful – Booking Confirmed!",
+                        Message = guestMessage,
+                        TargetLink = guestReceiptLink
+                    });
             }
 
             if (guest is not null && !string.IsNullOrWhiteSpace(guest.Email))

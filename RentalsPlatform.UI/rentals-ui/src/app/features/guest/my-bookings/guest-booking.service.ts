@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 
 export interface GuestBooking {
   id: string;
@@ -17,6 +17,7 @@ export interface GuestBooking {
   paymentStatus: PaymentStatus;
   /** ISO timestamp when host approved – used to compute 24-h payment deadline */
   approvedAt?: string | null;
+  rejectionReason?: string | null;
 }
 
 export type BookingStatus = 1 | 2 | 3 | 4 | 5 | 6 | 7;
