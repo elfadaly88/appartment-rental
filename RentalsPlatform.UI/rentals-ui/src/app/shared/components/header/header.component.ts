@@ -10,6 +10,7 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
   standalone: true,
   imports: [RouterLink, RouterLinkActive, TranslateModule, NotificationBellComponent],
   templateUrl: './header.component.html',
+  styleUrl: './header.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent {

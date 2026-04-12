@@ -24,11 +24,15 @@
     "ERROR_FALLBACK": "يرجى مراجعة هذا الحقل."
   },
   "NAV": {
+    "HOME": "الرئيسية",
     "LOGIN": "دخول",
+    "REGISTER": "إنشاء حساب",
     "LOGOUT": "تسجيل خروج",
     "WELCOME": "مرحباً، {{name}}",
     "PROPERTIES": "العقارات",
     "ADD_PROPERTY": "إضافة عقار",
+    "POST_PROPERTY": "نشر عقار",
+    "MY_BOOKINGS": "حجوزاتي",
     "CALENDAR": "التقويم",
     "TOGGLE_LANG_LABEL": "التبديل للإنجليزية",
     "REPORTS": "التقارير",
@@ -36,6 +40,17 @@
     "BOOKINGS": "الحجوزات"
     ,"OPEN_MENU": "فتح القائمة"
     ,"CLOSE_MENU": "إغلاق القائمة"
+  },
+  "GUEST": {
+    "PROPERTIES": {
+      "HEADING": "عقارات مميزة",
+      "SUBHEADING": "اكتشف إقامات فاخرة مختارة بعناية للمسافرين العصريين.",
+      "EMPTY_TITLE": "لا توجد عقارات متاحة حالياً",
+      "EMPTY_TEXT": "جرّب تعديل الفلاتر أو عد لاحقاً لمشاهدة قوائم جديدة.",
+      "VIEW_MAP": "عرض على الخريطة",
+      "NIGHT": "ليلة",
+      "PREMIUM_STAY": "إقامة فاخرة"
+    }
   },
   "ADMIN": {
     "COMMON": {

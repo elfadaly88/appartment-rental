@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RentalsPlatform.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6b6ce1e5fabb1f97b4cae65c96c89ae668d901a9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7e8d5aef04a2fb233c766cce4e9f13b5827044be")]
 [assembly: System.Reflection.AssemblyProductAttribute("RentalsPlatform.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RentalsPlatform.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,9 +1,14 @@
-<section class="list" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'">
-  <header class="list__header">
-    <h2 class="list__heading">{{ heading() }}</h2>
+<section class="mx-auto max-w-7xl px-6 py-16" [attr.dir]="locale() === 'ar' ? 'rtl' : 'ltr'">
+  <header class="mb-10">
+    <h2 class="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+      {{ 'GUEST.PROPERTIES.HEADING' | translate }}
+    </h2>
+    <p class="mt-2 text-sm text-slate-500">
+      {{ 'GUEST.PROPERTIES.SUBHEADING' | translate }}
+    </p>
   </header>
 
-  <div class="list__grid">
+  <div class="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
     @for (property of properties(); track property.id) {
       <app-property-card
         [property]="property"
@@ -11,23 +16,36 @@
         (clicked)="selectedPropertyId.set($event)"
       />
     } @empty {
-      <div class="list__empty">
-        <svg class="list__empty-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="3" width="7" height="7" rx="1"/>
-          <rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <rect x="14" y="14" width="7" height="7" rx="1"/>
-        </svg>
-        <p class="list__empty-text">{{ emptyMessage() }}</p>
+      <div class="col-span-full">
+        <div class="empty-state mx-auto max-w-2xl rounded-3xl border border-slate-200 bg-white px-8 py-16 text-center shadow-sm">
+          <div class="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-teal-50 text-teal-600">
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 11.5 12 4l9 7.5" />
+              <path d="M5.5 10.5V20h13V10.5" />
+              <path d="M9.25 20v-5.25a1.75 1.75 0 0 1 1.75-1.75h2a1.75 1.75 0 0 1 1.75 1.75V20" />
+              <path d="m7 7 1.2 1.2M17 7l-1.2 1.2" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900">
+            {{ 'GUEST.PROPERTIES.EMPTY_TITLE' | translate }}
+          </h3>
+          <p class="mx-auto mt-2 max-w-md text-sm text-slate-500">
+            {{ 'GUEST.PROPERTIES.EMPTY_TEXT' | translate }}
+          </p>
+          <svg class="mx-auto mt-8 h-6 w-28 text-slate-200" viewBox="0 0 120 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M2 12h20m8 0h20m8 0h20m8 0h20" stroke-linecap="round" />
+            <circle cx="60" cy="12" r="3" fill="currentColor" stroke="none" />
+          </svg>
+        </div>
       </div>
     }
   </div>
 </section>
 
 @if (selectedPropertyId()) {
-  <app-property-gallery 
-    [propertyId]="selectedPropertyId()!" 
-    [locale]="locale()" 
+  <app-property-gallery
+    [propertyId]="selectedPropertyId()!"
+    [locale]="locale()"
     (close)="selectedPropertyId.set(null)"
   />
 }

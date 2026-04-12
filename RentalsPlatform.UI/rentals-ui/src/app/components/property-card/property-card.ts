@@ -6,9 +6,11 @@ import {
   computed,
 } from '@angular/core';
 import { Property } from '../../models/property.model';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-property-card',
+  imports: [TranslateModule],
   templateUrl: './property-card.html',
   styleUrl: './property-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,7 +49,4 @@ export class PropertyCard {
   protected readonly mapUrl = computed(() => this.property().address.mapUrl);
   protected readonly imageUrl = computed(() => this.property().imageUrl);
   protected readonly imageAlt = computed(() => this.name());
-  protected readonly mapLabel = computed(() =>
-    this.locale() === 'ar' ? 'عرض على الخريطة' : 'View on Map'
-  );
 }

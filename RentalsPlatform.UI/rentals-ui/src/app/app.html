@@ -1,10 +1,4 @@
-@if (!isScopedLayoutRoute()) {
+<main class="min-h-screen bg-slate-50">
   <app-header />
-}
-
-<!-- Main content with responsive padding for mobile bottom nav -->
-<main class="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-  <div class="container mx-auto px-4 py-6 sm:px-6 md:py-8 lg:px-8 md:pb-8 pb-24">
-    <router-outlet />
-  </div>
+  <router-outlet />
 </main>

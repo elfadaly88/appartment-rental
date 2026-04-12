@@ -1,5 +1,5 @@
-<article class="card cursor-pointer group hover:ring-2 hover:ring-teal-500 transition-all duration-300" (click)="clicked.emit(property().id)" tabindex="0" (keyup.enter)="clicked.emit(property().id)">
-  <div class="card__media overflow-hidden relative">
+<article class="card group" (click)="clicked.emit(property().id)" tabindex="0" (keyup.enter)="clicked.emit(property().id)">
+  <div class="card__media">
     @defer (on viewport) {
       <img
         class="card__image"
@@ -15,7 +15,8 @@
     }
 
     <span class="card__price-badge">
-      {{ formattedPrice() }}
+      <span class="card__price-value">{{ formattedPrice() }}</span>
+      <span class="card__price-unit">/{{ 'GUEST.PROPERTIES.NIGHT' | translate }}</span>
     </span>
   </div>
 
@@ -28,6 +29,7 @@
       </svg>
       {{ address() }}
     </p>
+    <p class="card__meta">{{ 'GUEST.PROPERTIES.PREMIUM_STAY' | translate }}</p>
   </div>
 
   <div class="card__actions">
@@ -43,7 +45,7 @@
         <line x1="8" y1="2" x2="8" y2="18"/>
         <line x1="16" y1="6" x2="16" y2="22"/>
       </svg>
-      {{ mapLabel() }}
+      {{ 'GUEST.PROPERTIES.VIEW_MAP' | translate }}
     </a>
   </div>
 </article>

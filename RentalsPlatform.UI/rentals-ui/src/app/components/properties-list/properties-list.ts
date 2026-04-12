@@ -2,16 +2,16 @@ import {
   Component,
   ChangeDetectionStrategy,
   input,
-  computed,
 } from '@angular/core';
 import { Property } from '../../models/property.model';
 import { PropertyCard } from '../property-card/property-card';
 import { PropertyGallery } from '../property-gallery/property-gallery';
 import { signal } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-properties-list',
-  imports: [PropertyCard, PropertyGallery],
+  imports: [PropertyCard, PropertyGallery, TranslateModule],
   templateUrl: './properties-list.html',
   styleUrl: './properties-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -21,16 +21,6 @@ export class PropertiesList {
   readonly locale = input<'ar' | 'en'>('en');
 
   protected readonly selectedPropertyId = signal<string | null>(null);
-
-  protected readonly heading = computed(() =>
-    this.locale() === 'ar' ? 'العقارات المميزة' : 'Featured Properties'
-  );
-
-  protected readonly emptyMessage = computed(() =>
-    this.locale() === 'ar'
-      ? 'لا توجد عقارات متاحة حالياً'
-      : 'No properties available at this time'
-  );
 
   protected readonly trackById = (_index: number, property: Property) =>
     property.id;

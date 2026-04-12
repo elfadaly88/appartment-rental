@@ -24,11 +24,15 @@
     "ERROR_FALLBACK": "Please review this field."
   },
   "NAV": {
+    "HOME": "Home",
     "LOGIN": "Login",
+    "REGISTER": "Register",
     "LOGOUT": "Logout",
     "WELCOME": "Welcome, {{name}}",
     "PROPERTIES": "Properties",
     "ADD_PROPERTY": "Add Property",
+    "POST_PROPERTY": "Post Property",
+    "MY_BOOKINGS": "My Bookings",
     "CALENDAR": "Calendar",
     "TOGGLE_LANG_LABEL": "Switch to Arabic",
     "REPORTS": "Reports",
@@ -36,6 +40,17 @@
     "BOOKINGS": "Bookings"
     ,"OPEN_MENU": "Open menu"
     ,"CLOSE_MENU": "Close menu"
+  },
+  "GUEST": {
+    "PROPERTIES": {
+      "HEADING": "Featured Properties",
+      "SUBHEADING": "Discover premium stays curated for modern travelers.",
+      "EMPTY_TITLE": "No properties available right now",
+      "EMPTY_TEXT": "Try adjusting your filters or come back shortly for fresh listings.",
+      "VIEW_MAP": "View on Map",
+      "NIGHT": "night",
+      "PREMIUM_STAY": "Premium stay"
+    }
   },
   "ADMIN": {
     "COMMON": {
