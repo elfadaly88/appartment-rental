@@ -6,10 +6,10 @@ import { LanguageService } from './core/services/language.service';
 import { AuthService } from './core/auth/auth.service';
 import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell.component';
 import { filter, map, startWith } from 'rxjs/operators';
-
+import { HeaderComponent } from './shared/components/header/header.component';
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NotificationBellComponent, TranslateModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, HeaderComponent,NotificationBellComponent, TranslateModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

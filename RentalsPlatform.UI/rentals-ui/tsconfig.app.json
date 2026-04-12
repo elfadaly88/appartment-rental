@@ -4,6 +4,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
+    "rootDir": "src",             // <--- أضف هذا السطر هنا
     "types": [
       "node"
     ]

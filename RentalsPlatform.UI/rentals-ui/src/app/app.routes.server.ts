@@ -45,6 +45,14 @@ export const serverRoutes: ServerRoute[] = [
     path: 'chat/:bookingId/:otherParticipantId',
     renderMode: RenderMode.Client,
   },
+    {
+      path: 'user/:id',
+      renderMode: RenderMode.Client,
+    },
+    {
+      path: 'profile',
+      renderMode: RenderMode.Client,
+    },
   {
     path: '**',
     renderMode: RenderMode.Prerender,

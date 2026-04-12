@@ -13,7 +13,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { DecimalPipe, CurrencyPipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DecimalPipe, SlicePipe } from '@angular/common';
 import Swal from 'sweetalert2';
 
 import { BookingService, CreateBookingDto } from '../../core/services/booking.service';
@@ -25,7 +25,7 @@ import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-property-detail-component',
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, CurrencyPipe],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, CurrencyPipe, SlicePipe, CommonModule],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
