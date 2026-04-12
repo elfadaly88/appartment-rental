@@ -13,4 +13,5 @@ public interface IPaymobService
     Task<string> GetUnifiedCheckoutUrlAsync(Booking booking);
     bool VerifyPaymobHmac(IQueryCollection query, string receivedHmac);
     Task<string> CreateSubMerchantAsync(string authToken, HostBankDetailsDto details);
+    Task<string> InitializeBookingPaymentAsync(string authToken, string bookingId);
 }

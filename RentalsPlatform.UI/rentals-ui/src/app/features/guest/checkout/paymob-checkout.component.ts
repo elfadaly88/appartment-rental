@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   inject,
+  OnInit,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -12,11 +13,14 @@ import { PLATFORM_ID } from '@angular/core';
 
 import { CheckoutStore } from '../state/checkout.store';
 import { LanguageService } from '../../../core/services/language.service';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe'; // تأكد من استيراد الـ Pipe
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; // استيراد الـ Sanitizer
+import { effect } from '@angular/core';
 
 @Component({
   selector: 'app-paymob-checkout',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SafeHtmlPipe], // ضفنا الـ Pipe هنا عشان الـ iframe
   templateUrl: './paymob-checkout.component.html',
   styleUrl: './paymob-checkout.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,26 +29,35 @@ import { LanguageService } from '../../../core/services/language.service';
     '[attr.lang]': 'lang.currentLang()',
   },
 })
-export class PaymobCheckoutComponent {
+export class PaymobCheckoutComponent implements OnInit {
   protected readonly store = inject(CheckoutStore);
   protected readonly route = inject(ActivatedRoute);
   protected readonly lang = inject(LanguageService);
   protected readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
-
+protected safeIframeUrl: SafeResourceUrl | null = null;
+private readonly sanitizer = inject(DomSanitizer);
   private readonly bookingIdParam = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('bookingId') ?? '')),
     { initialValue: '' },
   );
 
-  constructor() {
+  ngOnInit(): void {
     const bookingId = this.bookingIdParam();
     if (bookingId) {
       void this.beginRedirect(bookingId);
-    } else {
-      this.store.clear();
     }
+  }
 
+  constructor() {
+    effect(() => {
+      const url = this.store.iframeUrl();
+      if (url) {
+        this.safeIframeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      } else {
+        this.safeIframeUrl = null;
+      }
+    });
     this.destroyRef.onDestroy(() => {
       this.store.clear();
     });
@@ -56,24 +69,20 @@ export class PaymobCheckoutComponent {
 
   protected retryRedirect(): void {
     const bookingId = this.bookingIdParam();
-    if (!bookingId) {
-      return;
+    if (bookingId) {
+      void this.beginRedirect(bookingId);
     }
-
-    void this.beginRedirect(bookingId);
   }
 
   private async beginRedirect(bookingId: string): Promise<void> {
     await this.store.initiatePayment(bookingId);
 
-    const redirectUrl = this.store.checkoutUrl();
-    if (!redirectUrl) {
-      return;
-    }
+    // 💡 التعديل هنا: بنقرأ الـ iframeUrl الجديد
+    const redirectUrl = this.store.iframeUrl();
 
-    // Unified Checkout flow: hard redirect to Paymob checkout page.
-    if (isPlatformBrowser(this.platformId)) {
-      window.location.href = redirectUrl;
-    }
+    // إذا كنت تريد التحويل لصفحة خارجية (Unified Checkout)
+    // if (redirectUrl && isPlatformBrowser(this.platformId)) {
+    //   window.location.href = redirectUrl;
+    // }
   }
 }

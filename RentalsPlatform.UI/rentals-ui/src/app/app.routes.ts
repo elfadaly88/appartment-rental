@@ -124,6 +124,6 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
-  { path: '', redirectTo: 'properties', pathMatch: 'full' },
-  { path: '**', redirectTo: 'properties' },
+  { path: '', redirectTo: 'properties', pathMatch: 'full' }, // ده بيوجهه للرئيسية فوراً
+  { path: '**', redirectTo: 'properties' }
 ];

@@ -272,4 +272,59 @@ public class PaymobService : IPaymobService
 
         return string.Equals(computedHmac, receivedHmac.Trim(), StringComparison.OrdinalIgnoreCase);
     }
+ public async Task<string> InitializeBookingPaymentAsync(string authToken, string bookingId)
+{
+    // 1. (اختياري هنا) هات بيانات الحجز من الداتا بيز عشان تحسب الـ Amount بجد
+    // هنفترض حالياً مبلغ ثابت للتجربة أو إنك هتجيبه من الـ Repository
+    var amountInCents = 10000; // 100 EGP
+
+    // 2. تسجيل الطلب (Order Registration)
+    var orderRequest = new
+    {
+        auth_token = authToken,
+        delivery_needed = "false",
+        amount_cents = amountInCents.ToString(),
+        currency = "EGP",
+        items = new[] {
+            new { name = $"Booking {bookingId}", amount_cents = amountInCents.ToString(), description = "Apartment Rental" }
+        }
+    };
+
+    var orderResponse = await _httpClient.PostAsJsonAsync("https://egypt.paymob.com/api/acceptance/steps/orders", orderRequest);
+    var orderResult = await orderResponse.Content.ReadFromJsonAsync<dynamic>();
+    string orderId = orderResult.id.ToString();
+
+    // 3. طلب مفتاح الدفع (Payment Key Generation)
+    // لازم تبعت الـ billing_data كاملة عشان الريكويست ما يرفضش
+    var paymentKeyRequest = new
+    {
+        auth_token = authToken,
+        amount_cents = amountInCents.ToString(),
+        expiration = 3600, // ساعة واحدة
+        order_id = orderId,
+        billing_data = new
+        {
+            apartment = "NA",
+            email = "guest@example.com", // المفروض تجيبه من بيانات الحجز
+            floor = "NA",
+            first_name = "Guest",
+            street = "NA",
+            building = "NA",
+            phone_number = "+201234567890",
+            shipping_method = "PKG",
+            postal_code = "NA",
+            city = "Cairo",
+            country = "EG",
+            last_name = "User",
+            state = "Cairo"
+        },
+        currency = "EGP",
+        integration_id = 456123 // حط الـ Integration ID (Card) بتاعك هنا من داشبورد باي موب
+    };
+
+    var keyResponse = await _httpClient.PostAsJsonAsync("https://egypt.paymob.com/api/acceptance/payment_keys", paymentKeyRequest);
+    var keyResult = await keyResponse.Content.ReadFromJsonAsync<dynamic>();
+
+    return keyResult.token.ToString(); // ده التوكن اللي هيروح للأنجيولار ويفتح الايفريم
+}
 }

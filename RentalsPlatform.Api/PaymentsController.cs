@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -69,4 +69,28 @@ public class PaymentsController : ControllerBase
             return BadRequest(new { Message = ex.Message });
         }
     }
+    [Authorize]
+    [HttpPost("paymob/initiate")]
+    public async Task<IActionResult> InitiatePayment([FromBody] InitiatePaymentRequest request)
+    {
+        try
+        {
+            // 1. هات التوكن بتاع باي موب
+            var authToken = await _paymobService.GetAuthTokenAsync();
+
+            // 2. سجل الطلب وهات الـ Payment Token
+            // ملاحظة: الـ _paymobService لازم يكون فيها ميثود بتتعامل مع الـ Booking وتطلع التوكن
+            var paymentToken = await _paymobService.InitializeBookingPaymentAsync(authToken, request.BookingId);
+
+            return Ok(new { token = paymentToken });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initiating payment for booking {BookingId}", request.BookingId);
+            return BadRequest(new { Message = "Could not initialize payment with Paymob." });
+        }
+    }
+
+    // الـ DTO المطلوب
+    public record InitiatePaymentRequest(string BookingId);
 }

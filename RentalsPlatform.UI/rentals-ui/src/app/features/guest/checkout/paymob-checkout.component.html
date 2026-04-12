@@ -1,32 +1,36 @@
 <section class="checkout-redirect" role="region" [attr.aria-label]="t('إعادة توجيه آمنة', 'Secure Redirect')">
   <article class="checkout-redirect__card">
-    <div class="checkout-redirect__shield" aria-hidden="true">🔒</div>
-
-    <h1>{{ t('نقوم بتجهيز الدفع', 'Processing Payment') }}</h1>
-    <p>{{ t('سيتم تحويلك خلال لحظات إلى بوابة Paymob المؤمنة.', 'You will be redirected in a moment to Paymob secure checkout.') }}</p>
 
     @if (store.isLoading()) {
+      <div class="checkout-redirect__shield" aria-hidden="true">🔒</div>
+      <h1>{{ t('نقوم بتجهيز الدفع', 'Processing Payment') }}</h1>
+      <p>{{ t('سيتم تحويلك خلال لحظات إلى بوابة Paymob المؤمنة.', 'You will be redirected in a moment to Paymob secure checkout.') }}</p>
+
       <div class="checkout-redirect__loader" aria-live="polite">
         <div class="checkout-redirect__spinner"></div>
         <span>{{ t('جارٍ التوجيه الآمن إلى بوابة الدفع...', 'Securely redirecting to payment gateway...') }}</span>
       </div>
-
-      <div class="checkout-redirect__skeleton" aria-hidden="true">
-        <div class="checkout-redirect__skeleton-line"></div>
-        <div class="checkout-redirect__skeleton-line checkout-redirect__skeleton-line--short"></div>
-      </div>
-    } @else if (store.error(); as err) {
+    } @else if (store.error()) {
       <div class="checkout-redirect__error" role="alert">
-        <p>{{ err }}</p>
+        <p>{{ store.error() }}</p>
         <button type="button" class="checkout-redirect__retry" (click)="retryRedirect()">
           {{ t('إعادة المحاولة', 'Try Again') }}
         </button>
       </div>
+    } @else if (safeIframeUrl) {
+      <div class="payment-iframe-container animate-fade-in mt-8">
+    <iframe
+      [src]="safeIframeUrl"
+      class="w-full h-[700px] border-0 rounded-3xl shadow-2xl bg-white"
+      allow="payment"
+    ></iframe>
+  </div>
     } @else {
       <div class="checkout-redirect__loader" aria-live="polite">
         <div class="checkout-redirect__spinner"></div>
         <span>{{ t('تجهيز رابط الدفع...', 'Preparing payment URL...') }}</span>
       </div>
     }
+
   </article>
 </section>

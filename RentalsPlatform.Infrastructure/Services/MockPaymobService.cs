@@ -24,4 +24,13 @@ public class MockPaymobService : IPaymobService
 
     public Task<string> CreateSubMerchantAsync(string authToken, HostBankDetailsDto details)
         => Task.FromResult($"mock-sub-merchant-{Guid.NewGuid():N}");
+
+
+        public async Task<string> InitializeBookingPaymentAsync(string authToken, string bookingId)
+{
+    // بنرجع توكن وهمي عشان الـ Build ينجح والـ UI يفتح معاك للتجربة
+    await Task.Delay(10); // محاكاة لعملية async بسيطة
+    return "mock_payment_token_from_paymob_service_for_testing_only";
+}
+
 }
