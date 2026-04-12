@@ -13,7 +13,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { SlicePipe } from '@angular/common';
+import { DecimalPipe, CurrencyPipe } from '@angular/common';
 import Swal from 'sweetalert2';
 
 import { BookingService, CreateBookingDto } from '../../core/services/booking.service';
@@ -23,21 +23,9 @@ import { LanguageService } from '../../core/services/language.service';
 import { AuthStore } from '../../core/state/auth.store';
 import { environment } from '../../../environments/environment';
 
-interface AvailabilityRange {
-  startDate: string;
-  endDate: string;
-  reason?: string | null;
-  source: 'HostBlocked' | 'Booked';
-}
-
-interface PropertyAvailabilityResponse {
-  blockedDates: AvailabilityRange[];
-  bookedDates: AvailabilityRange[];
-}
-
 @Component({
   selector: 'app-property-detail-component',
-  imports: [ReactiveFormsModule, RouterLink, SlicePipe],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, CurrencyPipe],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,12 +58,8 @@ export class PropertyDetailComponent implements OnInit {
   protected readonly propertyDetails = signal<any>(null);
   protected readonly hostProfile = signal<any>(null);
   protected readonly isLoadingDetails = signal(true);
-  protected readonly isLoadingAvailability = signal(true);
   protected readonly isBooking = signal(false);
   protected readonly bookBtnState = signal<'idle' | 'active'>('idle');
-  protected readonly selectedImageUrl = signal<string>('');
-  protected readonly blockedRanges = signal<AvailabilityRange[]>([]);
-  protected readonly bookedRanges = signal<AvailabilityRange[]>([]);
 
   protected readonly latestNotification = this.notificationService.latestNotification;
   private lastShownNotificationId: string | null = null;
@@ -86,7 +70,6 @@ export class PropertyDetailComponent implements OnInit {
   protected readonly bookingForm = this.fb.nonNullable.group({
     checkInDate: ['', [Validators.required]],
     checkOutDate: ['', [Validators.required]],
-    guestCount: [1, [Validators.required, Validators.min(1)]],
   });
 
   private readonly checkInValue = toSignal(
@@ -97,74 +80,6 @@ export class PropertyDetailComponent implements OnInit {
     this.bookingForm.controls.checkOutDate.valueChanges,
     { initialValue: '' },
   );
-  private readonly guestCountValue = toSignal(
-    this.bookingForm.controls.guestCount.valueChanges,
-    { initialValue: 1 },
-  );
-
-  protected readonly selectedGuests = computed(() => Number(this.guestCountValue() ?? 1));
-
-  protected readonly maxGuests = computed(() => {
-    const detailsMax = Number(this.propertyDetails()?.maxGuests ?? 0);
-    if (detailsMax > 0) return detailsMax;
-
-    const listMax = Number(this.property()?.maxGuests ?? 0);
-    return listMax > 0 ? listMax : 1;
-  });
-
-  protected readonly guestCapacityError = computed(() => {
-    const selected = this.selectedGuests();
-    const max = this.maxGuests();
-    if (selected <= max) return '';
-
-    return this.t(
-      `عفواً، السعة القصوى لهذا المكان هي (${max}) أفراد فقط`,
-      `Sorry, the maximum capacity for this place is (${max}) guests only.`,
-    );
-  });
-
-  protected readonly hasDateConflict = computed(() => {
-    const checkInDate = this.bookingForm.controls.checkInDate.value;
-    const checkOutDate = this.bookingForm.controls.checkOutDate.value;
-    if (!checkInDate || !checkOutDate) return false;
-
-    const checkIn = new Date(checkInDate);
-    const checkOut = new Date(checkOutDate);
-    if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime())) return false;
-    if (checkOut <= checkIn) return false;
-
-    const ranges = [...this.blockedRanges(), ...this.bookedRanges()];
-    return ranges.some((range) => this.isOverlappingRange(checkIn, checkOut, range.startDate, range.endDate));
-  });
-
-  protected readonly conflictWarning = computed(() => {
-    if (!this.hasDateConflict()) return '';
-    return this.t(
-      'تحذير تعارض: التواريخ المختارة تتداخل مع حجز مؤكد أو تواريخ محجوبة.',
-      'Conflict warning: the selected dates overlap with existing reserved or blocked dates.',
-    );
-  });
-
-  protected readonly canSubmitBooking = computed(() => {
-    console.log('Re-evaluating canSubmitBooking: isBooking=', this.isBooking(), 'formValid=', this.bookingForm.valid, 'nights=', this.nights(), 'guestError=', this.guestCapacityError(), 'dateConflict=', this.hasDateConflict());
-    if (this.isBooking() || this.bookingForm.invalid || this.nights() < 1) return false;
-    if (!!this.guestCapacityError()) return false;
-    if (this.hasDateConflict()) return false;
-    return true;
-  });
-
-  protected readonly unavailableRanges = computed(() => [
-    ...this.blockedRanges().map((x) => ({
-      startDate: x.startDate,
-      endDate: x.endDate,
-      label: this.t('محجوب بواسطة المضيف', 'Blocked by host'),
-    })),
-    ...this.bookedRanges().map((x) => ({
-      startDate: x.startDate,
-      endDate: x.endDate,
-      label: this.t('محجوز بالفعل', 'Already booked'),
-    })),
-  ]);
 
   protected readonly minCheckOutDate = computed(() => {
     const ci = this.checkInValue();
@@ -189,27 +104,8 @@ export class PropertyDetailComponent implements OnInit {
   );
 
   protected readonly subtotal = computed(() => this.nights() * this.nightlyRate());
-  protected readonly serviceFeeRate = computed(() => {
-    const value = Number(this.propertyDetails()?.serviceFeePercentage ?? this.property()?.serviceFeePercentage ?? 0);
-    return value > 0 ? value / 100 : 0;
-  });
-
-  protected readonly taxRate = computed(() => {
-    const value = Number(this.propertyDetails()?.taxPercentage ?? this.property()?.taxPercentage ?? 0);
-    return value > 0 ? value / 100 : 0;
-  });
-
-  protected readonly serviceFee = computed(() => {
-    const rate = this.serviceFeeRate();
-    if (rate <= 0) return 0;
-    return this.roundAmount(this.subtotal() * rate);
-  });
-
-  protected readonly taxes = computed(() => {
-    const rate = this.taxRate();
-    if (rate <= 0) return 0;
-    return this.roundAmount((this.subtotal() + this.serviceFee()) * rate);
-  });
+  protected readonly serviceFee = computed(() => Math.round(this.subtotal() * 0.12));
+  protected readonly taxes = computed(() => Math.round(this.subtotal() * 0.14));
   protected readonly grandTotal = computed(() =>
     this.subtotal() + this.serviceFee() + this.taxes(),
   );
@@ -238,7 +134,6 @@ export class PropertyDetailComponent implements OnInit {
     this.store.loadProperties();
     this.notificationService.startConnection();
     this.loadPropertyDetails();
-    this.loadAvailability();
   }
 
   private loadPropertyDetails(): void {
@@ -247,35 +142,10 @@ export class PropertyDetailComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.propertyDetails.set(data);
-          this.selectedImageUrl.set(Array.isArray(data?.images) ? (data.images[0] ?? '') : '');
           this.isLoadingDetails.set(false);
         },
         error: () => this.isLoadingDetails.set(false),
       });
-  }
-
-  private loadAvailability(): void {
-    this.isLoadingAvailability.set(true);
-    this.http
-      .get<PropertyAvailabilityResponse>(`${environment.apiUrl}/bookings/availability`, {
-        params: { propertyId: this.id() },
-      })
-      .subscribe({
-        next: (data) => {
-          this.blockedRanges.set(data?.blockedDates ?? []);
-          this.bookedRanges.set(data?.bookedDates ?? []);
-          this.isLoadingAvailability.set(false);
-        },
-        error: () => {
-          this.blockedRanges.set([]);
-          this.bookedRanges.set([]);
-          this.isLoadingAvailability.set(false);
-        },
-      });
-  }
-
-  private roundAmount(value: number): number {
-    return Math.round((value + Number.EPSILON) * 100) / 100;
   }
 
   // ── Booking Logic ─────────────────────────────────────────────────
@@ -311,30 +181,11 @@ export class PropertyDetailComponent implements OnInit {
       return;
     }
 
-    if (this.guestCapacityError()) {
-      void Swal.fire({
-        icon: 'error',
-        title: this.t('عدد الضيوف غير مسموح', 'Invalid guest count'),
-        text: this.guestCapacityError(),
-      });
-      return;
-    }
-
-    if (this.hasDateConflict()) {
-      void Swal.fire({
-        icon: 'warning',
-        title: this.t('تعارض في التواريخ', 'Date conflict'),
-        text: this.conflictWarning(),
-      });
-      return;
-    }
-
     this.isBooking.set(true);
 
     const payload: CreateBookingDto = {
       propertyId: this.id(),
       guestId: this.authStore.currentUser()?.id ?? '',
-      guestCount: this.selectedGuests(),
       checkInDate: this.bookingForm.controls.checkInDate.value,
       checkOutDate: this.bookingForm.controls.checkOutDate.value,
     };
@@ -394,11 +245,6 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   protected getMainImage(): string {
-    const selected = this.selectedImageUrl();
-    if (selected) {
-      return selected;
-    }
-
     const d = this.propertyDetails();
     if (d?.images?.length) return d.images[0];
     return this.property()?.imageUrl ?? '';
@@ -406,10 +252,6 @@ export class PropertyDetailComponent implements OnInit {
 
   protected getAllImages(): string[] {
     return this.propertyDetails()?.images ?? [];
-  }
-
-  protected selectImage(imageUrl: string): void {
-    this.selectedImageUrl.set(imageUrl);
   }
 
   protected getAddress(): string {
@@ -420,66 +262,6 @@ export class PropertyDetailComponent implements OnInit {
     }
     const p = this.property();
     return p ? (this.lang.currentLang() === 'ar' ? p.address.ar : p.address.en) : '';
-  }
-
-  protected formatRangeDate(dateIso: string): string {
-    const locale = this.lang.currentLang() === 'ar' ? 'ar-EG' : 'en-GB';
-    const date = this.dateOnlyToLocalDate(dateIso);
-    if (!date) {
-      return dateIso;
-    }
-
-    return date.toLocaleDateString(locale, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-
-  private isOverlappingRange(checkIn: Date, checkOut: Date, existingStart: string, existingEnd: string): boolean {
-    const checkInDay = this.toDayNumber(checkIn);
-    const checkOutDay = this.toDayNumber(checkOut);
-    const existingCheckInDay = this.toDayNumber(existingStart);
-    const existingCheckOutDay = this.toDayNumber(existingEnd);
-
-    if (checkInDay === null || checkOutDay === null || existingCheckInDay === null || existingCheckOutDay === null) {
-      return false;
-    }
-
-    // Required overlap predicate: !(CheckIn >= ExistingCheckOut || CheckOut <= ExistingCheckIn)
-    return !(checkInDay >= existingCheckOutDay || checkOutDay <= existingCheckInDay);
-  }
-
-  private toDayNumber(value: Date | string): number | null {
-    if (value instanceof Date) {
-      if (Number.isNaN(value.getTime())) {
-        return null;
-      }
-
-      return Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()) / 86400000;
-    }
-
-    const [yearText, monthText, dayText] = value.split('T')[0].split('-');
-    const year = Number(yearText);
-    const month = Number(monthText);
-    const day = Number(dayText);
-    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
-      return null;
-    }
-
-    return Date.UTC(year, month - 1, day) / 86400000;
-  }
-
-  private dateOnlyToLocalDate(value: string): Date | null {
-    const [yearText, monthText, dayText] = value.split('T')[0].split('-');
-    const year = Number(yearText);
-    const month = Number(monthText);
-    const day = Number(dayText);
-    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
-      return null;
-    }
-
-    return new Date(year, month - 1, day);
   }
 
   private showNotificationToast(message: NotificationMessage): void {

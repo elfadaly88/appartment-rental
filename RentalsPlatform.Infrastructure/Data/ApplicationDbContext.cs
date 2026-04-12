@@ -39,8 +39,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(p => p.RejectionReason).HasMaxLength(500);
             entity.Property(p => p.SubmittedAt).IsRequired();
             entity.Property(p => p.BasePricePerNight).HasColumnType("numeric(18,2)").IsRequired();
-            entity.Property(p => p.ServiceFeePercentage).HasColumnType("numeric(5,2)").HasDefaultValue(0m);
-            entity.Property(p => p.TaxPercentage).HasColumnType("numeric(5,2)").HasDefaultValue(0m);
 
             entity.HasMany(p => p.PropertyPriceRules)
                 .WithOne(r => r.Property)

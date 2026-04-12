@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+
 import { environment } from '../../../../environments/environment';
 
 export interface CheckoutPriceLineDto {
@@ -62,7 +63,6 @@ export class CheckoutStore {
 
       this._checkoutUrl.set(response.checkoutUrl);
       this._summary.set(response.bookingSummary ?? null);
-
     } catch (err) {
       console.error('[CheckoutStore] initiatePayment failed', err);
       this._error.set('Unable to generate secure payment link. Please try again.');

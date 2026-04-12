@@ -9,8 +9,6 @@ public sealed record HostPropertySummaryDto(
     string City,
     string Country,
     decimal PricePerNight,
-    decimal? ServiceFeePercentage,
-    decimal? TaxPercentage,
     string Currency,
     int MaxGuests,
     PropertyStatus Status,

@@ -42,34 +42,16 @@ public class BookingService : IBookingService
 
     // ── Create ───────────────────────────────────────────────────────
 
-    public async Task<Guid> CreateGuestBookingAsync(Guid propertyId, Guid guestId, int guestCount, DateOnly checkInDate, DateOnly checkOutDate, CancellationToken cancellationToken = default)
+    public async Task<Guid> CreateGuestBookingAsync(Guid propertyId, Guid guestId, DateOnly checkInDate, DateOnly checkOutDate, CancellationToken cancellationToken = default)
     {
-        if (guestCount < 1)
-            throw new InvalidOperationException("Guest count must be at least 1.");
-
         var property = await _propertyRepository.GetByIdAsync(propertyId, cancellationToken);
         if (property is null)
             throw new InvalidOperationException("Property not found.");
 
-        if (guestCount > property.MaxGuests)
-            throw new InvalidOperationException($"عفواً، السعة القصوى لهذا المكان هي ({property.MaxGuests}) أفراد فقط");
+        var isOverlap = await _bookingRepository.HasOverlappingBookingAsync(
+            propertyId, checkInDate, checkOutDate, cancellationToken);
 
-        var hasBlockedOverlap = await _dbContext.UnavailableDates
-            .AsNoTracking()
-            .AnyAsync(u =>
-                u.PropertyId == propertyId &&
-                !(checkInDate >= u.EndDate || checkOutDate <= u.StartDate),
-                cancellationToken);
-
-        var isOverlap = await _dbContext.Bookings
-            .AsNoTracking()
-            .AnyAsync(b =>
-                b.PropertyId == propertyId &&
-                (b.Status == BookingStatus.Confirmed || b.Status == BookingStatus.Completed) &&
-                !(checkInDate >= b.EndDate || checkOutDate <= b.StartDate),
-                cancellationToken);
-
-        if (hasBlockedOverlap || isOverlap)
+        if (isOverlap)
             throw new InvalidOperationException("Sorry, these dates are already booked.");
 
         var duration = new DateRange(checkInDate, checkOutDate);
@@ -292,13 +274,12 @@ public class BookingService : IBookingService
         bookingData.Booking.Approve();
         await _dbContext.SaveChangesAsync();
 
-        // Notify guest – embed highlight anchor so the pay button is scrolled into view
-        var approvalTargetLink = $"/my-bookings?highlight={bookingData.Booking.Id}";
+        // Notify guest
         var guestNotification = new Notification(
             bookingData.Booking.GuestId.ToString(),
             "Booking Approved – Pay Now!",
             "Your booking request has been approved. Please complete payment within 24 hours to confirm your stay.",
-            approvalTargetLink);
+            $"/my-bookings");
 
         await _notificationService.CreateNotificationAsync(guestNotification);
 
@@ -306,21 +287,18 @@ public class BookingService : IBookingService
             .SendAsync("ReceiveNotification", new
             {
                 bookingData.Booking.Id,
-                Title = "Booking Approved – Pay Now!",
-                Message = "Your booking has been approved. Pay within 24 hours to confirm your stay.",
-                TargetLink = approvalTargetLink
+                Title = "Booking Approved!",
+                Message = "Pay within 24 hours to confirm your stay.",
+                TargetLink = "/my-bookings"
             });
 
         return Result.Success("Booking approved successfully. Guest has 24 hours to pay.");
     }
 
-    public async Task<Result> RejectBookingAsync(Guid bookingId, string hostId, string reason)
+    public async Task<Result> RejectBookingAsync(Guid bookingId, string hostId)
     {
         if (!Guid.TryParse(hostId, out var hostGuid))
             return Result.Failure("Invalid host id.");
-
-        if (string.IsNullOrWhiteSpace(reason))
-            return Result.Failure("Rejection reason is required.");
 
         var bookingData = await (
             from booking in _dbContext.Bookings
@@ -335,7 +313,7 @@ public class BookingService : IBookingService
         if (bookingData.Status != BookingStatus.Pending && bookingData.Status != BookingStatus.Approved)
             return Result.Failure("Only pending or approved bookings can be rejected.");
 
-        bookingData.Reject(reason);
+        bookingData.Cancel();
         await _dbContext.SaveChangesAsync();
 
         return Result.Success("Booking rejected successfully.");
@@ -393,8 +371,7 @@ public class BookingService : IBookingService
                 booking.TotalPrice.Currency,
                 booking.Status,
                 booking.PaymentStatus,
-                booking.ApprovedAt,
-                booking.Reason))
+                booking.ApprovedAt))
             .ToListAsync(cancellationToken);
     }
 

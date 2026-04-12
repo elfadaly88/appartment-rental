@@ -34,10 +34,6 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
-    path: 'user/:id',
-    renderMode: RenderMode.Client,
-  },
-  {
     path: 'checkout/callback',
     renderMode: RenderMode.Client,
   },

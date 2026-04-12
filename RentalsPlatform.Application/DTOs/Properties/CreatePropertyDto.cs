@@ -52,11 +52,5 @@ public record CreatePropertyDto
     [Range(1, 100)]
     public int MaxGuests { get; init; } = 1;
 
-    [Range(0, 100)]
-    public decimal? ServiceFeePercentage { get; init; }
-
-    [Range(0, 100)]
-    public decimal? TaxPercentage { get; init; }
-
     public IFormFileCollection Images { get; init; } = null!;
 }

@@ -54,16 +54,13 @@ public class HostBookingsController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/reject")]
-    public async Task<IActionResult> Reject(Guid id, [FromBody] RejectBookingRequest request)
+    public async Task<IActionResult> Reject(Guid id)
     {
         var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(hostId))
             return Unauthorized();
 
-        if (string.IsNullOrWhiteSpace(request.Reason))
-            return BadRequest(new { Message = "Rejection reason is required." });
-
-        var result = await _bookingService.RejectBookingAsync(id, hostId, request.Reason.Trim());
+        var result = await _bookingService.RejectBookingAsync(id, hostId);
         if (!result.IsSuccess)
             return BadRequest(new { result.Message });
 
@@ -83,6 +80,4 @@ public class HostBookingsController : ControllerBase
 
         return Ok(new { result.Message });
     }
-
-    public sealed record RejectBookingRequest(string Reason);
 }

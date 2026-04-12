@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RentalsPlatform.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2c25d02fa06ec9359c595b6949c83f32c3770607")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9083626cff0f925d172c8186eef77a3591a831ff")]
 [assembly: System.Reflection.AssemblyProductAttribute("RentalsPlatform.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RentalsPlatform.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

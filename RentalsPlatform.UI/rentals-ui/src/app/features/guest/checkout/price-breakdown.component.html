@@ -48,33 +48,10 @@
       </div>
     }
 
-    @if (hasServiceFee()) {
-      <div class="price-breakdown__row">
-        <span>
-          {{ t('رسوم الخدمة', 'Service fee') }}
-          @if (percentageLabel(serviceFeeRate() ?? platformFeeRate()); as label) {
-            @if (label) {
-              <span>({{ label }})</span>
-            }
-          }
-        </span>
-        <strong>{{ formatCurrency(resolvedServiceFee()) }}</strong>
-      </div>
-    }
-
-    @if (hasTax()) {
-      <div class="price-breakdown__row">
-        <span>
-          {{ t('الضرائب', 'Taxes') }}
-          @if (percentageLabel(taxRate()); as label) {
-            @if (label) {
-              <span>({{ label }})</span>
-            }
-          }
-        </span>
-        <strong>{{ formatCurrency(resolvedTax()) }}</strong>
-      </div>
-    }
+    <div class="price-breakdown__row">
+      <span>{{ t('رسوم المنصة', 'Platform Fee') }} ({{ percentageLabel() }})</span>
+      <strong>{{ formatCurrency(platformFee()) }}</strong>
+    </div>
 
     <div class="price-breakdown__divider"></div>
 

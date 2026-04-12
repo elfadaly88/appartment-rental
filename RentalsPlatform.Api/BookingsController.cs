@@ -1,11 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using RentalsPlatform.Application.DTOs.Bookings;
 using RentalsPlatform.Application.Services;
-using RentalsPlatform.Domain.Enums;
-using RentalsPlatform.Infrastructure.Data;
 
 namespace RentalsPlatform.Api.Controllers;
 
@@ -14,12 +11,10 @@ namespace RentalsPlatform.Api.Controllers;
 public class BookingsController : ControllerBase
 {
     private readonly IBookingService _bookingService;
-    private readonly ApplicationDbContext _dbContext;
 
-    public BookingsController(IBookingService bookingService, ApplicationDbContext dbContext)
+    public BookingsController(IBookingService bookingService)
     {
         _bookingService = bookingService;
-        _dbContext = dbContext;
     }
 
     [Authorize]
@@ -33,15 +28,11 @@ public class BookingsController : ControllerBase
         if (request.CheckOutDate <= request.CheckInDate)
             return BadRequest(new { Message = "Check-out date must be after check-in date." });
 
-        if (request.GuestCount < 1)
-            return BadRequest(new { Message = "Guest count must be at least 1." });
-
         try
         {
             var bookingId = await _bookingService.CreateGuestBookingAsync(
                 request.PropertyId,
                 guestId,
-                request.GuestCount,
                 request.CheckInDate,
                 request.CheckOutDate,
                 cancellationToken);
@@ -52,41 +43,6 @@ public class BookingsController : ControllerBase
         {
             return BadRequest(new { Message = ex.Message });
         }
-    }
-
-    [HttpGet("availability")]
-    public async Task<IActionResult> GetAvailability([FromQuery] Guid propertyId, CancellationToken cancellationToken)
-    {
-        var blockedDates = await _dbContext.UnavailableDates
-            .AsNoTracking()
-            .Where(x => x.PropertyId == propertyId)
-            .Select(x => new
-            {
-                x.StartDate,
-                x.EndDate,
-                x.Reason,
-                Source = "HostBlocked"
-            })
-            .ToListAsync(cancellationToken);
-
-        var bookedDates = await _dbContext.Bookings
-            .AsNoTracking()
-            .Where(x => x.PropertyId == propertyId &&
-                        (x.Status == BookingStatus.Confirmed || x.Status == BookingStatus.Completed))
-            .Select(x => new
-            {
-                StartDate = x.StartDate,
-                EndDate = x.EndDate,
-                Reason = (string?)null,
-                Source = "Booked"
-            })
-            .ToListAsync(cancellationToken);
-
-        return Ok(new
-        {
-            BlockedDates = blockedDates,
-            BookedDates = bookedDates
-        });
     }
 
     [HttpGet("quote")]
@@ -154,6 +110,6 @@ public class BookingsController : ControllerBase
         return Ok(new { result.Message });
     }
 
-    public sealed record CreateBookingRequest(Guid PropertyId, int GuestCount, DateOnly CheckInDate, DateOnly CheckOutDate);
+    public sealed record CreateBookingRequest(Guid PropertyId, DateOnly CheckInDate, DateOnly CheckOutDate);
 }
 

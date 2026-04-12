@@ -31,8 +31,6 @@ public class PropertiesController(
             Description = string.IsNullOrWhiteSpace(p.Description.En) ? p.Description.Ar : p.Description.En,
             Price = p.PricePerNight.Amount,
             Currency = p.PricePerNight.Currency,
-            p.ServiceFeePercentage,
-            p.TaxPercentage,
             p.MaxGuests
         });
 
@@ -109,8 +107,6 @@ public class PropertiesController(
                     Amount = p.PricePerNight.Amount,
                     Currency = p.PricePerNight.Currency,
                 },
-                p.ServiceFeePercentage,
-                p.TaxPercentage,
                 ImageUrl = p.PropertyImages
                     .OrderByDescending(i => i.IsMain)
                     .Select(i => i.Url)
@@ -137,7 +133,7 @@ public class PropertiesController(
         if (property is null)
             return NotFound(new { Message = "Property not found." });
 
-        var response = new
+        var response = new 
         {
             property.Id,
             Name = new
@@ -158,8 +154,6 @@ public class PropertiesController(
                 Amount = property.PricePerNight.Amount,
                 Currency = property.PricePerNight.Currency,
             },
-            property.ServiceFeePercentage,
-            property.TaxPercentage,
             Images = property.PropertyImages
                 .OrderByDescending(i => i.IsMain)
                 .Select(i => i.Url)
@@ -196,8 +190,6 @@ public class PropertiesController(
                 p.Location.City,
                 p.Location.Country,
                 p.PricePerNight.Amount,
-                p.ServiceFeePercentage,
-                p.TaxPercentage,
                 p.PricePerNight.Currency,
                 p.MaxGuests,
                 p.Status,
@@ -227,8 +219,6 @@ public class PropertiesController(
                 p.Location.City,
                 p.Location.Country,
                 p.PricePerNight.Amount,
-                p.ServiceFeePercentage,
-                p.TaxPercentage,
                 p.PricePerNight.Currency,
                 p.MaxGuests,
                 p.Status,
@@ -309,8 +299,6 @@ public class PropertiesController(
             property.Location.ZipCode,
             property.Location.MapUrl,
             property.PricePerNight.Amount,
-            property.ServiceFeePercentage,
-            property.TaxPercentage,
             property.PricePerNight.Currency,
             property.MaxGuests,
             property.Status,
@@ -346,9 +334,7 @@ public class PropertiesController(
             new LocalizedText(dto.DescriptionAr, dto.DescriptionEn),
             new Address(dto.Country, dto.City, dto.Street, dto.ZipCode, dto.MapUrl),
             new Money(dto.PricePerNight, "EGP"),
-            dto.MaxGuests,
-            dto.ServiceFeePercentage ?? 0m,
-            dto.TaxPercentage ?? 0m);
+            dto.MaxGuests);
 
         var uploadedPublicIds = new List<string>();
         IDbContextTransaction? transaction = null;
@@ -431,9 +417,7 @@ public class PropertiesController(
             new LocalizedText(dto.DescriptionAr, dto.DescriptionEn),
             new Address(dto.Country, dto.City, dto.Street, dto.ZipCode, dto.MapUrl),
             new Money(dto.PricePerNight, property.PricePerNight.Currency),
-            dto.MaxGuests,
-            dto.ServiceFeePercentage ?? 0m,
-            dto.TaxPercentage ?? 0m);
+            dto.MaxGuests);
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(new { Message = "Property updated successfully.", PropertyId = property.Id });

@@ -14,7 +14,6 @@ public record GuestBookingDto(
     string Currency,
     BookingStatus Status,
     PaymentStatus PaymentStatus,
-    DateTime? ApprovedAt,
-    string? RejectionReason
+    DateTime? ApprovedAt
 );
 

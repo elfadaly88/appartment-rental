@@ -21,7 +21,7 @@ public class PricingService : IPricingService
         var property = await _dbContext.Properties
             .AsNoTracking()
             .Where(p => p.Id == propertyId)
-            .Select(p => new { p.Id, p.BasePricePerNight, p.ServiceFeePercentage, p.TaxPercentage })
+            .Select(p => new { p.Id, p.BasePricePerNight })
             .FirstOrDefaultAsync();
 
         if (property is null)
@@ -33,26 +33,14 @@ public class PricingService : IPricingService
             .OrderBy(r => r.StartDate)
             .ToListAsync();
 
-        decimal subtotal = 0m;
+        decimal total = 0m;
 
         for (var day = checkIn; day < checkOut; day = day.AddDays(1))
         {
             var matchedRule = rules.FirstOrDefault(r => day >= r.StartDate && day <= r.EndDate);
-            subtotal += matchedRule?.CustomPricePerNight ?? property.BasePricePerNight;
+            total += matchedRule?.CustomPricePerNight ?? property.BasePricePerNight;
         }
 
-        var serviceFeeRate = property.ServiceFeePercentage ?? 0m;
-        var taxRate = property.TaxPercentage ?? 0m;
-
-        var serviceFee = serviceFeeRate > 0m
-            ? subtotal * (serviceFeeRate / 100m)
-            : 0m;
-
-        var taxBase = subtotal + serviceFee;
-        var tax = taxRate > 0m
-            ? taxBase * (taxRate / 100m)
-            : 0m;
-
-        return subtotal + serviceFee + tax;
+        return total;
     }
 }

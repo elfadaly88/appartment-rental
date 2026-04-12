@@ -31,7 +31,6 @@
               }
             ],
             "styles": [
-              "src/tailwind.css",
               "src/styles.scss",
               "node_modules/mapbox-gl/dist/mapbox-gl.css",
               "@angular/material/prebuilt-themes/indigo-pink.css"
@@ -53,8 +52,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "10kB",
-                  "maximumError": "14kB"
+                  "maximumWarning": "8kB",
+                  "maximumError": "12kB"
                 }
               ],
               "outputHashing": "all"
@@ -104,7 +103,6 @@
               }
             ],
             "styles": [
-              "src/tailwind.css",
               "src/styles.scss",
               "node_modules/mapbox-gl/dist/mapbox-gl.css",
               "@angular/material/prebuilt-themes/indigo-pink.css"
