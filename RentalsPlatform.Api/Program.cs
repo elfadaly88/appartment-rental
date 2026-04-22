@@ -24,6 +24,9 @@ using WebPush;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- SECRET VALIDATION LOGIC ---
+ValidateConfiguration(builder.Configuration, builder.Environment);
+
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -248,3 +251,41 @@ using (var scope = app.Services.CreateScope())
 
 
 app.Run();
+
+void ValidateConfiguration(IConfiguration config, IWebHostEnvironment env)
+{
+    var requiredSecrets = new[]
+    {
+        "ConnectionStrings:DefaultConnection",
+        "JwtSettings:Key",
+        "CloudinarySettings:ApiKey",
+        "CloudinarySettings:ApiSecret",
+        "Paymob:ApiKey",
+        "Paymob:SecretKey",
+        "VapidDetails:PrivateKey"
+    };
+
+    var missingSecrets = requiredSecrets
+        .Where(s => string.IsNullOrEmpty(config[s]) || config[s].Contains("YOUR_"))
+        .ToList();
+
+    if (missingSecrets.Any())
+    {
+        var error = $"Critical secrets missing in {env.EnvironmentName} environment: {string.Join(", ", missingSecrets)}. " +
+                    "Please ensure they are set in user-secrets (local) or environment variables (server).";
+
+        if (env.IsDevelopment())
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("==================================================================");
+            Console.WriteLine("CONFIGURATION ERROR");
+            Console.WriteLine(error);
+            Console.WriteLine("==================================================================");
+            Console.ResetColor();
+        }
+        else
+        {
+            throw new InvalidOperationException(error);
+        }
+    }
+}

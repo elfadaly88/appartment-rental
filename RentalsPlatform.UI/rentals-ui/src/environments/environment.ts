@@ -1,15 +1,15 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5020/api',
-  hubUrl: 'http://localhost:5020/hubs/notifications',
+  apiUrl: 'YOUR_API_URL',
+  hubUrl: 'YOUR_HUB_URL',
   socialAuth: {
-    googleClientId: '925688396885-pbf60vnpudiqqc1pit6a7hjlel5mnb6d.apps.googleusercontent.com',
-    facebookAppId: '3888886368074635',
+    googleClientId: 'YOUR_GOOGLE_CLIENT_ID',
+    facebookAppId: 'YOUR_FACEBOOK_APP_ID',
   },
   push: {
-    vapidPublicKey: 'BI6D_TIhiaTX6eSM-JHVqNhvaYEsYwfY769updlG3xIYhu8iHAD8Yl-DlpEjqh_GitKX7JAW6_x8_2KBQgPKrVw',
+    vapidPublicKey: 'YOUR_VAPID_PUBLIC_KEY',
   },
   mapbox: {
-    accessToken: '',
+    accessToken: 'YOUR_MAPBOX_ACCESS_TOKEN',
   },
 };

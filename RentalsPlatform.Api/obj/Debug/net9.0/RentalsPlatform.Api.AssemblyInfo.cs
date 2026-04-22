@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("9a72b25b-d289-4a6d-959e-2a98c6eb00f8")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("RentalsPlatform.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3699cba5f1aaae360302e3e7d183d737e31161b8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+73a508e1e17beec9c12573c7658cf69304fd8f4e")]
 [assembly: System.Reflection.AssemblyProductAttribute("RentalsPlatform.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RentalsPlatform.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
