@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  effect,
   OnInit,
   computed,
   inject,
@@ -15,6 +16,7 @@ import {
   HostBooking,
   BookingStatus,
 } from '../state/booking.store';
+import { SignalrService } from '../../../core/services/signalr.service';
 
 type BookingTab = 'pending' | 'upcoming' | 'history';
 
@@ -33,6 +35,8 @@ type BookingTab = 'pending' | 'upcoming' | 'history';
 export class BookingManagementComponent implements OnInit {
   protected readonly lang = inject(LanguageService);
   protected readonly bookingStore = inject(BookingStore);
+  private readonly signalr = inject(SignalrService);
+  private lastRealtimeId = '';
 
   protected readonly activeTab = signal<BookingTab>('pending');
 
@@ -116,10 +120,19 @@ export class BookingManagementComponent implements OnInit {
   protected statusLabel(status: BookingStatus): string {
     if (status === 'pending') return this.t('قيد المراجعة', 'Pending');
     if (status === 'approved') return this.t('تمت الموافقة', 'Approved');
+    if (status === 'confirmed') return this.t('مدفوع', 'Paid');
     if (status === 'active') return this.t('نشط', 'Active');
     if (status === 'completed') return this.t('مكتمل', 'Completed');
     if (status === 'rejected') return this.t('مرفوض', 'Declined');
     return this.t('ملغي', 'Cancelled');
+  }
+
+  protected guestPhoneText(booking: HostBooking): string {
+    if (booking.isGuestPhoneVerified && booking.guestPhoneFull) {
+      return booking.guestPhoneFull;
+    }
+
+    return booking.guestPhoneMasked ?? this.t('غير متاح', 'Unavailable');
   }
 
   protected formatDateRange(booking: HostBooking): string {
@@ -178,6 +191,20 @@ export class BookingManagementComponent implements OnInit {
       showConfirmButton: false,
       timer: 2800,
       title: this.t('تعذر تحديث الحجز', 'Could not update booking'),
+    });
+  }
+
+  constructor() {
+    effect(() => {
+      const latest = this.signalr.notifications()[0];
+      if (!latest || !latest.id || latest.id === this.lastRealtimeId) {
+        return;
+      }
+
+      this.lastRealtimeId = latest.id;
+      if (latest.eventType === 'payment_success') {
+        void this.bookingStore.loadBookings();
+      }
     });
   }
 }

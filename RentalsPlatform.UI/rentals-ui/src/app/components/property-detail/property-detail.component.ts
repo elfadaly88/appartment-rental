@@ -104,11 +104,7 @@ export class PropertyDetailComponent implements OnInit {
   );
 
   protected readonly subtotal = computed(() => this.nights() * this.nightlyRate());
-  protected readonly serviceFee = computed(() => Math.round(this.subtotal() * 0.12));
-  protected readonly taxes = computed(() => Math.round(this.subtotal() * 0.14));
-  protected readonly grandTotal = computed(() =>
-    this.subtotal() + this.serviceFee() + this.taxes(),
-  );
+  protected readonly grandTotal = computed(() => this.subtotal());
 
   protected readonly currency = computed(
     () => this.property()?.price?.currency ?? 'EGP',

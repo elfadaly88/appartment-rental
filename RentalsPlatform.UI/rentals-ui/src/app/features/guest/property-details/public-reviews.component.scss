@@ -431,7 +431,7 @@
 
 @media (max-width: 480px) {
   .public-reviews__card {
-    flex: 0 0 calc(100vw - 2rem);
+    flex: 0 0 min(100%, 18.5rem);
   }
 
   .public-reviews__guest-name {

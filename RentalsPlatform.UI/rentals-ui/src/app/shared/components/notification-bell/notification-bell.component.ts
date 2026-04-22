@@ -117,6 +117,11 @@ export class NotificationBellComponent implements OnInit {
     await this.router.navigateByUrl(targetLink || '/host/bookings');
   }
 
+  protected async markAsRead(id: string, event: Event): Promise<void> {
+    event.stopPropagation();
+    await this.store.markAsRead(id);
+  }
+
   protected async markAllAsRead(): Promise<void> {
     const unread = this.store.notifications().filter((item) => !item.isRead);
     await Promise.all(unread.map((item) => this.store.markAsRead(item.id)));

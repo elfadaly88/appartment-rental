@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 export type BookingStatus =
   | 'pending'
   | 'approved'
+  | 'confirmed'
   | 'active'
   | 'completed'
   | 'rejected'
@@ -16,6 +17,9 @@ export interface HostBooking {
   propertyId: string;
   propertyName: string;
   guestName: string;
+  guestPhoneMasked?: string;
+  guestPhoneFull?: string;
+  isGuestPhoneVerified?: boolean;
   guestEmail?: string;
   checkInDate: string;
   checkOutDate: string;
@@ -52,7 +56,7 @@ export class BookingStore {
         const checkIn = new Date(booking.checkInDate);
         checkIn.setHours(0, 0, 0, 0);
         return (
-          (booking.status === 'approved' || booking.status === 'active') &&
+          (booking.status === 'approved' || booking.status === 'confirmed' || booking.status === 'active') &&
           checkIn.getTime() >= now.getTime()
         );
       })

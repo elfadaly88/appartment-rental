@@ -125,6 +125,8 @@ public class BookingService : IBookingService
         var hostBookings = await (
             from booking in _dbContext.Bookings.AsNoTracking()
             join property in _dbContext.Properties.AsNoTracking() on booking.PropertyId equals property.Id
+            join guest in _dbContext.Users.AsNoTracking() on booking.GuestId.ToString() equals guest.Id into guestJoin
+            from guest in guestJoin.DefaultIfEmpty()
             where property.HostId == hostGuid
             orderby booking.StartDate descending
             select new
@@ -132,34 +134,55 @@ public class BookingService : IBookingService
                 booking.Id,
                 PropertyName = property.Name.En,
                 booking.GuestId,
+                GuestPhone = guest == null ? null : guest.PhoneNumber,
                 booking.StartDate,
                 booking.EndDate,
                 TotalPrice = booking.TotalPrice.Amount,
-                booking.Status
+                booking.Status,
+                booking.PaymentStatus
             })
             .ToListAsync();
 
         var guestIds = hostBookings.Select(x => x.GuestId.ToString()).Distinct().ToList();
 
-        var guests = await _dbContext.Users
+        // Fetch raw name parts — EF Core / Npgsql cannot translate
+        // `new[] { ... }.Where(predicate)` inside a SQL projection.
+        // String assembly is done in-memory after the DB round-trip.
+        var guestRaw = await _dbContext.Users
             .AsNoTracking()
             .Where(u => guestIds.Contains(u.Id))
-            .Select(u => new
+            .Select(u => new { u.Id, u.FirstName, u.LastName })
+            .ToListAsync();
+
+        var guests = guestRaw.ToDictionary(
+            x => x.Id,
+            x =>
             {
-                u.Id,
-                FullName = string.Join(" ", new[] { u.FirstName, u.LastName }.Where(v => !string.IsNullOrWhiteSpace(v))).Trim()
-            })
-            .ToDictionaryAsync(x => x.Id, x => string.IsNullOrWhiteSpace(x.FullName) ? "Unknown Guest" : x.FullName);
+                var full = string.Join(
+                    " ",
+                    new[] { x.FirstName, x.LastName }
+                        .Where(v => !string.IsNullOrWhiteSpace(v))
+                ).Trim();
+                return string.IsNullOrWhiteSpace(full) ? "Unknown Guest" : full;
+            });
 
         return hostBookings.Select(x =>
         {
             var guestId = x.GuestId.ToString();
             var guestName = guests.TryGetValue(guestId, out var name) ? name : "Unknown Guest";
+            var normalizedPhone = EgyptianPhoneNumber.NormalizeToLocal(x.GuestPhone);
+            var hasValidPhone = EgyptianPhoneNumber.IsValidLocal(normalizedPhone);
+            var isVerified = hasValidPhone && x.PaymentStatus == PaymentStatus.Paid;
+            var maskedPhone = hasValidPhone ? MaskPhone(normalizedPhone) : null;
+            var fullPhone = isVerified ? normalizedPhone : null;
 
             return new HostBookingDto(
                 x.Id,
                 x.PropertyName,
                 guestName,
+                maskedPhone,
+                fullPhone,
+                isVerified,
                 x.StartDate,
                 x.EndDate,
                 x.TotalPrice,
@@ -238,6 +261,14 @@ public class BookingService : IBookingService
                 pipelineStatus,
                 softBlockUntil);
         });
+    }
+
+    private static string MaskPhone(string phone)
+    {
+        if (phone.Length < 11)
+            return phone;
+
+        return $"{phone[..3]}{new string('•', 6)}{phone[^2..]}";
     }
 
     // ── Host actions ──────────────────────────────────────────────────

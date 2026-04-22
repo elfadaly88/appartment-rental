@@ -12,6 +12,7 @@ import {
   HubConnection,
   HubConnectionBuilder,
   HubConnectionState,
+  HttpTransportType,
   IHttpConnectionOptions,
   LogLevel,
 } from '@microsoft/signalr';
@@ -22,6 +23,8 @@ import { NotificationStore } from '../state/notification.store';
 
 export interface RealtimeNotification {
   id: string;
+  bookingId?: string;
+  eventType?: string;
   guestName?: string;
   propertyName?: string;
   title?: string;
@@ -53,6 +56,14 @@ export class SignalrService implements OnDestroy {
 
     const token = this.getAuthToken();
     if (!token) {
+      void this.router.navigate(['/auth']);
+      return;
+    }
+
+    if (this.isJwtExpired(token)) {
+      localStorage.removeItem('jwtToken');
+      localStorage.removeItem('token');
+      this.connectionState.set(HubConnectionState.Disconnected);
       void this.router.navigate(['/auth']);
       return;
     }
@@ -110,10 +121,12 @@ export class SignalrService implements OnDestroy {
   }
 
   private buildConnection(): void {
-    const url = environment.hubUrl;
+    const url = this.resolveHubUrl(environment.hubUrl);
 
     const options: IHttpConnectionOptions = {
       accessTokenFactory: () => this.getAuthToken(),
+      transport: HttpTransportType.WebSockets,
+      skipNegotiation: true,
     };
 
     this.hubConnection = new HubConnectionBuilder()
@@ -175,11 +188,55 @@ export class SignalrService implements OnDestroy {
     return localStorage.getItem('jwtToken') ?? '';
   }
 
+  private resolveHubUrl(url: string): string {
+    if (!isPlatformBrowser(this.platformId)) {
+      return url;
+    }
+
+    const pageIsHttps = window.location.protocol === 'https:';
+    if (pageIsHttps && url.startsWith('http://')) {
+      return `https://${url.slice('http://'.length)}`;
+    }
+
+    if (!pageIsHttps && url.startsWith('https://')) {
+      return `http://${url.slice('https://'.length)}`;
+    }
+
+    return url;
+  }
+
+  private isJwtExpired(token: string): boolean {
+    try {
+      const payloadBase64 = token.split('.')[1] ?? '';
+      if (!payloadBase64) {
+        return true;
+      }
+
+      const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+      const payload = JSON.parse(atob(padded)) as { exp?: number };
+
+      if (typeof payload.exp !== 'number') {
+        return false;
+      }
+
+      return payload.exp * 1000 <= Date.now() + 30_000;
+    } catch {
+      return true;
+    }
+  }
+
   private normalizeNotification(payload: unknown): RealtimeNotification {
     const source = (payload ?? {}) as Record<string, unknown>;
 
     const guestName =
       this.readString(source, ['guestName', 'GuestName', 'guest']) || undefined;
+
+    const bookingId =
+      this.readString(source, ['bookingId', 'BookingId']) || undefined;
+
+    const eventType =
+      this.readString(source, ['eventType', 'EventType']) || undefined;
 
     const propertyName =
       this.readString(source, ['propertyName', 'PropertyName', 'property']) || undefined;
@@ -192,6 +249,8 @@ export class SignalrService implements OnDestroy {
 
     return {
       id,
+      bookingId,
+      eventType,
       guestName,
       propertyName,
       title,

@@ -483,9 +483,17 @@
   display: grid;
   grid-template-columns: repeat(1, minmax(16.5rem, 1fr));
   gap: 0.85rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  overflow: visible;
+  scroll-snap-type: none;
   padding-block-end: 0.2rem;
+}
+
+.pipeline-scroll {
+  max-block-size: min(68vh, 44rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding-inline-end: 0.35rem;
 }
 
 .pipeline-card {
@@ -493,7 +501,6 @@
   border: 1px solid rgba(255, 255, 255, 0.62);
   background: rgba(255, 255, 255, 0.78);
   padding: 0.85rem;
-  scroll-snap-align: start;
   min-inline-size: 16.5rem;
   display: grid;
   gap: 0.45rem;
@@ -672,6 +679,7 @@ button.pipeline-card__action {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
+  border: 1px solid rgba(15, 118, 110, 0.22);
   background: rgba(15, 118, 110, 0.12);
   display: flex;
   align-items: center;
@@ -679,6 +687,7 @@ button.pipeline-card__action {
 }
 
 .guest-avatar__img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -783,20 +792,23 @@ button.pipeline-card__action {
 
 @media (min-width: 1024px) {
   .host-dashboard__main {
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    grid-template-columns: 1fr;
     align-items: start;
   }
 
   .panel--bookings {
-    position: sticky;
-    inset-block-start: 1rem;
+    position: static;
   }
 
   .pipeline-skeleton,
   .pipeline-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    overflow-x: visible;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
     scroll-snap-type: none;
+  }
+
+  .pipeline-scroll {
+    max-block-size: min(70vh, 48rem);
   }
 
   .pipeline-card {
@@ -844,3 +856,57 @@ button.pipeline-card__action {
     transform: translateX(100%);
   }
 }
+
+// ═══ PIPELINE HEADER ICON ═══════════════════════════════════════
+.panel__header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pipeline-icon-wrap {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  background: linear-gradient(145deg, var(--_accent), #10a39a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 14px rgba(15, 118, 110, 0.28);
+}
+
+.pipeline-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke: #fff;
+}
+
+// ═══ STATUS INDICATOR DOTS ══════════════════════════════════════
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot--pending  { background: #d97706; }
+.status-dot--approved { background: #2563eb; }
+.status-dot--confirmed { background: #059669; }
+.status-dot--arriving { background: #7c3aed; animation: pulse-dot 1.5s ease infinite; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.35); }
+}
+
+// ═══ PIPELINE PANEL — prominent top section ══════════════════════
+.panel--bookings {
+  border-top: 3px solid var(--_accent);
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 118, 110, 0.04),
+    var(--_glass-bg) 60px
+  );
+}
+

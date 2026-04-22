@@ -44,19 +44,19 @@ export const routes: Routes = [
       import('./features/profile/public-profile/public-profile.component').then((m) => m.PublicProfileComponent),
   },
   {
-    path: 'checkout/:bookingId',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/guest/checkout/paymob-checkout.component').then(
-        (m) => m.PaymobCheckoutComponent,
-      ),
-  },
-  {
     path: 'checkout/callback',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/guest/checkout/payment-callback.component').then(
         (m) => m.PaymentCallbackComponent,
+      ),
+  },
+  {
+    path: 'checkout/:bookingId',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/guest/checkout/paymob-checkout.component').then(
+        (m) => m.PaymobCheckoutComponent,
       ),
   },
   {
@@ -124,6 +124,10 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
-  { path: '', redirectTo: 'properties', pathMatch: 'full' }, // ده بيوجهه للرئيسية فوراً
-  { path: '**', redirectTo: 'properties' }
+  {
+   path: 'home',
+    loadComponent: () =>
+      import('./features/landing/landing.component').then((m) => m.LandingComponent),
+  },{ path: '', redirectTo: 'home', pathMatch: 'full' },
+  { path: '**', redirectTo: 'home' },
 ];

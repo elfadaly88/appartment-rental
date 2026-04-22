@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
   HubConnection,
@@ -14,6 +14,7 @@ import {
   HubConnectionState,
   IHttpConnectionOptions,
   LogLevel,
+  HttpTransportType,
 } from '@microsoft/signalr';
 
 import { environment } from '../../../environments/environment';
@@ -38,6 +39,8 @@ export class ChatService {
 
   private hubConnection: HubConnection | null = null;
   private readonly activeBookingId = signal<string | null>(null);
+  private isChatHubUnavailable = false;
+  private isChatApiUnavailable = false;
 
   readonly messages = signal<ChatMessageDto[]>([]);
   readonly isLoading = signal(false);
@@ -54,6 +57,10 @@ export class ChatService {
 
     const token = this.getAuthToken();
     if (!token) {
+      return;
+    }
+
+    if (this.isChatHubUnavailable) {
       return;
     }
 
@@ -84,6 +91,11 @@ export class ChatService {
       }
     } catch (error) {
       this.connectionState.set(HubConnectionState.Disconnected);
+      if (this.isEndpointMissingError(error)) {
+        this.isChatHubUnavailable = true;
+        this.error.set('Realtime chat is not available right now.');
+        return;
+      }
       this.error.set(this.readErrorMessage(error, 'Unable to connect to booking chat.'));
     }
   }
@@ -125,6 +137,13 @@ export class ChatService {
     }
 
     this.activeBookingId.set(normalizedBookingId);
+
+    if (this.isChatApiUnavailable) {
+      this.messages.set([]);
+      this.error.set('Chat history is not available right now.');
+      return;
+    }
+
     this.isLoading.set(true);
     this.error.set(null);
 
@@ -143,6 +162,12 @@ export class ChatService {
 
       this.messages.set(normalized);
     } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 404) {
+        this.isChatApiUnavailable = true;
+        this.error.set('Chat history endpoint is not configured on the server yet.');
+        this.messages.set([]);
+        return;
+      }
       this.error.set(this.readErrorMessage(error, 'Unable to load chat history.'));
       this.messages.set([]);
     } finally {
@@ -186,6 +211,8 @@ export class ChatService {
   private buildConnection(): void {
     const options: IHttpConnectionOptions = {
       accessTokenFactory: () => this.getAuthToken(),
+      skipNegotiation: true,
+      transport: HttpTransportType.WebSockets,
     };
 
     this.hubConnection = new HubConnectionBuilder()
@@ -253,11 +280,11 @@ export class ChatService {
   private buildChatHubUrl(): string {
     const hubUrl = environment.hubUrl?.trim();
     if (hubUrl) {
-      return hubUrl.replace(/notifications$/i, 'chat');
+      return this.resolveHubUrl(hubUrl.replace(/notifications$/i, 'chat'));
     }
 
     const apiBase = environment.apiUrl.replace(/\/?api$/i, '');
-    return `${apiBase}/hubs/chat`;
+    return this.resolveHubUrl(`${apiBase}/hubs/chat`);
   }
 
   private getAuthToken(): string {
@@ -267,7 +294,57 @@ export class ChatService {
       return '';
     }
 
-    return localStorage.getItem('jwtToken') ?? localStorage.getItem('token') ?? '';
+    const token = localStorage.getItem('jwtToken') ?? localStorage.getItem('token') ?? '';
+    if (!token) {
+      return '';
+    }
+
+    if (this.isJwtExpired(token)) {
+      localStorage.removeItem('jwtToken');
+      localStorage.removeItem('token');
+      this.error.set('Your session expired. Please log in again.');
+      return '';
+    }
+
+    return token;
+  }
+
+  private resolveHubUrl(url: string): string {
+    if (!isPlatformBrowser(this.platformId)) {
+      return url;
+    }
+
+    const pageIsHttps = window.location.protocol === 'https:';
+    if (pageIsHttps && url.startsWith('http://')) {
+      return `https://${url.slice('http://'.length)}`;
+    }
+
+    if (!pageIsHttps && url.startsWith('https://')) {
+      return `http://${url.slice('https://'.length)}`;
+    }
+
+    return url;
+  }
+
+  private isJwtExpired(token: string): boolean {
+    try {
+      const payloadBase64 = token.split('.')[1] ?? '';
+      if (!payloadBase64) {
+        return true;
+      }
+
+      const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+      const payload = JSON.parse(atob(padded)) as { exp?: number };
+
+      if (typeof payload.exp !== 'number') {
+        return false;
+      }
+
+      return payload.exp * 1000 <= Date.now() + 30_000;
+    } catch {
+      return true;
+    }
   }
 
   private readErrorMessage(error: unknown, fallback: string): string {
@@ -276,5 +353,18 @@ export class ChatService {
     }
 
     return fallback;
+  }
+
+  private isEndpointMissingError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('websocket failed to connect') ||
+      message.includes('connection could not be found on the server') ||
+      message.includes('not be a signalr endpoint')
+    );
   }
 }

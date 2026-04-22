@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 
 import { LanguageService } from '../../../core/services/language.service';
+import { PaymentVerificationService } from './payment-verification.service';
 
 @Component({
   selector: 'app-payment-callback',
@@ -18,14 +19,28 @@ import { LanguageService } from '../../../core/services/language.service';
     '[attr.lang]': 'lang.currentLang()',
   },
 })
-export class PaymentCallbackComponent {
+export class PaymentCallbackComponent implements OnInit {
+  private static readonly VerifyRetries = 5;
+  private static readonly VerifyDelayMs = 2000;
+
   protected readonly route = inject(ActivatedRoute);
+  protected readonly router = inject(Router);
+  private readonly paymentVerificationService = inject(PaymentVerificationService);
+  private readonly platformId = inject(PLATFORM_ID);
   protected readonly lang = inject(LanguageService);
+  protected readonly verifiedBookingId = signal<string | null>(null);
 
   protected readonly status = signal<'success' | 'failed' | 'processing'>('processing');
 
   private readonly successParam = toSignal(
     this.route.queryParamMap.pipe(map((q) => (q.get('success') ?? '').toLowerCase())),
+    { initialValue: '' },
+  );
+
+  private readonly bookingIdParam = toSignal(
+    this.route.queryParamMap.pipe(
+      map((q) => q.get('bookingId') ?? q.get('merchant_order_id') ?? q.get('order') ?? ''),
+    ),
     { initialValue: '' },
   );
 
@@ -58,20 +73,62 @@ export class PaymentCallbackComponent {
     );
   });
 
-  constructor() {
+  async ngOnInit(): Promise<void> {
     const value = this.successParam();
+    const successHint = value === 'true';
 
-    if (value === 'true') {
-      this.status.set('success');
-      return;
-    }
+    const bookingIdFromCallback = this.bookingIdParam();
+    const bookingId = bookingIdFromCallback || (isPlatformBrowser(this.platformId) ? sessionStorage.getItem('pendingPaymobBookingId') : '') || '';
 
-    if (value === 'false') {
+    if (!bookingId) {
       this.status.set('failed');
       return;
     }
 
     this.status.set('processing');
+
+    try {
+      const response = await this.verifyWithRetry(bookingId, successHint);
+
+      if (response.isVerified) {
+        this.verifiedBookingId.set(response.bookingId);
+        this.status.set('success');
+        if (isPlatformBrowser(this.platformId)) {
+          sessionStorage.removeItem('pendingPaymobBookingId');
+        }
+
+        await this.router.navigate(['/receipt', response.bookingId], { replaceUrl: true });
+        return;
+      }
+
+      if (value === 'false') {
+        this.status.set('failed');
+        return;
+      }
+
+      this.status.set(response.paymentStatus === 'Pending' ? 'processing' : 'failed');
+    } catch {
+      this.status.set('failed');
+    }
+  }
+
+  private async verifyWithRetry(bookingId: string, successHint: boolean) {
+    let lastResponse = await this.paymentVerificationService.verifyBookingPayment(bookingId, successHint);
+
+    if (lastResponse.isVerified || lastResponse.paymentStatus !== 'Pending' || !successHint) {
+      return lastResponse;
+    }
+
+    for (let attempt = 0; attempt < PaymentCallbackComponent.VerifyRetries; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, PaymentCallbackComponent.VerifyDelayMs));
+
+      lastResponse = await this.paymentVerificationService.verifyBookingPayment(bookingId, successHint);
+      if (lastResponse.isVerified || lastResponse.paymentStatus !== 'Pending') {
+        return lastResponse;
+      }
+    }
+
+    return lastResponse;
   }
 
   protected t(ar: string, en: string): string {

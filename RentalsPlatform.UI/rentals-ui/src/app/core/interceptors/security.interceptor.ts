@@ -41,9 +41,9 @@ export const securityInterceptor: HttpInterceptorFn = (req, next) => {
     }
   }
 
-  // withCredentials is required for HttpOnly cookie auth/session-based APIs.
+  // Removing withCredentials: true since the application uses JWT token auth
+  // Sending all localhost cookies bloats header size and causes HTTP 431 errors on Kestrel.
   const secureReq = req.clone({
-    withCredentials: true,
     setHeaders,
   });
 

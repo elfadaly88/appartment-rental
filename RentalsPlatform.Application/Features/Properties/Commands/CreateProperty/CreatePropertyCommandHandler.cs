@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using RentalsPlatform.Application.Interfaces;
 using RentalsPlatform.Domain.Entities;
 using RentalsPlatform.Domain.ValueObjects;
@@ -8,11 +8,13 @@ namespace RentalsPlatform.Application.Features.Properties.Commands.CreatePropert
 public class CreatePropertyCommandHandler : IRequestHandler<CreatePropertyCommand, Guid>
 {
     private readonly IPropertyRepository _propertyRepository;
+    private readonly INotificationService _notificationService;
 
     // بنحقن الـ Interface مش الـ DbContext
-    public CreatePropertyCommandHandler(IPropertyRepository propertyRepository)
+    public CreatePropertyCommandHandler(IPropertyRepository propertyRepository, INotificationService notificationService)
     {
         _propertyRepository = propertyRepository;
+        _notificationService = notificationService;
     }
 
     public async Task<Guid> Handle(CreatePropertyCommand request, CancellationToken cancellationToken)
@@ -36,6 +38,16 @@ public class CreatePropertyCommandHandler : IRequestHandler<CreatePropertyComman
         // 3. الحفظ في الداتابيز
         await _propertyRepository.AddAsync(property, cancellationToken);
         await _propertyRepository.SaveChangesAsync(cancellationToken);
+
+        await _notificationService.NotifyGroupAsync("Admins", "ReceiveNotification", new
+        {
+            id = Guid.NewGuid().ToString(),
+            title = "New Property Submission",
+            message = $"Host submitted '{request.Name}' for review.",
+            createdAt = DateTime.UtcNow.ToString("O"),
+            propertyName = request.Name,
+            hostId = request.HostId
+        });
 
         // 4. إرجاع الـ ID عشان الفرانتد يقدر يحول المستخدم لصفحة الشقة
         return property.Id;

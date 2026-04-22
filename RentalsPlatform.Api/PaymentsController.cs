@@ -2,8 +2,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RentalsPlatform.Application.DTOs.Payments;
 using RentalsPlatform.Domain.Entities;
+using RentalsPlatform.Domain.Enums;
+using RentalsPlatform.Infrastructure.Data;
 using RentalsPlatform.Infrastructure.Services;
 
 namespace RentalsPlatform.Api.Controllers;
@@ -14,15 +17,18 @@ public class PaymentsController : ControllerBase
 {
     private readonly IPaymobService _paymobService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ApplicationDbContext _dbContext;
     private readonly ILogger<PaymentsController> _logger;
 
     public PaymentsController(
         IPaymobService paymobService,
         UserManager<ApplicationUser> userManager,
+        ApplicationDbContext dbContext,
         ILogger<PaymentsController> logger)
     {
         _paymobService = paymobService;
         _userManager = userManager;
+        _dbContext = dbContext;
         _logger = logger;
     }
 
@@ -73,24 +79,55 @@ public class PaymentsController : ControllerBase
     [HttpPost("paymob/initiate")]
     public async Task<IActionResult> InitiatePayment([FromBody] InitiatePaymentRequest request)
     {
+        if (request.BookingId == Guid.Empty)
+            return BadRequest(new { Message = "Booking id is required." });
+
         try
         {
-            // 1. هات التوكن بتاع باي موب
-            var authToken = await _paymobService.GetAuthTokenAsync();
-
-            // 2. سجل الطلب وهات الـ Payment Token
-            // ملاحظة: الـ _paymobService لازم يكون فيها ميثود بتتعامل مع الـ Booking وتطلع التوكن
-            var paymentToken = await _paymobService.InitializeBookingPaymentAsync(authToken, request.BookingId);
-
-            return Ok(new { token = paymentToken });
+            var response = await _paymobService.InitializeBookingPaymentAsync(request.BookingId);
+            return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Unable to initiate payment for booking {BookingId}", request.BookingId);
+            return BadRequest(new { Message = ex.Message });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Paymob API error for booking {BookingId}: {StatusCode}", request.BookingId, ex.StatusCode);
+            return StatusCode(StatusCodes.Status502BadGateway, new { Message = "Payment provider returned an error. Please try again later.", Detail = ex.Message });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error initiating payment for booking {BookingId}", request.BookingId);
-            return BadRequest(new { Message = "Could not initialize payment with Paymob." });
+            _logger.LogError(ex, "Unexpected error initiating payment for booking {BookingId}", request.BookingId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "Could not initialize payment with Paymob.", Detail = ex.Message });
         }
     }
 
-    // الـ DTO المطلوب
-    public record InitiatePaymentRequest(string BookingId);
+    [Authorize]
+    [HttpGet("paymob/payment-status/{bookingId:guid}")]
+    public async Task<IActionResult> GetPaymentStatus(Guid bookingId)
+    {
+        var userIdRaw = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdRaw, out var userId))
+            return Unauthorized();
+
+        var booking = await _dbContext.Bookings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == bookingId && b.GuestId == userId);
+
+        if (booking is null)
+            return NotFound(new { Message = "Booking not found." });
+
+        var paymentStatus = await _paymobService.GetBookingPaymentStatusAsync(bookingId);
+
+        return Ok(new
+        {
+            bookingId,
+            paymentStatus = paymentStatus.ToString(),
+            isPaid = paymentStatus == PaymentStatus.Paid
+        });
+    }
+
+    public sealed record InitiatePaymentRequest(Guid BookingId);
 }

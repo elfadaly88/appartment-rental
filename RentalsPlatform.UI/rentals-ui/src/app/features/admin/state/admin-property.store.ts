@@ -7,9 +7,20 @@ import { environment } from '../../../../environments/environment';
 export interface PendingPropertyDto {
   id: string;
   title: string;
+  description: string;
   hostName: string;
   priceAmount: number;
   priceCurrency: string;
+  maxGuests?: number;
+  area?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  amenities?: string[];
+  serviceFee?: number;
+  securityDeposit?: number;
+  country?: string;
+  city?: string;
+  street?: string;
   images: string[];
   createdAt?: string;
 }
@@ -40,9 +51,20 @@ export class AdminPropertyStore {
       const mappedItems = (Array.isArray(response) ? response : []).map(item => ({
         id: item.id,
         title: item.title,
+        description: item.description || '',
         hostName: (item.hostName && item.hostName.trim() !== '') ? item.hostName : (item.email || 'Unknown Host'),
         priceAmount: item.priceAmount ?? item.price ?? 0,
         priceCurrency: item.priceCurrency || 'EGP',
+        maxGuests: item.maxGuests,
+        area: item.area,
+        bedrooms: item.bedrooms,
+        bathrooms: item.bathrooms,
+        amenities: item.amenities || [],
+        serviceFee: item.serviceFee,
+        securityDeposit: item.securityDeposit,
+        country: item.country,
+        city: item.city,
+        street: item.street,
         images: item.images || [],
         createdAt: item.createdAt || item.submittedAt
       }));

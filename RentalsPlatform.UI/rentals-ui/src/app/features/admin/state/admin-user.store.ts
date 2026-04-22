@@ -13,6 +13,7 @@ export interface AdminUserDto {
   role: AdminUserRole;
   isBanned: boolean;
   banReason?: string | null;
+  avatarUrl?: string;
 }
 
 @Injectable({ providedIn: 'root' })

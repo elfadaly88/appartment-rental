@@ -1,14 +1,14 @@
 <section class="checkout-redirect" role="region" [attr.aria-label]="t('إعادة توجيه آمنة', 'Secure Redirect')">
   <article class="checkout-redirect__card">
 
-    @if (store.isLoading()) {
-      <div class="checkout-redirect__shield" aria-hidden="true">🔒</div>
-      <h1>{{ t('نقوم بتجهيز الدفع', 'Processing Payment') }}</h1>
-      <p>{{ t('سيتم تحويلك خلال لحظات إلى بوابة Paymob المؤمنة.', 'You will be redirected in a moment to Paymob secure checkout.') }}</p>
+    <div class="checkout-redirect__shield" aria-hidden="true">🔒</div>
+    <h1>{{ t('الدفع عبر Paymob', 'Pay with Paymob') }}</h1>
+    <p>{{ t('اضغط على زر الدفع لفتح Paymob Checkout الآمن بدون iFrame.', 'Click Pay Now to open secure Paymob Checkout without an iframe.') }}</p>
 
+    @if (store.isLoading()) {
       <div class="checkout-redirect__loader" aria-live="polite">
         <div class="checkout-redirect__spinner"></div>
-        <span>{{ t('جارٍ التوجيه الآمن إلى بوابة الدفع...', 'Securely redirecting to payment gateway...') }}</span>
+        <span>{{ t('جارٍ تجهيز جلسة الدفع...', 'Preparing secure payment session...') }}</span>
       </div>
     } @else if (store.error()) {
       <div class="checkout-redirect__error" role="alert">
@@ -17,20 +17,78 @@
           {{ t('إعادة المحاولة', 'Try Again') }}
         </button>
       </div>
-    } @else if (safeIframeUrl) {
-      <div class="payment-iframe-container animate-fade-in mt-8">
-    <iframe
-      [src]="safeIframeUrl"
-      class="w-full h-[700px] border-0 rounded-3xl shadow-2xl bg-white"
-      allow="payment"
-    ></iframe>
-  </div>
     } @else {
-      <div class="checkout-redirect__loader" aria-live="polite">
-        <div class="checkout-redirect__spinner"></div>
-        <span>{{ t('تجهيز رابط الدفع...', 'Preparing payment URL...') }}</span>
+      <div class="checkout-redirect__actions">
+        <button type="button" class="checkout-redirect__pay-now" [disabled]="phoneForm.invalid || isSavingPhone()" (click)="payNow()">
+          {{ t('Pay Now', 'Pay Now') }}
+        </button>
+        <button type="button" class="checkout-redirect__phone-edit" (click)="openPhoneModal()">
+          {{ t('تحديث رقم الجوال', 'Update phone') }}
+        </button>
+
+        @if (store.paymentSession()?.checkoutUrl) {
+          <button type="button" class="checkout-redirect__manual-open" (click)="openSecurePaymentPage()">
+            {{ t('افتح صفحة الدفع الآمنة', 'Open Secure Payment Page') }}
+          </button>
+        }
       </div>
+
+      @if (store.paymentSession()?.checkoutUrl) {
+        <div class="checkout-redirect__manual-fallback" role="note" [attr.aria-label]="t('رابط الدفع الاحتياطي', 'Manual payment fallback link')">
+          <p>{{ t('إذا لم يتم فتح Paymob تلقائيًا، استخدم الرابط الآمن التالي:', 'If Paymob does not open automatically, use this secure link:') }}</p>
+          <a [href]="store.paymentSession()!.checkoutUrl" rel="noopener noreferrer">
+            {{ store.paymentSession()!.checkoutUrl }}
+          </a>
+        </div>
+      }
+
     }
 
   </article>
+
+  @if (isPhoneModalOpen()) {
+    <div class="checkout-phone-modal" role="dialog" aria-modal="true" [attr.aria-label]="t('إكمال رقم الجوال', 'Complete mobile number')">
+      <article class="checkout-phone-modal__card">
+        <h2>{{ t('خطوة أخيرة!', 'One more step!') }}</h2>
+        <p>{{ t('Paymob يتطلب رقم جوال صالح لإتمام الدفع.', 'Paymob requires a valid mobile number to process your payment.') }}</p>
+
+        <form [formGroup]="phoneForm" class="checkout-phone-modal__form" (ngSubmit)="savePhoneFromModal()">
+          <label for="checkoutPhone">{{ t('رقم الجوال', 'Mobile number') }}</label>
+          <div class="checkout-phone-modal__field">
+            <span class="checkout-phone-modal__flag">🇪🇬</span>
+            <select formControlName="countryCode" aria-label="country code">
+              <option value="+20">+20</option>
+              <option value="0020">0020</option>
+            </select>
+            <input
+              id="checkoutPhone"
+              type="tel"
+              formControlName="phoneNumber"
+              (input)="onPhoneInput()"
+              placeholder="01012345678" />
+            @if (phoneForm.controls.phoneNumber.valid && phoneForm.controls.phoneNumber.value) {
+              <span class="checkout-phone-modal__valid">✓</span>
+            }
+          </div>
+
+          @if (phoneForm.controls.phoneNumber.touched && phoneForm.controls.phoneNumber.errors?.['required']) {
+            <p class="checkout-phone-modal__error">Mobile number is required for payment security.</p>
+          }
+          @if (phoneForm.controls.phoneNumber.touched && phoneForm.controls.phoneNumber.errors?.['egyptianPhone']) {
+            <p class="checkout-phone-modal__error">Please enter a valid Egyptian mobile number (e.g., 010xxxxxxxx).</p>
+          }
+          @if (phoneForm.controls.phoneNumber.errors?.['saveFailed']) {
+            <p class="checkout-phone-modal__error">{{ t('تعذر حفظ رقم الجوال، حاول مرة أخرى.', 'Could not save your phone number. Please try again.') }}</p>
+          }
+
+          <div class="checkout-phone-modal__actions">
+            <button type="button" (click)="closePhoneModal()">{{ t('إغلاق', 'Close') }}</button>
+            <button type="submit" [disabled]="phoneForm.invalid || isSavingPhone()">
+              {{ isSavingPhone() ? t('جارٍ الحفظ...', 'Saving...') : t('حفظ المتابعة', 'Save & Continue') }}
+            </button>
+          </div>
+        </form>
+      </article>
+    </div>
+  }
 </section>

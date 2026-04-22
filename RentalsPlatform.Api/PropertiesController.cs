@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using RentalsPlatform.Application.Common;
 using RentalsPlatform.Application.DTOs.Properties;
 using RentalsPlatform.Application.Interfaces;
 using RentalsPlatform.Domain.Entities;
@@ -9,6 +10,9 @@ using RentalsPlatform.Domain.Enums;
 using RentalsPlatform.Domain.ValueObjects;
 using RentalsPlatform.Infrastructure.Data;
 using RentalsPlatform.Infrastructure.Services;
+using RentalsPlatform.Infrastructure.Hubs;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Identity;
 
 namespace RentalsPlatform.Api.Controllers;
 
@@ -17,7 +21,9 @@ namespace RentalsPlatform.Api.Controllers;
 public class PropertiesController(
     ICloudStorageService cloudStorageService,
     IPropertyRepository propertyRepository,
-    ApplicationDbContext dbContext) : BaseController
+    ApplicationDbContext dbContext,
+    IHubContext<NotificationHub> notificationHub,
+    UserManager<ApplicationUser> userManager) : BaseController
 {
     [HttpGet]
     public async Task<IActionResult> GetProperties(CancellationToken cancellationToken)
@@ -125,15 +131,33 @@ public class PropertiesController(
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetPropertyById(Guid id, CancellationToken cancellationToken)
     {
-        var property = await dbContext.Properties
-            .AsNoTracking()
-            .Include(p => p.PropertyImages)
-            .FirstOrDefaultAsync(p => p.Id == id && p.Status == PropertyStatus.Approved, cancellationToken);
+        // Single query: property + host profile via LEFT JOIN on AspNetUsers
+        var result = await (
+            from p in dbContext.Properties.AsNoTracking()
+                                          .Include(p => p.PropertyImages)
+            join u in dbContext.Users.AsNoTracking()
+                on p.HostId.ToString() equals u.Id into hostGroup
+            from host in hostGroup.DefaultIfEmpty()
+            where p.Id == id && p.Status == PropertyStatus.Approved
+            select new
+            {
+                Property = p,
+                HostName      = host != null ? (host.FullName ?? host.DisplayName ?? host.Email ?? "") : "",
+                HostAvatarUrl = host != null ? (host.AvatarUrl ?? host.ProfilePictureUrl ?? "")        : "",
+                HostJoinDate  = host != null ? host.CreatedAt : (DateTime?)null,
+            }
+        ).FirstOrDefaultAsync(cancellationToken);
 
-        if (property is null)
+        if (result is null)
             return NotFound(new { Message = "Property not found." });
 
-        var response = new 
+        var property = result.Property;
+
+        // A host is "verified" when they have both a display name and an avatar
+        var isVerified = !string.IsNullOrWhiteSpace(result.HostName)
+                      && !string.IsNullOrWhiteSpace(result.HostAvatarUrl);
+
+        var response = new
         {
             property.Id,
             Name = new
@@ -147,11 +171,11 @@ public class PropertiesController(
                 En = property.Location.City,
                 property.Location.MapUrl,
                 property.Location.Country,
-                property.Location.Street
+                property.Location.Street,
             },
             Price = new
             {
-                Amount = property.PricePerNight.Amount,
+                Amount   = property.PricePerNight.Amount,
                 Currency = property.PricePerNight.Currency,
             },
             Images = property.PropertyImages
@@ -161,9 +185,19 @@ public class PropertiesController(
             Description = new
             {
                 Ar = property.Description.Ar,
-                En = string.IsNullOrWhiteSpace(property.Description.En) ? property.Description.Ar : property.Description.En,
+                En = string.IsNullOrWhiteSpace(property.Description.En)
+                     ? property.Description.Ar
+                     : property.Description.En,
             },
-            property.MaxGuests
+            property.MaxGuests,
+            // ── Host identity card ─────────────────────────────────────
+            HostInfo = new
+            {
+                Name       = string.IsNullOrWhiteSpace(result.HostName) ? "Host" : result.HostName,
+                AvatarUrl  = result.HostAvatarUrl,
+                JoinedYear = result.HostJoinDate?.Year,
+                IsVerified = isVerified,
+            },
         };
 
         return Ok(response);
@@ -322,6 +356,13 @@ public class PropertiesController(
         if (CurrentUserId is not { } hostId)
             return Unauthorized(new { Message = "Invalid user token." });
 
+        var host = await userManager.FindByIdAsync(hostId.ToString());
+        if (host is null)
+            return Unauthorized(new { Message = "Host account not found." });
+
+        if (!EgyptianPhoneNumber.IsValidLocal(host.PhoneNumber))
+            return BadRequest(new { Message = "Mobile number is required for payment security. Please update your profile before creating a listing." });
+
         if (!ModelState.IsValid)
             return ValidationProblem(ModelState);
 
@@ -366,6 +407,26 @@ public class PropertiesController(
             await dbContext.Properties.AddAsync(property, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+
+            // Broadcast real-time notification to Admins
+            try
+            {
+                var admins = await userManager.GetUsersInRoleAsync("Admin");
+                if (admins.Any())
+                {
+                    var title = "New Property Awaiting Approval";
+                    var message = $"A new property '{property.Name.En}' was added and requires your approval.";
+
+                    await notificationHub.Clients.Users(admins.Select(a => a.Id)).SendAsync("ReceiveNotification", new
+                    {
+                        title,
+                        message,
+                        propertyName = property.Name.En,
+                        targetLink = "/admin/approvals"
+                    }, cancellationToken);
+                }
+            }
+            catch { /* Best effort */ }
 
             return CreatedAtAction(nameof(GetHostProperty), new { id = property.Id }, new
             {

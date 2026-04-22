@@ -22,6 +22,7 @@ export class HostDashboardComponent implements OnInit {
   protected readonly propertyService = inject(PropertyService);
   protected readonly bookingSearch = signal('');
   protected readonly processingId = signal<string | null>(null);
+  private readonly brokenGuestAvatars = signal<Record<string, true>>({});
 
   protected readonly statCards = computed(() => [
     {
@@ -59,9 +60,19 @@ export class HostDashboardComponent implements OnInit {
     );
   });
 
-  ngOnInit(): void {
-    void this.propertyService.loadDashboard();
-    void this.propertyService.loadPipeline();
+  async ngOnInit(): Promise<void> {
+    try {
+      await Promise.all([
+        this.propertyService.loadDashboard(),
+        this.propertyService.loadPipeline(),
+      ]);
+    } catch (e) {
+      console.error('Failed to load dashboard', e);
+    }
+  }
+
+  protected retryLoad(): void {
+    void this.ngOnInit();
   }
 
   protected t(ar: string, en: string): string {
@@ -130,6 +141,27 @@ export class HostDashboardComponent implements OnInit {
     this.processingId.set(bookingId);
     await this.propertyService.confirmCheckIn(bookingId);
     this.processingId.set(null);
+  }
+
+  protected isAvatarBroken(bookingId: string): boolean {
+    return !!this.brokenGuestAvatars()[bookingId];
+  }
+
+  protected onGuestAvatarError(bookingId: string, event?: Event): void {
+    this.brokenGuestAvatars.update((state) => ({ ...state, [bookingId]: true }));
+
+    const img = event?.target as HTMLImageElement | null;
+    if (img) {
+      img.onerror = null;
+      img.removeAttribute('src');
+    }
+  }
+
+  protected guestInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
   }
 
   /** Returns hours remaining of the 24-h soft-block, or null. */

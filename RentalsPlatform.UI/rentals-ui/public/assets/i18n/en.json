@@ -160,5 +160,55 @@
     "PRICE_RULES_LOAD_ERROR": "Unable to load price rules.",
     "PRICE_RULES_SAVE_ERROR": "Unable to save the price rule.",
     "PRICE_RULES_DELETE_ERROR": "Unable to delete the price rule."
+  },
+  "LANDING": {
+    "HERO": {
+      "EYEBROW": "Egypt's Premier Luxury Platform",
+      "TITLE_LINE1": "Find Your Perfect",
+      "TITLE_ACCENT": "Luxury Stay",
+      "SUBTITLE": "Discover handpicked, verified luxury properties across Egypt. Book with confidence, live in style.",
+      "BTN_EXPLORE": "Explore Properties",
+      "PILL_1": "Verified Listings",
+      "PILL_2": "Prime Locations",
+      "PILL_3": "Flexible Dates",
+      "CTA_PRIMARY": "Browse Properties",
+      "CTA_HOST": "List Your Property",
+      "SCROLL_HINT": "Scroll to explore"
+    },
+    "STATS": {
+      "EYEBROW": "Trusted by Thousands",
+      "TITLE": "Numbers That Speak",
+      "SUBTITLE": "Real-time platform statistics reflecting our growing community of luxury travelers and hosts.",
+      "LUXURY_UNITS": "Luxury Units",
+      "LUXURY_UNITS_SUB": "Approved & verified properties",
+      "TOTAL_CLIENTS": "Happy Clients",
+      "TOTAL_CLIENTS_SUB": "Guests & hosts on the platform",
+      "ANNUAL_TRANSACTIONS": "Bookings This Year",
+      "ANNUAL_TRANSACTIONS_SUB": "Completed stays in",
+      "ERROR": "Could not load platform stats. Please try again later."
+    },
+    "FEATURES": {
+      "VERIFIED_TITLE": "Verified Properties",
+      "VERIFIED_DESC": "Every listing is reviewed and approved by our team before going live.",
+      "SUPPORT_TITLE": "Dedicated Support",
+      "SUPPORT_DESC": "Our team is available around the clock for guests and hosts alike.",
+      "INSTANT_TITLE": "Instant Booking",
+      "INSTANT_DESC": "Secure your stay in seconds with our fast, seamless checkout flow.",
+      "SECURE_TITLE": "Secure Payments",
+      "SECURE_DESC": "All transactions are encrypted and protected by industry standards."
+    },
+    "CTA": {
+      "TITLE": "Ready for a Luxury Experience?",
+      "SUBTITLE": "Join thousands of satisfied guests who have discovered Egypt's finest properties through Luxe Rentals.",
+      "BTN_BROWSE": "Start Exploring",
+      "BTN_JOIN": "Create Free Account"
+    },
+    "FEATURED": {
+      "EYEBROW": "Handpicked for you",
+      "TITLE": "Featured Properties",
+      "SUBTITLE": "Discover premium stays curated for modern travellers",
+      "ALL": "All Cities",
+      "EMPTY": "No properties found for this filter."
+    }
   }
 }

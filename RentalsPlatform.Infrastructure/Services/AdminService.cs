@@ -24,6 +24,7 @@ public class AdminService : IAdminService
     {
         var pendingProperties = await _dbContext.Properties
             .AsNoTracking()
+            .Include(p => p.PropertyImages)
             .Where(p => p.Status == PropertyStatus.Pending)
             .Join(
                 _dbContext.Users.AsNoTracking(),
@@ -41,6 +42,11 @@ public class AdminService : IAdminService
                     DescriptionAr = property.Description.Ar,
                     PriceAmount = property.PricePerNight.Amount,
                     PriceCurrency = property.PricePerNight.Currency,
+                    MaxGuests = property.MaxGuests,
+                    Country = property.Location.Country,
+                    City = property.Location.City,
+                    Street = property.Location.Street,
+                    Images = property.PropertyImages.OrderByDescending(i => i.IsMain).Select(i => i.Url).ToList(),
                     Status = property.Status,
                     SubmittedAt = property.SubmittedAt
                 })
@@ -57,7 +63,17 @@ public class AdminService : IAdminService
             Description = string.IsNullOrWhiteSpace(property.DescriptionEn) ? property.DescriptionAr ?? string.Empty : property.DescriptionEn,
             PriceAmount = property.PriceAmount,
             PriceCurrency = property.PriceCurrency,
-            Images = Array.Empty<string>(),
+            MaxGuests = property.MaxGuests,
+            Area = 270, // Mocked for UI requirements
+            Bedrooms = 3, // Mocked for UI requirements
+            Bathrooms = 2, // Mocked for UI requirements
+            Amenities = new[] { "WiFi", "AC", "Pool", "Gym", "Smart TV", "Parking" }, // Mocked for UI requirements
+            ServiceFee = property.PriceAmount * 0.1m, // 10% service fee mock
+            SecurityDeposit = 1000m, // Mocked deposit
+            Country = string.IsNullOrWhiteSpace(property.Country) ? "Unknown" : property.Country,
+            City = string.IsNullOrWhiteSpace(property.City) ? "Unknown" : property.City,
+            Street = string.IsNullOrWhiteSpace(property.Street) ? "" : property.Street,
+            Images = property.Images,
             Status = property.Status,
             SubmittedAt = property.SubmittedAt
         });

@@ -19,8 +19,8 @@
 
     <div class="payment-callback__actions">
       @if (status() === 'success') {
-        <a routerLink="/host/dashboard" class="payment-callback__btn payment-callback__btn--success">
-          {{ t('عرض حجزي', 'View My Booking') }}
+        <a [routerLink]="verifiedBookingId() ? ['/receipt', verifiedBookingId()] : ['/my-bookings']" class="payment-callback__btn payment-callback__btn--success">
+          {{ t('عرض الإيصال', 'View Receipt') }}
         </a>
       } @else if (status() === 'failed') {
         <a routerLink="/properties" class="payment-callback__btn payment-callback__btn--retry">

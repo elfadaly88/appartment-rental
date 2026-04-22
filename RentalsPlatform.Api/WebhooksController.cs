@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 using RentalsPlatform.Application.Interfaces;
 using RentalsPlatform.Application.Services;
+using RentalsPlatform.Domain.Enums;
 using RentalsPlatform.Infrastructure.Data;
 using RentalsPlatform.Infrastructure.Hubs;
 using RentalsPlatform.Infrastructure.Services;
@@ -47,19 +49,30 @@ public class WebhooksController : ControllerBase
     [HttpPost("paymob-callback")]
     public async Task<IActionResult> PaymobCallback()
     {
-        var query = Request.Query;
-        var receivedHmac = query["hmac"].ToString();
+        IQueryCollection payload = Request.Query;
+        var receivedHmac = payload["hmac"].ToString();
+
+        if (string.IsNullOrWhiteSpace(receivedHmac) && Request.HasFormContentType)
+        {
+            var form = await Request.ReadFormAsync();
+            var payloadDictionary = form.ToDictionary(
+                pair => pair.Key,
+                pair => new StringValues(pair.Value.ToArray()),
+                StringComparer.OrdinalIgnoreCase);
+            payload = new QueryCollection(payloadDictionary);
+            receivedHmac = payload["hmac"].ToString();
+        }
 
         if (string.IsNullOrWhiteSpace(receivedHmac))
             return Unauthorized(new { Message = "Missing HMAC." });
 
-        if (!_paymobService.VerifyPaymobHmac(query, receivedHmac))
+        if (!_paymobService.VerifyPaymobHmac(payload, receivedHmac))
         {
             _logger.LogCritical("SECURITY ALERT: Invalid Paymob callback HMAC. Query: {QueryString}", Request.QueryString.Value);
             return Unauthorized(new { Message = "Invalid HMAC signature." });
         }
 
-        var paymobOrderId = query["order"].ToString();
+        var paymobOrderId = payload["order"].ToString();
         if (string.IsNullOrWhiteSpace(paymobOrderId))
             return BadRequest(new { Message = "Missing order id." });
 
@@ -67,7 +80,7 @@ public class WebhooksController : ControllerBase
         if (booking is null)
             return NotFound(new { Message = "Booking not found for this Paymob order." });
 
-        var isSuccess = bool.TryParse(query["success"].ToString(), out var successFlag) && successFlag;
+        var isSuccess = bool.TryParse(payload["success"].ToString(), out var successFlag) && successFlag;
         await ProcessPaymentResultAsync(booking, isSuccess);
 
         return Ok(new { Message = "Callback processed." });
@@ -97,6 +110,10 @@ public class WebhooksController : ControllerBase
         if (success)
         {
             booking.MarkPaymentPaid();
+            if (booking.Status is BookingStatus.Pending or BookingStatus.Approved)
+            {
+                booking.Confirm();
+            }
 
             if (property is not null)
             {
@@ -110,7 +127,14 @@ public class WebhooksController : ControllerBase
                     $"/host/bookings/{booking.Id}"));
 
                 await _hubContext.Clients.User(property.HostId.ToString())
-                    .SendAsync("ReceiveNotification", new { BookingId = booking.Id, Message = message });
+                    .SendAsync("ReceiveNotification", new
+                    {
+                        Id = $"payment-{booking.Id}",
+                        BookingId = booking.Id,
+                        EventType = "payment_success",
+                        Title = "Booking Paid",
+                        Message = message
+                    });
             }
 
             if (guest is not null && !string.IsNullOrWhiteSpace(guest.Email))

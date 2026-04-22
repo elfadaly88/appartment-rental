@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using RentalsPlatform.Application.DTOs.Payments;
 using RentalsPlatform.Domain.Entities;
+using RentalsPlatform.Domain.Enums;
 
 namespace RentalsPlatform.Infrastructure.Services;
 
@@ -13,5 +14,6 @@ public interface IPaymobService
     Task<string> GetUnifiedCheckoutUrlAsync(Booking booking);
     bool VerifyPaymobHmac(IQueryCollection query, string receivedHmac);
     Task<string> CreateSubMerchantAsync(string authToken, HostBankDetailsDto details);
-    Task<string> InitializeBookingPaymentAsync(string authToken, string bookingId);
+    Task<InitiatePaymobResponseDto> InitializeBookingPaymentAsync(Guid bookingId);
+    Task<PaymentStatus> GetBookingPaymentStatusAsync(Guid bookingId);
 }

@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthStore } from '../../../core/state/auth.store';
 import { LanguageService } from '../../../core/services/language.service';
@@ -18,37 +24,46 @@ import { LanguageService } from '../../../core/services/language.service';
 export class HostLayoutComponent {
   protected readonly lang = inject(LanguageService);
   private readonly authStore = inject(AuthStore);
+
+  // ── UI state ────────────────────────────────────────────────
   protected readonly isMenuOpen = signal(false);
   protected readonly isRtl = computed(() => this.lang.dir() === 'rtl');
-  protected readonly userEmail = computed(() => this.authStore.currentUser()?.email ?? 'host@local.com');
-  protected readonly userDisplayName = computed(() => this.authStore.currentUser()?.displayName ?? this.authStore.currentUser()?.email ?? 'host@local.com');
-  protected readonly userAvatar = computed(() => this.authStore.currentUser()?.avatarUrl);
 
+  // ── Tab navigation ───────────────────────────────────────────
   protected readonly navItems = computed(() => [
-    { path: '/host/dashboard', label: this.t('نظرة عامة', 'Overview') },
-    { path: '/host/properties/new', label: this.t('إضافة عقار', 'Add Property') },
-    { path: '/host/bookings', label: this.t('الحجوزات', 'Bookings') },
-    { path: '/host/block-dates', label: this.t('حظر التواريخ', 'Block Dates') },
-    { path: '/profile', label: this.t('الملف الشخصي', 'Profile') },
+    {
+      path: '/host/dashboard',
+      label: this.t('نظرة عامة', 'Overview'),
+      icon: '📊',
+      exact: true,
+    },
+    {
+      path: '/host/bookings',
+      label: this.t('الحجوزات', 'Bookings'),
+      icon: '📅',
+      exact: false,
+    },
+    {
+      path: '/host/block-dates',
+      label: this.t('حظر التواريخ', 'Block Dates'),
+      icon: '🚫',
+      exact: false,
+    },
+    {
+      path: '/profile',
+      label: this.t('الملف الشخصي', 'Profile'),
+      icon: '👤',
+      exact: false,
+    },
   ]);
 
-  protected readonly languageLabel = computed(() => this.t('عربي', 'EN'));
-
+  // ── Methods ──────────────────────────────────────────────────
   protected toggleMenu(): void {
-    this.isMenuOpen.update((state) => !state);
+    this.isMenuOpen.update((s) => !s);
   }
 
   protected closeMenu(): void {
     this.isMenuOpen.set(false);
-  }
-
-  protected toggleLanguage(): void {
-    this.lang.toggleLanguage();
-  }
-
-  protected logout(): void {
-    this.closeMenu();
-    this.authStore.logout();
   }
 
   protected t(ar: string, en: string): string {

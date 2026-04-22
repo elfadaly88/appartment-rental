@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RentalsPlatform.Api;
+using RentalsPlatform.Api.Chat;
 using RentalsPlatform.Api.Extensions;
 using RentalsPlatform.Api.Middleware;
 using RentalsPlatform.Application.Interfaces;
@@ -41,6 +42,7 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<VapidDetailsSettings>(builder.Configuration.GetSection("VapidDetails"));
 builder.Services.Configure<PaymobSettings>(builder.Configuration.GetSection("Paymob"));
+builder.Services.Configure<ExternalAuthSettings>(builder.Configuration.GetSection("ExternalAuth"));
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings.Key);
 
@@ -50,9 +52,10 @@ builder.Services
         options.User.RequireUniqueEmail = true;
         options.Password.RequireDigit = true;
         options.Password.RequiredLength = 8;
+        options.Password.RequiredUniqueChars = 1;
         options.Password.RequireNonAlphanumeric = true;
         options.Password.RequireUppercase = true;
-        options.Password.RequireLowercase = true;
+        options.Password.RequireLowercase = false;
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -85,7 +88,8 @@ builder.Services.AddAuthentication(options =>
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
 
-            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/hubs/notifications") || path.StartsWithSegments("/hubs/chat")))
             {
                 context.Token = accessToken;
             }
@@ -103,6 +107,10 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(IPropertyRepository).Assembly));
+builder.Services.AddHttpClient("SocialAuth", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -150,9 +158,11 @@ builder.Services.AddBackgroundJobsAndEmails(builder.Configuration);
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<SubmitReviewDtoValidator>();
 
+builder.Services.AddResponseCaching();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<IChatMessageStore, InMemoryChatMessageStore>();
 
 var app = builder.Build();
 
@@ -167,6 +177,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAngular");
+app.UseResponseCaching();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseAuthentication();
 app.UseMiddleware<EnforceBanMiddleware>();
@@ -202,7 +213,8 @@ catch (ReflectionTypeLoadException ex)
     throw new Exception($"Failed to load controllers. Details: {errorMessage}", ex);
 }
 
-app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<NotificationHub>("/hubs/notifications").RequireAuthorization();
+app.MapHub<ChatHub>("/hubs/chat").RequireAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {

@@ -29,6 +29,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         {
             entity.Property(u => u.PaymobSubMerchantId).HasMaxLength(100);
             entity.Property(u => u.BankAccountNumber).HasMaxLength(100);
+            entity.Property(u => u.PhoneNumber).HasMaxLength(20);
         });
 
         modelBuilder.Entity<Property>(entity =>

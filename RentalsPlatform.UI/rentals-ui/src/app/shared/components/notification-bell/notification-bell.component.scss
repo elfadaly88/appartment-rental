@@ -1,7 +1,7 @@
 :host {
   position: relative;
   display: inline-flex;
-  z-index: 160;
+  z-index: 99999;
 }
 
 .notify {
@@ -74,14 +74,17 @@
   inline-size: min(92vw, 360px);
   border-radius: 22px;
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.68), rgba(235, 243, 255, 0.42));
-  border: 1px solid rgba(255, 255, 255, 0.46);
+    linear-gradient(140deg, rgba(255, 255, 255, 0.75), rgba(235, 243, 255, 0.65));
+  border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow:
-    0 28px 54px rgba(14, 30, 70, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(25px) saturate(1.35);
-  -webkit-backdrop-filter: blur(25px) saturate(1.35);
+    0 35px 65px rgba(14, 30, 70, 0.35),
+    0 15px 25px rgba(14, 30, 70, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(40px) saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
   overflow: hidden;
+  z-index: 99999;
+  transform: translateZ(0); /* force stacking context */
   animation: panel-enter 220ms ease;
 }
 

@@ -9,7 +9,9 @@ import { filter, map, startWith } from 'rxjs/operators';
 import { HeaderComponent } from './shared/components/header/header.component';
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, HeaderComponent,NotificationBellComponent, TranslateModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive,
+     HeaderComponent,NotificationBellComponent
+     , TranslateModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

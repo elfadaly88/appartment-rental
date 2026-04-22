@@ -152,6 +152,7 @@
 }
 
 .card__status[data-status='approved'],
+.card__status[data-status='confirmed'],
 .card__status[data-status='active'] {
   background: rgba(14, 165, 164, 0.18);
   color: #0f766e;
@@ -184,6 +185,24 @@
   color: var(--_text-primary);
   font-weight: 700;
   margin-inline-start: 0.3rem;
+}
+
+.card__phone-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.card__verified {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.12rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(22, 163, 74, 0.16);
+  color: #15803d;
 }
 
 .card__actions {

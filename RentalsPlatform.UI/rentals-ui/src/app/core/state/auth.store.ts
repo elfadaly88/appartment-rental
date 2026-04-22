@@ -15,6 +15,7 @@ export interface AuthUser {
   email: string;
   role: string;
   displayName?: string;
+  fullName?: string;
   avatarUrl?: string;
   bio?: string;
 }
@@ -78,26 +79,33 @@ function parseUserFromToken(token: string): AuthUser {
     ]) ?? 'guest';
 
   const displayName = readClaim(payload, ['DisplayName']) ?? undefined;
+  const fullName = readClaim(payload, ['FullName', 'name', 'given_name']) ?? undefined;
   const avatarUrl = readClaim(payload, ['AvatarUrl', 'ProfilePictureUrl']) ?? undefined;
   const bio = readClaim(payload, ['Bio']) ?? undefined;
 
-  return { id, email, role, displayName, avatarUrl, bio };
+  return { id, email, role, displayName, fullName, avatarUrl, bio };
 }
 
-// auth.store.ts (النسخة المعدلة)
+// auth.store.ts
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
 
-  // ✅ التعديل: السجنال بيبدأ بمحاولة قراءة التوكن فوراً
+  // ✅ السجنال يبدأ بمحاولة قراءة التوكن فوراً مع فحص الانتهاء فقط
   private readonly _currentUser = signal<AuthUser | null>(
     (() => {
       if (typeof window !== 'undefined' && window.localStorage) {
         const token = localStorage.getItem('jwtToken');
         if (token) {
           try {
+            const payload = decodeJwtPayload(token);
+            const exp = typeof payload['exp'] === 'number' ? payload['exp'] : null;
+            if (exp !== null && exp * 1000 < Date.now()) {
+              localStorage.removeItem('jwtToken');
+              return null;
+            }
             return parseUserFromToken(token);
           } catch { return null; }
         }
@@ -122,6 +130,13 @@ export class AuthStore {
       const token = localStorage.getItem('jwtToken');
       if (token) {
         try {
+          const payload = decodeJwtPayload(token);
+          const exp = typeof payload['exp'] === 'number' ? payload['exp'] : null;
+          if (exp !== null && exp * 1000 < Date.now()) {
+            localStorage.removeItem('jwtToken');
+            void this.router.navigate(['/auth']);
+            return null;
+          }
           return parseUserFromToken(token);
         } catch {
           localStorage.removeItem('jwtToken');
@@ -130,7 +145,7 @@ export class AuthStore {
     }
     return null;
   }
-    async login(credentials: AuthCredentials): Promise<boolean> {
+  async login(credentials: AuthCredentials): Promise<boolean> {
     this._isLoading.set(true);
 
     try {
@@ -143,6 +158,16 @@ export class AuthStore {
       }
       const user = parseUserFromToken(response.token);
       this._currentUser.set(user);
+
+      const navRole = this.normalizeRole(user.role);
+      if (navRole === 'admin') {
+        await this.router.navigate(['/admin/approvals']);
+      } else if (navRole === 'host') {
+        await this.router.navigate(['/dashboard']);
+      } else {
+        await this.router.navigate(['/properties']);
+      }
+
       return true;
     } catch {
       this._currentUser.set(null);
@@ -176,6 +201,14 @@ export class AuthStore {
     }
 
     try {
+      const payload = decodeJwtPayload(token);
+      const exp = typeof payload['exp'] === 'number' ? payload['exp'] : null;
+      if (exp !== null && exp * 1000 < Date.now()) {
+        localStorage.removeItem('jwtToken');
+        this._currentUser.set(null);
+        void this.router.navigate(['/auth']);
+        return;
+      }
       const user = parseUserFromToken(token);
       this._currentUser.set(user);
     } catch {

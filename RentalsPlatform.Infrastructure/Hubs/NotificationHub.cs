@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace RentalsPlatform.Infrastructure.Hubs;
@@ -7,6 +7,23 @@ namespace RentalsPlatform.Infrastructure.Hubs;
 [Authorize]
 public class NotificationHub : Hub
 {
-    // الـ Hub هنا فاضي لأننا بنستخدمه للـ Server-to-Client push فقط.
-    // مش محتاجين العميل يبعت حاجة للسيرفر من خلاله في المرحلة دي.
+    public override async Task OnConnectedAsync()
+    {
+        var userId = Context.UserIdentifier;
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, userId);
+        }
+
+        if (Context.User != null && Context.User.IsInRole("Admin"))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, "Admins");
+        }
+        else if (Context.User != null && Context.User.IsInRole("Host"))
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, "Hosts");
+        }
+
+        await base.OnConnectedAsync();
+    }
 }

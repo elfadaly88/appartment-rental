@@ -121,7 +121,7 @@ export class PropertyFormComponent implements OnDestroy {
     country: this.fb.control('Egypt', [Validators.required]),
     city: this.fb.control('', [Validators.required]),
     street: this.fb.control('', [Validators.required]),
-    zipCode: this.fb.control('', [Validators.required]),
+    zipCode: this.fb.control(''),   // optional — not required in this region
     mapUrl: this.fb.control('', [Validators.pattern(/^$|https?:\/\/.+/i)]),
     pricePerNight: this.fb.control(1, [Validators.required, Validators.min(1)]),
     maxGuests: this.fb.control(1, [Validators.required, Validators.min(1)]),
@@ -155,15 +155,13 @@ export class PropertyFormComponent implements OnDestroy {
       return this.form.controls.country.valid
         && this.form.controls.city.valid
         && this.form.controls.street.valid
-        && this.form.controls.zipCode.valid
-        && this.form.controls.mapUrl.valid;
+        && this.form.controls.mapUrl.valid;   // zipCode optional
     }
 
     if (step === 3) {
       return this.form.controls.pricePerNight.valid
         && this.form.controls.maxGuests.valid
-        && this.form.controls.houseRules.valid
-        && this.form.controls.amenitiesText.valid;
+        && this.form.controls.amenitiesText.valid;   // houseRules is optional
     }
 
     return this.isEditMode() || this.previews().length > 0;
@@ -312,7 +310,7 @@ export class PropertyFormComponent implements OnDestroy {
     formData.append('pricePerNight', String(payload.pricePerNight));
     formData.append('maxGuests', String(payload.maxGuests));
     formData.append('category', payload.category);
-    formData.append('houseRules', payload.houseRules);
+    formData.append('houseRules', payload.houseRules || 'Please respect the property and neighbors.');
     formData.append('amenitiesText', payload.amenitiesText);
 
     this.previews().forEach((item) => {
@@ -450,8 +448,8 @@ export class PropertyFormComponent implements OnDestroy {
   private validateCurrentStep(): boolean {
     const fieldGroups = [
       ['nameAr', 'nameEn', 'descriptionAr', 'descriptionEn', 'category'],
-      ['country', 'city', 'street', 'zipCode', 'mapUrl'],
-      ['pricePerNight', 'maxGuests', 'houseRules', 'amenitiesText'],
+      ['country', 'city', 'street', 'mapUrl'],          // zipCode removed (optional)
+      ['pricePerNight', 'maxGuests', 'amenitiesText'], // houseRules optional
       [],
     ] as const;
 

@@ -5,8 +5,10 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using RentalsPlatform.Application.Common;
 using RentalsPlatform.Application.DTOs.Payments;
 using RentalsPlatform.Domain.Entities;
+using RentalsPlatform.Domain.Enums;
 using RentalsPlatform.Infrastructure.Data;
 
 namespace RentalsPlatform.Infrastructure.Services;
@@ -32,7 +34,7 @@ public class PaymobService : IPaymobService
         {
             api_key = _settings.ApiKey
         });
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessOrThrowWithBodyAsync(response, "Paymob auth token request failed");
 
         using var stream = await response.Content.ReadAsStreamAsync();
         using var document = await JsonDocument.ParseAsync(stream);
@@ -63,7 +65,7 @@ public class PaymobService : IPaymobService
             }
         });
 
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessOrThrowWithBodyAsync(response, "Paymob sub-merchant creation failed");
 
         using var stream = await response.Content.ReadAsStreamAsync();
         using var document = await JsonDocument.ParseAsync(stream);
@@ -95,7 +97,7 @@ public class PaymobService : IPaymobService
             items = Array.Empty<object>()
         });
 
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessOrThrowWithBodyAsync(response, "Paymob order registration failed");
 
         using var stream = await response.Content.ReadAsStreamAsync();
         using var document = await JsonDocument.ParseAsync(stream);
@@ -112,6 +114,8 @@ public class PaymobService : IPaymobService
         int integrationId,
         IReadOnlyCollection<PaymobSplitItem>? splits = null)
     {
+        var normalizedBillingData = NormalizeBillingData(billingData);
+
         var requestPayload = new Dictionary<string, object?>
         {
             ["auth_token"] = authToken,
@@ -120,19 +124,19 @@ public class PaymobService : IPaymobService
             ["order_id"] = orderId,
             ["billing_data"] = new
             {
-                apartment = billingData.Apartment,
-                email = billingData.Email,
-                floor = billingData.Floor,
-                first_name = billingData.FirstName,
-                street = billingData.Street,
-                building = billingData.Building,
-                phone_number = billingData.PhoneNumber,
-                shipping_method = billingData.ShippingMethod,
-                postal_code = billingData.PostalCode,
-                city = billingData.City,
-                country = billingData.Country,
-                last_name = billingData.LastName,
-                state = billingData.State
+                apartment = normalizedBillingData.Apartment,
+                email = normalizedBillingData.Email,
+                floor = normalizedBillingData.Floor,
+                first_name = normalizedBillingData.FirstName,
+                street = normalizedBillingData.Street,
+                building = normalizedBillingData.Building,
+                phone_number = normalizedBillingData.PhoneNumber,
+                shipping_method = normalizedBillingData.ShippingMethod,
+                postal_code = normalizedBillingData.PostalCode,
+                city = normalizedBillingData.City,
+                country = normalizedBillingData.Country,
+                last_name = normalizedBillingData.LastName,
+                state = normalizedBillingData.State
             },
             ["currency"] = currency,
             ["integration_id"] = integrationId,
@@ -151,7 +155,7 @@ public class PaymobService : IPaymobService
 
         var response = await _httpClient.PostAsJsonAsync("acceptance/payment_keys", requestPayload);
 
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessOrThrowWithBodyAsync(response, "Paymob payment key request failed");
 
         using var stream = await response.Content.ReadAsStreamAsync();
         using var document = await JsonDocument.ParseAsync(stream);
@@ -167,10 +171,7 @@ public class PaymobService : IPaymobService
 
     public async Task<string> GetUnifiedCheckoutUrlAsync(Booking booking)
     {
-        var authToken = await GetAuthTokenAsync();
-        var amountCents = booking.TotalPrice.Amount * 100m;
-
-        var orderId = await RegisterOrderAsync(authToken, amountCents, booking.TotalPrice.Currency);
+        var amountCents = Convert.ToInt32(decimal.Round(booking.TotalPrice.Amount * 100m, 0, MidpointRounding.AwayFromZero));
 
         var property = await _dbContext.Properties
             .AsNoTracking()
@@ -185,31 +186,8 @@ public class PaymobService : IPaymobService
         if (string.IsNullOrWhiteSpace(host.PaymobSubMerchantId))
             throw new InvalidOperationException("Host is not onboarded for split payments.");
 
-        var platformShare = decimal.Round(booking.TotalPrice.Amount * PlatformCommissionRate, 2, MidpointRounding.AwayFromZero);
-        var hostShare = booking.TotalPrice.Amount - platformShare;
-
-        var platformShareCents = Convert.ToInt32(decimal.Round(platformShare * 100m, 0, MidpointRounding.AwayFromZero));
-        var hostShareCents = Convert.ToInt32(decimal.Round(hostShare * 100m, 0, MidpointRounding.AwayFromZero));
-
-        var totalCents = Convert.ToInt32(decimal.Round(amountCents, 0, MidpointRounding.AwayFromZero));
-        if (platformShareCents + hostShareCents != totalCents)
-        {
-            hostShareCents = totalCents - platformShareCents;
-        }
-
-        var hostSplitPercentage = totalCents == 0
-            ? 0
-            : (int)Math.Round((decimal)hostShareCents / totalCents * 100m, MidpointRounding.AwayFromZero);
-
-        var splits = new List<PaymobSplitItem>
-        {
-            new()
-            {
-                SubMerchantId = host.PaymobSubMerchantId,
-                SplitPercentage = hostSplitPercentage,
-                SplitAmountCents = hostShareCents
-            }
-        };
+        var platformShareCents = Convert.ToInt32(decimal.Round(booking.TotalPrice.Amount * PlatformCommissionRate * 100m, 0, MidpointRounding.AwayFromZero));
+        var hostShareCents = amountCents - platformShareCents;
 
         var billingData = new PaymobBillingData
         {
@@ -219,22 +197,25 @@ public class PaymobService : IPaymobService
             PhoneNumber = string.IsNullOrWhiteSpace(host.PhoneNumber) ? "NA" : host.PhoneNumber
         };
 
-        var paymentKey = await GetPaymentKeyAsync(
-            authToken,
-            orderId,
+        var subDeals = new Dictionary<string, object>
+        {
+            [host.PaymobSubMerchantId] = new { total_amount = hostShareCents, currency = booking.TotalPrice.Currency }
+        };
+
+        var (clientSecret, intentionId) = await CreateIntentionAsync(
             amountCents,
             booking.TotalPrice.Currency,
+            $"{booking.Id:N}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
             billingData,
-            _settings.IntegrationId,
-            splits);
+            subDeals);
 
         var trackedBooking = await _dbContext.Bookings.FirstOrDefaultAsync(x => x.Id == booking.Id)
                             ?? throw new InvalidOperationException("Booking not found while persisting Paymob order id.");
 
-        trackedBooking.SetPaymobOrderId(orderId);
+        trackedBooking.SetPaymobOrderId(intentionId);
         await _dbContext.SaveChangesAsync();
 
-        return $"https://accept.paymob.com/api/acceptance/iframes/{_settings.IframeId}?payment_token={paymentKey}";
+        return BuildUnifiedCheckoutUrl(_settings.PublicKey, clientSecret);
     }
 
     public bool VerifyPaymobHmac(IQueryCollection query, string receivedHmac)
@@ -272,59 +253,175 @@ public class PaymobService : IPaymobService
 
         return string.Equals(computedHmac, receivedHmac.Trim(), StringComparison.OrdinalIgnoreCase);
     }
- public async Task<string> InitializeBookingPaymentAsync(string authToken, string bookingId)
-{
-    // 1. (اختياري هنا) هات بيانات الحجز من الداتا بيز عشان تحسب الـ Amount بجد
-    // هنفترض حالياً مبلغ ثابت للتجربة أو إنك هتجيبه من الـ Repository
-    var amountInCents = 10000; // 100 EGP
-
-    // 2. تسجيل الطلب (Order Registration)
-    var orderRequest = new
+    public async Task<InitiatePaymobResponseDto> InitializeBookingPaymentAsync(Guid bookingId)
     {
-        auth_token = authToken,
-        delivery_needed = "false",
-        amount_cents = amountInCents.ToString(),
-        currency = "EGP",
-        items = new[] {
-            new { name = $"Booking {bookingId}", amount_cents = amountInCents.ToString(), description = "Apartment Rental" }
-        }
-    };
+        if (_settings.IntegrationId <= 0)
+            throw new InvalidOperationException("Paymob IntegrationId is missing from configuration.");
 
-    var orderResponse = await _httpClient.PostAsJsonAsync("https://egypt.paymob.com/api/acceptance/steps/orders", orderRequest);
-    var orderResult = await orderResponse.Content.ReadFromJsonAsync<dynamic>();
-    string orderId = orderResult.id.ToString();
+        var booking = await _dbContext.Bookings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == bookingId)
+            ?? throw new InvalidOperationException("Booking not found.");
 
-    // 3. طلب مفتاح الدفع (Payment Key Generation)
-    // لازم تبعت الـ billing_data كاملة عشان الريكويست ما يرفضش
-    var paymentKeyRequest = new
-    {
-        auth_token = authToken,
-        amount_cents = amountInCents.ToString(),
-        expiration = 3600, // ساعة واحدة
-        order_id = orderId,
-        billing_data = new
+        if (booking.TotalPrice.Amount <= 0)
+            throw new InvalidOperationException("Booking total amount must be greater than zero.");
+
+        var guest = await _dbContext.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == booking.GuestId.ToString())
+            ?? throw new InvalidOperationException("Guest account not found.");
+
+        var amountCents = Convert.ToInt32(decimal.Round(booking.TotalPrice.Amount * 100m, 0, MidpointRounding.AwayFromZero));
+        var specialReference = $"{booking.Id:N}-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+
+        var billingData = new PaymobBillingData
         {
-            apartment = "NA",
-            email = "guest@example.com", // المفروض تجيبه من بيانات الحجز
-            floor = "NA",
-            first_name = "Guest",
-            street = "NA",
-            building = "NA",
-            phone_number = "+201234567890",
-            shipping_method = "PKG",
-            postal_code = "NA",
-            city = "Cairo",
-            country = "EG",
-            last_name = "User",
-            state = "Cairo"
-        },
-        currency = "EGP",
-        integration_id = 456123 // حط الـ Integration ID (Card) بتاعك هنا من داشبورد باي موب
-    };
+            FirstName = string.IsNullOrWhiteSpace(guest.FirstName) ? "NA" : guest.FirstName,
+            LastName = string.IsNullOrWhiteSpace(guest.LastName) ? "NA" : guest.LastName,
+            Email = string.IsNullOrWhiteSpace(guest.Email) ? "na@rentalsplatform.com" : guest.Email,
+            PhoneNumber = string.IsNullOrWhiteSpace(guest.PhoneNumber) ? "NA" : guest.PhoneNumber
+        };
 
-    var keyResponse = await _httpClient.PostAsJsonAsync("https://egypt.paymob.com/api/acceptance/payment_keys", paymentKeyRequest);
-    var keyResult = await keyResponse.Content.ReadFromJsonAsync<dynamic>();
+        var (clientSecret, intentionId) = await CreateIntentionAsync(
+            amountCents,
+            booking.TotalPrice.Currency,
+            specialReference,
+            billingData);
 
-    return keyResult.token.ToString(); // ده التوكن اللي هيروح للأنجيولار ويفتح الايفريم
-}
+        var trackedBooking = await _dbContext.Bookings.FirstOrDefaultAsync(x => x.Id == booking.Id)
+            ?? throw new InvalidOperationException("Booking not found while saving Paymob order id.");
+
+        trackedBooking.SetPaymobOrderId(intentionId);
+        await _dbContext.SaveChangesAsync();
+
+        return new InitiatePaymobResponseDto
+        {
+            BookingId = booking.Id,
+            OrderId = intentionId,
+            PaymentKey = clientSecret,
+            PublicKey = _settings.PublicKey,
+            CheckoutUrl = BuildUnifiedCheckoutUrl(_settings.PublicKey, clientSecret),
+            CallbackUrl = _settings.CheckoutReturnUrl
+        };
+    }
+
+    private static string BuildUnifiedCheckoutUrl(string publicKey, string clientSecret)
+    {
+        var encodedPublicKey = Uri.EscapeDataString(publicKey ?? string.Empty);
+        var encodedClientSecret = Uri.EscapeDataString(clientSecret ?? string.Empty);
+        return $"https://accept.paymob.com/unifiedcheckout/?publicKey={encodedPublicKey}&clientSecret={encodedClientSecret}";
+    }
+
+    private async Task<(string ClientSecret, string IntentionId)> CreateIntentionAsync(
+        int amountCents,
+        string currency,
+        string specialReference,
+        PaymobBillingData billingData,
+        Dictionary<string, object>? subDeals = null)
+    {
+        var normalized = NormalizeBillingData(billingData);
+
+        var payload = new Dictionary<string, object>
+        {
+            ["amount"] = amountCents,
+            ["currency"] = currency,
+            ["payment_methods"] = new[] { _settings.IntegrationId },
+            ["items"] = Array.Empty<object>(),
+            ["billing_data"] = new
+            {
+                first_name = normalized.FirstName,
+                last_name = normalized.LastName,
+                email = normalized.Email,
+                phone_number = normalized.PhoneNumber,
+                apartment = normalized.Apartment ?? "NA",
+                floor = normalized.Floor ?? "NA",
+                street = normalized.Street ?? "NA",
+                building = normalized.Building ?? "NA",
+                shipping_method = normalized.ShippingMethod ?? "PKG",
+                postal_code = normalized.PostalCode ?? "NA",
+                city = normalized.City ?? "NA",
+                country = normalized.Country ?? "EG",
+                state = normalized.State ?? "NA"
+            },
+            ["customer"] = new
+            {
+                first_name = normalized.FirstName,
+                last_name = normalized.LastName,
+                email = normalized.Email
+            },
+            ["special_reference"] = specialReference,
+            ["redirection_url"] = _settings.CheckoutReturnUrl
+        };
+
+        if (subDeals is { Count: > 0 })
+            payload["sub_deals"] = subDeals;
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://accept.paymob.com/v1/intention/");
+        request.Headers.Add("Authorization", $"Token {_settings.SecretKey}");
+        request.Content = JsonContent.Create(payload);
+
+        var response = await _httpClient.SendAsync(request);
+        await EnsureSuccessOrThrowWithBodyAsync(response, "Paymob intention creation failed");
+
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var document = await JsonDocument.ParseAsync(stream);
+
+        var clientSecret = document.RootElement.GetProperty("client_secret").GetString()
+            ?? throw new InvalidOperationException("Paymob intention client_secret is missing.");
+        var intentionId = document.RootElement.GetProperty("id").GetRawText().Trim('"');
+
+        return (clientSecret, intentionId);
+    }
+
+    private static PaymobBillingData NormalizeBillingData(PaymobBillingData data)
+    {
+        var email = string.IsNullOrWhiteSpace(data.Email) ? "na@rentalsplatform.com" : data.Email.Trim();
+        if (!email.Contains('@'))
+            throw new InvalidOperationException("Guest profile must include a valid email before payment.");
+
+        var phone = EgyptianPhoneNumber.NormalizeToLocal(data.PhoneNumber);
+        if (!EgyptianPhoneNumber.IsValidLocal(phone))
+            throw new InvalidOperationException("Guest profile must include a valid phone number before payment.");
+
+        var country = string.IsNullOrWhiteSpace(data.Country) || data.Country.Equals("NA", StringComparison.OrdinalIgnoreCase)
+            ? "EG"
+            : data.Country.Trim();
+
+        return new PaymobBillingData
+        {
+            FirstName = string.IsNullOrWhiteSpace(data.FirstName) ? "NA" : data.FirstName,
+            LastName = string.IsNullOrWhiteSpace(data.LastName) ? "NA" : data.LastName,
+            Email = email,
+            PhoneNumber = phone,
+            Apartment = string.IsNullOrWhiteSpace(data.Apartment) ? "NA" : data.Apartment,
+            Floor = string.IsNullOrWhiteSpace(data.Floor) ? "NA" : data.Floor,
+            Street = string.IsNullOrWhiteSpace(data.Street) ? "NA" : data.Street,
+            Building = string.IsNullOrWhiteSpace(data.Building) ? "NA" : data.Building,
+            ShippingMethod = string.IsNullOrWhiteSpace(data.ShippingMethod) ? "PKG" : data.ShippingMethod,
+            PostalCode = string.IsNullOrWhiteSpace(data.PostalCode) ? "00000" : data.PostalCode,
+            City = string.IsNullOrWhiteSpace(data.City) ? "NA" : data.City,
+            Country = country,
+            State = string.IsNullOrWhiteSpace(data.State) ? "NA" : data.State
+        };
+    }
+
+    private static async Task EnsureSuccessOrThrowWithBodyAsync(HttpResponseMessage response, string context)
+    {
+        if (response.IsSuccessStatusCode)
+            return;
+
+        var body = await response.Content.ReadAsStringAsync();
+        var detail = string.IsNullOrWhiteSpace(body) ? "No response body." : body;
+        throw new HttpRequestException($"{context}. Status: {(int)response.StatusCode} ({response.StatusCode}). Body: {detail}", null, response.StatusCode);
+    }
+
+    public async Task<PaymentStatus> GetBookingPaymentStatusAsync(Guid bookingId)
+    {
+        var booking = await _dbContext.Bookings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == bookingId)
+            ?? throw new InvalidOperationException("Booking not found.");
+
+        return booking.PaymentStatus;
+    }
 }

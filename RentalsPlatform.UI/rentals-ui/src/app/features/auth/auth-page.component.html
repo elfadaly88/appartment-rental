@@ -42,14 +42,33 @@
               <p class="auth-form__error">{{ fieldErrorText('login', 'email') | translate: fieldErrorParams('login', 'email') }}</p>
             }
 
-            <label class="floating-field" [class.is-invalid]="fieldHasError('login', 'password')">
+            <label class="floating-field floating-field--password" [class.is-invalid]="fieldHasError('login', 'password')">
               <input
                 class="floating-field__input"
-                type="password"
+                [type]="loginPasswordVisible() ? 'text' : 'password'"
                 formControlName="password"
                 placeholder=" "
                 autocomplete="current-password"
               />
+              <button
+                type="button"
+                class="floating-field__toggle"
+                [attr.aria-label]="((loginPasswordVisible() ? 'AUTH.PASSWORD_HIDE' : 'AUTH.PASSWORD_SHOW') | translate)"
+                (click)="toggleLoginPasswordVisibility()"
+              >
+                @if (loginPasswordVisible()) {
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M3 3.8 20.2 21m-5.2-5.2a3.5 3.5 0 0 1-4.9-4.9m-3.2-3a9.7 9.7 0 0 0-3.8 4.1 10.3 10.3 0 0 0 17.9 1.1m-3.2-4.3A10.2 10.2 0 0 0 12 5.7c-1.3 0-2.5.2-3.7.7"
+                    />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2.2 12.1a10.4 10.4 0 0 1 19.6-.1A10.3 10.3 0 0 1 12 18.3a10.2 10.2 0 0 1-9.8-6.2Z" />
+                    <circle cx="12" cy="12" r="3.2" />
+                  </svg>
+                }
+              </button>
               <span class="floating-field__label">{{ 'AUTH.FIELD_PASSWORD' | translate }}</span>
             </label>
             @if (fieldHasError('login', 'password')) {
@@ -60,7 +79,7 @@
               <p class="auth-form__error auth-form__error--block">{{ submitError() }}</p>
             }
 
-            <button class="auth-form__submit" type="submit" [disabled]="isSubmitting()">
+            <button class="auth-form__submit" type="submit" [disabled]="isBusy()">
               @if (isSubmitting()) {
                 <span class="auth-form__spinner" aria-hidden="true"></span>
                 {{ 'AUTH.BTN_SIGNING_IN' | translate }}
@@ -68,6 +87,53 @@
                 {{ 'AUTH.BTN_CONTINUE' | translate }}
               }
             </button>
+
+            <div class="auth-form__divider">
+              <span>{{ 'AUTH.SOCIAL_DIVIDER_LOGIN' | translate }}</span>
+            </div>
+
+            <div class="auth-form__social-buttons">
+              <button
+                type="button"
+                class="social-button social-button--google"
+                [disabled]="isBusy()"
+                [attr.aria-busy]="socialProviderPending() === 'google'"
+                (click)="socialSignIn('google')"
+              >
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span>
+                  @if (socialProviderPending() === 'google') {
+                    {{ 'AUTH.SOCIAL_LOADING' | translate }}
+                  } @else {
+                    {{ 'AUTH.SOCIAL_GOOGLE_CONTINUE' | translate }}
+                  }
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="social-button social-button--facebook"
+                [disabled]="isBusy()"
+                [attr.aria-busy]="socialProviderPending() === 'facebook'"
+                (click)="socialSignIn('facebook')"
+              >
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                <span>
+                  @if (socialProviderPending() === 'facebook') {
+                    {{ 'AUTH.SOCIAL_LOADING' | translate }}
+                  } @else {
+                    {{ 'AUTH.SOCIAL_FACEBOOK_CONTINUE' | translate }}
+                  }
+                </span>
+              </button>
+            </div>
           </form>
         }
         @case ('register') {
@@ -107,25 +173,123 @@
               <p class="auth-form__error">{{ fieldErrorText('register', 'email') | translate: fieldErrorParams('register', 'email') }}</p>
             }
 
-            <label class="floating-field" [class.is-invalid]="fieldHasError('register', 'password')">
+            <label class="floating-field floating-field--password" [class.is-invalid]="fieldHasError('register', 'password')">
               <input
                 class="floating-field__input"
-                type="password"
+                [type]="registerPasswordVisible() ? 'text' : 'password'"
                 formControlName="password"
                 placeholder=" "
                 autocomplete="new-password"
               />
+              <button
+                type="button"
+                class="floating-field__toggle"
+                [attr.aria-label]="((registerPasswordVisible() ? 'AUTH.PASSWORD_HIDE' : 'AUTH.PASSWORD_SHOW') | translate)"
+                (click)="toggleRegisterPasswordVisibility()"
+              >
+                @if (registerPasswordVisible()) {
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M3 3.8 20.2 21m-5.2-5.2a3.5 3.5 0 0 1-4.9-4.9m-3.2-3a9.7 9.7 0 0 0-3.8 4.1 10.3 10.3 0 0 0 17.9 1.1m-3.2-4.3A10.2 10.2 0 0 0 12 5.7c-1.3 0-2.5.2-3.7.7"
+                    />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2.2 12.1a10.4 10.4 0 0 1 19.6-.1A10.3 10.3 0 0 1 12 18.3a10.2 10.2 0 0 1-9.8-6.2Z" />
+                    <circle cx="12" cy="12" r="3.2" />
+                  </svg>
+                }
+              </button>
               <span class="floating-field__label">{{ 'AUTH.FIELD_PASSWORD' | translate }}</span>
             </label>
-            @if (fieldHasError('register', 'password')) {
+            <section class="password-helper" [attr.dir]="langService.dir()">
+              <header class="password-helper__header">
+                <p class="password-helper__title">{{ 'AUTH.PASSWORD_REQUIREMENTS_TITLE' | translate }}</p>
+                <p class="password-helper__strength" [attr.data-level]="passwordStrengthLevel()">
+                  <span>{{ 'AUTH.PASSWORD_STRENGTH' | translate }}</span>
+                  <strong>{{ passwordStrengthLabelKey() | translate }}</strong>
+                </p>
+              </header>
+
+              <!-- 4-Segment Strength Bar -->
+              <div class="password-strength-bars" role="progressbar" aria-valuemin="0" aria-valuemax="4" [attr.aria-valuenow]="metPasswordRulesCount()">
+                <div class="strength-segment" [class.strength-segment--active]="metPasswordRulesCount() >= 1" [class.strength-segment--empty]="metPasswordRulesCount() < 1"></div>
+                <div class="strength-segment" [class.strength-segment--active]="metPasswordRulesCount() >= 2" [class.strength-segment--empty]="metPasswordRulesCount() < 2"></div>
+                <div class="strength-segment" [class.strength-segment--active]="metPasswordRulesCount() >= 3" [class.strength-segment--empty]="metPasswordRulesCount() < 3"></div>
+                <div class="strength-segment" [class.strength-segment--active]="metPasswordRulesCount() >= 4" [class.strength-segment--empty]="metPasswordRulesCount() < 4" [class.strength-segment--strong]="metPasswordRulesCount() === 4"></div>
+              </div>
+
+              <ul class="password-rules" aria-live="polite">
+                @for (requirement of passwordRequirements(); track requirement.key) {
+                  <li class="password-rules__item" [attr.data-state]="requirement.state">
+                    <span class="password-rules__icon" aria-hidden="true">
+                      @if (requirement.state === 'success') {
+                        <svg viewBox="0 0 24 24">
+                          <path d="m4.8 12.6 4.4 4.5 10-10" />
+                        </svg>
+                      } @else {
+                        <span class="password-rules__dot"></span>
+                      }
+                    </span>
+                    <span>{{ requirement.translationKey | translate }}</span>
+                  </li>
+                }
+              </ul>
+            </section>
+            @if (showRegisterPasswordError()) {
               <p class="auth-form__error">{{ fieldErrorText('register', 'password') | translate: fieldErrorParams('register', 'password') }}</p>
             }
 
             @if (registerRole() === 'host') {
-              <label class="terms-check" [class.is-invalid]="fieldHasError('register', 'acceptedHostTerms')">
-                <input class="terms-check__input" type="checkbox" formControlName="acceptedHostTerms" />
-                <span class="terms-check__label">{{ 'AUTH.TERMS_LABEL' | translate }}</span>
-              </label>
+              <section class="terms-portal" [class.is-invalid]="fieldHasError('register', 'acceptedHostTerms')" [class.is-accepted]="hostTermsAccepted()" role="group" [attr.aria-label]="t('شروط الاستضافة', 'Hosting terms')">
+                <div class="terms-portal__header">
+                  <div class="terms-portal__icon" aria-hidden="true">
+                    @if (hostTermsAccepted()) {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m7.5 12 2.4 2.4a2 2 0 0 0 2.8 0l3.8-3.8a2 2 0 0 1 2.8 0l1 1a2 2 0 0 1 0 2.8l-3.7 3.7a5 5 0 0 1-7.1 0l-5.9-5.9a2 2 0 0 1 0-2.8l1-1a2 2 0 0 1 2.8 0Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.5 12-2.4-2.4a2 2 0 0 0-2.8 0L7.5 13.4a2 2 0 0 1-2.8 0l-1-1a2 2 0 0 1 0-2.8l3.7-3.7a5 5 0 0 1 7.1 0l5.9 5.9a2 2 0 0 1 0 2.8l-1 1a2 2 0 0 1-2.8 0Z" />
+                      </svg>
+                    }
+                  </div>
+                  <div class="flex-1">
+                    <p class="terms-portal__eyebrow">{{ t('بوابة شركاء النجاح', 'Success Partners Portal') }}</p>
+                    <h3 class="terms-portal__title">{{ t('راجع شروط الاستضافة قبل التفعيل', 'Review hosting terms before activation') }}</h3>
+                    <p class="terms-portal__text">
+                      {{ t('نسختان عربية وإنجليزية بتصميم واضح وشفاف، مع تفعيل الموافقة بعد قراءة الشروط.', 'A polished bilingual terms experience with scroll-to-read confirmation before agreement.') }}
+                    </p>
+                  </div>
+                  @if (hostTermsAccepted()) {
+                    <div class="terms-portal__badge" aria-live="polite">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>{{ t('موافق', 'Agreed') }}</span>
+                    </div>
+                  }
+                </div>
+
+                <div class="terms-portal__actions">
+                  <button type="button" class="terms-portal__button" (click)="openHostTermsModal()">
+                    {{ hostTermsAccepted() ? t('مراجعة الشروط', 'Review terms') : t('فتح الشروط', 'Open terms') }}
+                  </button>
+
+                  <label class="terms-check">
+                    <input class="terms-check__input" type="checkbox" [checked]="hostTermsAccepted()" disabled />
+                    <span class="terms-check__label">{{ 'AUTH.TERMS_LABEL' | translate }}</span>
+                  </label>
+
+                  @if (hostTermsAccepted()) {
+                    <button type="button" class="terms-portal__link" (click)="revokeHostTerms()">
+                      {{ t('إلغاء الموافقة', 'Withdraw agreement') }}
+                    </button>
+                  }
+                </div>
+              </section>
+
               @if (fieldHasError('register', 'acceptedHostTerms')) {
                 <p class="auth-form__error">{{ fieldErrorText('register', 'acceptedHostTerms') | translate }}</p>
               }
@@ -135,17 +299,97 @@
               <p class="auth-form__error auth-form__error--block">{{ submitError() }}</p>
             }
 
-            <button class="auth-form__submit" type="submit" [disabled]="isSubmitting()">
+            <!-- Premium Register Button with States -->
+            <button
+              class="auth-form__submit group relative"
+              type="submit"
+              [disabled]="isRegisterSubmitDisabled()"
+              [attr.data-state]="registerButtonState()"
+              [attr.aria-busy]="isBusy()"
+            >
               @if (isSubmitting()) {
                 <span class="auth-form__spinner" aria-hidden="true"></span>
                 {{ 'AUTH.BTN_CREATING_ACCOUNT' | translate }}
+              } @else if (registerButtonState() === 'pending-terms') {
+                <span class="inline-flex items-center gap-2">
+                  <svg class="h-4 w-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {{ t('قبول الشروط أولاً', 'Accept terms first') }}
+                </span>
+              } @else if (registerButtonState() === 'pending') {
+                <span class="inline-flex items-center gap-2">
+                  <svg class="h-4 w-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {{ t('أكمل البيانات', 'Complete all fields') }}
+                </span>
               } @else {
-                {{ 'AUTH.BTN_CREATE_ACCOUNT' | translate }}
+                <span class="inline-flex items-center gap-2 group-hover:gap-3 transition-all">
+                  {{ 'AUTH.BTN_CREATE_ACCOUNT' | translate }}
+                  <svg class="h-4 w-4 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </span>
               }
             </button>
+
+            <div class="auth-form__divider">
+              <span>{{ 'AUTH.SOCIAL_DIVIDER_REGISTER' | translate }}</span>
+            </div>
+
+            <div class="auth-form__social-buttons">
+              <button
+                type="button"
+                class="social-button social-button--google"
+                [disabled]="isBusy()"
+                [attr.aria-busy]="socialProviderPending() === 'google'"
+                (click)="socialSignIn('google')"
+              >
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span>
+                  @if (socialProviderPending() === 'google') {
+                    {{ 'AUTH.SOCIAL_LOADING' | translate }}
+                  } @else {
+                    {{ 'AUTH.SOCIAL_GOOGLE_REGISTER' | translate }}
+                  }
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="social-button social-button--facebook"
+                [disabled]="isBusy()"
+                [attr.aria-busy]="socialProviderPending() === 'facebook'"
+                (click)="socialSignIn('facebook')"
+              >
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                <span>
+                  @if (socialProviderPending() === 'facebook') {
+                    {{ 'AUTH.SOCIAL_LOADING' | translate }}
+                  } @else {
+                    {{ 'AUTH.SOCIAL_FACEBOOK_REGISTER' | translate }}
+                  }
+                </span>
+              </button>
+            </div>
           </form>
         }
       }
     </div>
   </section>
+
+  <app-host-terms-modal
+    [isOpen]="isHostTermsModalOpen()"
+    [hasAccepted]="hostTermsAccepted()"
+    (closed)="closeHostTermsModal()"
+    (agreed)="acceptHostTerms()"
+  />
 </main>

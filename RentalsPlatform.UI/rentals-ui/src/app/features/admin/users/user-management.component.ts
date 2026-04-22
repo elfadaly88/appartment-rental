@@ -77,13 +77,32 @@ export class UserManagementComponent {
   }
 
   protected roleLabel(role: string): string {
-    if (role === 'host') {
+    const normalized = role?.toLowerCase();
+    if (normalized === 'host') {
       return this.t('مضيف', 'Host');
     }
-    if (role === 'guest') {
+    if (normalized === 'guest') {
       return this.t('ضيف', 'Guest');
     }
     return this.t('مدير', 'Admin');
+  }
+
+  protected roleClass(role: string): string {
+    const normalized = role?.toLowerCase();
+    if (normalized === 'admin') {
+      return 'badge--role-admin';
+    }
+    if (normalized === 'host') {
+      return 'badge--role-host';
+    }
+    return 'badge--role-guest';
+  }
+
+  protected getInitials(name: string): string {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
   protected statusLabel(isBanned: boolean): string {

@@ -161,6 +161,34 @@
   border-block-end: 0;
 }
 
+.user-grid__profile {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.user-grid__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-grid__initials {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border: 1px solid #cbd5e1;
+}
+
 .user-grid__name {
   color: #0f172a;
   font-size: 0.92rem;
@@ -183,9 +211,19 @@
   font-weight: 700;
 }
 
-.badge--role {
+.badge--role-admin {
   background: rgba(59, 130, 246, 0.1);
   color: #1d4ed8;
+}
+
+.badge--role-host {
+  background: rgba(13, 148, 136, 0.1);
+  color: #0f766e;
+}
+
+.badge--role-guest {
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
 }
 
 .badge--active {

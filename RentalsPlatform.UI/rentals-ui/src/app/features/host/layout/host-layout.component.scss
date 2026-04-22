@@ -1,3 +1,13 @@
 :host {
   display: block;
 }
+
+/* Hide scrollbar for the tab nav overflow container while keeping scroll functional */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE / Edge */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome / Safari / Opera */
+}

@@ -4,6 +4,8 @@ using RentalsPlatform.Application.DTOs.Notifications;
 using RentalsPlatform.Application.Interfaces;
 using RentalsPlatform.Domain.Entities;
 using RentalsPlatform.Infrastructure.Data;
+using Microsoft.AspNetCore.SignalR;
+using RentalsPlatform.Infrastructure.Hubs;
 
 namespace RentalsPlatform.Infrastructure.Services;
 
@@ -12,15 +14,18 @@ public class NotificationService : INotificationService
     private readonly ApplicationDbContext _dbContext;
     private readonly IWebPushService _webPushService;
     private readonly ILogger<NotificationService> _logger;
+    private readonly IHubContext<NotificationHub> _hubContext;
 
     public NotificationService(
         ApplicationDbContext dbContext,
         IWebPushService webPushService,
-        ILogger<NotificationService> logger)
+        ILogger<NotificationService> logger,
+        IHubContext<NotificationHub> hubContext)
     {
         _dbContext = dbContext;
         _webPushService = webPushService;
         _logger = logger;
+        _hubContext = hubContext;
     }
 
     public async Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(string userId)
@@ -68,5 +73,10 @@ public class NotificationService : INotificationService
                 _logger.LogError(ex, "Failed to send web push notification for user {UserId}.", model.UserId);
             }
         });
+    }
+
+    public async Task NotifyGroupAsync(string group, string method, object payload)
+    {
+        await _hubContext.Clients.Group(group).SendAsync(method, payload);
     }
 }

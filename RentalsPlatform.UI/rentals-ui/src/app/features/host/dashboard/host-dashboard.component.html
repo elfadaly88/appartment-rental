@@ -1,25 +1,12 @@
 <section class="host-dashboard">
-  <header class="host-dashboard__header">
-    <div>
-      <h1 class="host-dashboard__title">{{ t('لوحة تحكم المضيف', 'Host Dashboard') }}</h1>
-      <p class="host-dashboard__subtitle">
-        {{ t('تابع الأداء المالي والإشغال والحجوزات من شاشة واحدة.', 'Track revenue, occupancy, and guest demand from one screen.') }}
-      </p>
-    </div>
-
-    <div class="host-dashboard__header-actions">
-      <a class="host-dashboard__block-btn" routerLink="/host/block-dates">
-        {{ t('حظر التواريخ', 'Block Dates') }}
-      </a>
-      <a class="host-dashboard__add-btn" routerLink="/host/properties/new">
-        <span aria-hidden="true">+</span>
-        {{ t('إضافة عقار جديد', 'Add New Property') }}
-      </a>
-    </div>
-  </header>
 
   @if (propertyService.error(); as error) {
-    <div class="host-dashboard__error" role="alert">{{ error }}</div>
+    <div class="flex justify-between items-center bg-red-50 p-4 border border-red-200 rounded-xl mx-4 mt-4" role="alert">
+      <span class="text-red-700 font-medium">{{ error }}</span>
+      <button (click)="retryLoad()" class="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition">
+        {{ t('إعادة المحاولة', 'Retry Connection') }}
+      </button>
+    </div>
   }
 
   <!-- ═══ STAT CARDS ══════════════════════════════════════════════ -->
@@ -44,67 +31,19 @@
 
   <section class="host-dashboard__main">
 
-    <!-- ═══ MY PROPERTIES ══════════════════════════════════════════ -->
-    <section class="panel panel--properties">
-      <header class="panel__header">
-        <h2 class="panel__title">{{ t('عقاراتي', 'My Properties') }}</h2>
-        <a routerLink="/host/properties/new" class="panel__link">{{ t('+ إضافة', '+ Add') }}</a>
-      </header>
-
-      @defer (on viewport) {
-        <div class="properties-grid">
-          @if (propertyService.isLoading()) {
-            @for (_ of [1, 2, 3, 4]; track _) {
-              <article class="property-card property-card--skeleton" aria-hidden="true">
-                <div class="property-card__media"></div>
-                <div class="property-card__line property-card__line--lg"></div>
-                <div class="property-card__line property-card__line--sm"></div>
-              </article>
-            }
-          } @else {
-            @for (property of propertyService.properties(); track property.id) {
-              <article class="property-card">
-                <img class="property-card__image" [src]="property.thumbnailUrl || 'https://placehold.co/800x600?text=Luxe+Rental'" [alt]="property.title" loading="lazy" decoding="async" />
-                <h3 class="property-card__title">{{ property.title }}</h3>
-                <p class="property-card__location">{{ property.city }} • {{ property.country }}</p>
-                <p class="property-card__price">{{ formatCurrency(property.pricePerNight, property.currency) }}</p>
-                <span class="property-card__status">{{ propertyStatusLabel(property.status) }}</span>
-                <a
-                  class="property-card__edit"
-                  [class.property-card__edit--disabled]="!property.id"
-                  [routerLink]="property.id ? ['/host/properties', property.id, 'edit'] : null"
-                  [attr.aria-disabled]="!property.id"
-                >
-                  {{ t('تعديل العقار', 'Edit Property') }}
-                </a>
-              </article>
-            } @empty {
-              <div class="panel__empty">
-                <p>{{ t('لا توجد عقارات حالياً', 'No properties yet') }}</p>
-                <a class="panel__empty-link" routerLink="/host/properties/new">{{ t('إضافة أول عقار', 'Add your first property') }}</a>
-              </div>
-            }
-          }
-        </div>
-      } @placeholder {
-        <div class="properties-grid" aria-hidden="true">
-          @for (_ of [1, 2, 3, 4]; track _) {
-            <article class="property-card property-card--skeleton">
-              <div class="property-card__media"></div>
-              <div class="property-card__line property-card__line--lg"></div>
-              <div class="property-card__line property-card__line--sm"></div>
-            </article>
-          }
-        </div>
-      }
-    </section>
-
     <!-- ═══ BOOKING PIPELINE (Decision Hub) ════════════════════════ -->
     <section class="panel panel--bookings">
       <header class="panel__header">
-        <div>
-          <h2 class="panel__title">{{ t('مسار الحجوزات', 'Booking Pipeline') }}</h2>
-          <p class="panel__subtitle">{{ t('راجع الضيف واتخذ قرارك قبل الموافقة', 'Review the guest and decide before approving') }}</p>
+        <div class="panel__header-left">
+          <div class="pipeline-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pipeline-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="panel__title">{{ t('مسار الحجوزات', 'Booking Pipeline') }}</h2>
+            <p class="panel__subtitle">{{ t('راجع الضيف واتخذ قرارك قبل الموافقة', 'Review the guest and decide before approving') }}</p>
+          </div>
         </div>
         <div class="panel__toolbar">
           <input
@@ -117,29 +56,44 @@
         </div>
       </header>
 
-      <!-- Status legend -->
+      <!-- Status legend / filter tabs -->
       <div class="pipeline-legend">
-        <span class="status-badge status-badge--pending">{{ t('بانتظار الموافقة', 'Pending') }}</span>
-        <span class="status-badge status-badge--approved">{{ t('بانتظار الدفع', 'Approved') }}</span>
-        <span class="status-badge status-badge--confirmed">{{ t('مؤكد', 'Confirmed') }}</span>
-        <span class="status-badge status-badge--arriving">{{ t('وصول اليوم', 'Arriving') }}</span>
+        <span class="status-badge status-badge--pending">
+          <span class="status-dot status-dot--pending"></span>
+          {{ t('بانتظار الموافقة', 'Pending') }}
+        </span>
+        <span class="status-badge status-badge--approved">
+          <span class="status-dot status-dot--approved"></span>
+          {{ t('بانتظار الدفع', 'Approved') }}
+        </span>
+        <span class="status-badge status-badge--confirmed">
+          <span class="status-dot status-dot--confirmed"></span>
+          {{ t('مؤكد', 'Confirmed') }}
+        </span>
+        <span class="status-badge status-badge--arriving">
+          <span class="status-dot status-dot--arriving"></span>
+          {{ t('وصول اليوم', 'Arriving') }}
+        </span>
       </div>
 
       @if (propertyService.isPipelineLoading()) {
-        <div class="pipeline-skeleton" aria-hidden="true">
-          @for (_ of [1, 2, 3, 4]; track _) {
-            <article class="pipeline-card pipeline-card--skeleton">
-              <div class="pipeline-card__line pipeline-card__line--lg"></div>
-              <div class="pipeline-card__line pipeline-card__line--md"></div>
-              <div class="pipeline-card__line pipeline-card__line--sm"></div>
-              <div class="pipeline-card__actions-placeholder"></div>
-            </article>
-          }
+        <div class="pipeline-scroll" aria-label="Booking Pipeline Loading">
+          <div class="pipeline-skeleton" aria-hidden="true">
+            @for (_ of [1, 2, 3, 4]; track _) {
+              <article class="pipeline-card pipeline-card--skeleton">
+                <div class="pipeline-card__line pipeline-card__line--lg"></div>
+                <div class="pipeline-card__line pipeline-card__line--md"></div>
+                <div class="pipeline-card__line pipeline-card__line--sm"></div>
+                <div class="pipeline-card__actions-placeholder"></div>
+              </article>
+            }
+          </div>
         </div>
       } @else {
-        <div class="pipeline-grid" role="list">
-          @for (booking of filteredBookings(); track booking.id) {
-            <article class="pipeline-card" role="listitem" [class.pipeline-card--approved]="booking.pipelineStatus === 'Approved'">
+        <div class="pipeline-scroll" aria-label="Booking Pipeline">
+          <div class="pipeline-grid" role="list">
+            @for (booking of filteredBookings(); track booking.id) {
+              <article class="pipeline-card" role="listitem" [class.pipeline-card--approved]="booking.pipelineStatus === 'Approved'">
 
               <!-- Header: property title + status badge -->
               <header class="pipeline-card__header">
@@ -148,12 +102,21 @@
               </header>
 
               <!-- Guest Profile Row -->
-              <div class="pipeline-card__guest-row">
-                <div class="guest-avatar">
-                  @if (booking.guestAvatarUrl) {
-                    <img [src]="booking.guestAvatarUrl" [alt]="booking.guestName" class="guest-avatar__img">
+                <div class="pipeline-card__guest-row">
+                <div class="guest-avatar" [attr.data-avatar-broken]="isAvatarBroken(booking.id) ? 'true' : null">
+                  @if (booking.guestAvatarUrl && !isAvatarBroken(booking.id)) {
+                    <img
+                      [src]="booking.guestAvatarUrl"
+                      [alt]="booking.guestName + ' avatar'"
+                      class="guest-avatar__img"
+                      loading="lazy"
+                      decoding="async"
+                      referrerpolicy="no-referrer"
+                      crossorigin="anonymous"
+                      (error)="onGuestAvatarError(booking.id, $event)"
+                    >
                   } @else {
-                    <span class="guest-avatar__initials">{{ booking.guestName.charAt(0).toUpperCase() }}</span>
+                    <span class="guest-avatar__initials">{{ guestInitials(booking.guestName) }}</span>
                   }
                 </div>
                 <div class="guest-info">
@@ -247,18 +210,71 @@
                 </a>
               </div>
 
+              </article>
+            } @empty {
+              <div class="panel__empty">
+                <p>{{ t('لا توجد حجوزات نشطة أو قادمة حالياً', 'No active or upcoming bookings right now') }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- ═══ MY PROPERTIES ══════════════════════════════════════════ -->
+    <section class="panel panel--properties">
+      <header class="panel__header">
+        <h2 class="panel__title">{{ t('عقاراتي', 'My Properties') }}</h2>
+        <a routerLink="/host/properties/new" class="panel__link">{{ t('+ إضافة', '+ Add') }}</a>
+      </header>
+
+      @defer (on viewport) {
+        <div class="properties-grid">
+          @if (propertyService.isLoading()) {
+            @for (_ of [1, 2, 3, 4]; track _) {
+              <article class="property-card property-card--skeleton" aria-hidden="true">
+                <div class="property-card__media"></div>
+                <div class="property-card__line property-card__line--lg"></div>
+                <div class="property-card__line property-card__line--sm"></div>
+              </article>
+            }
+          } @else {
+            @for (property of propertyService.properties(); track property.id) {
+              <article class="property-card">
+                <img class="property-card__image" [src]="property.thumbnailUrl || 'https://placehold.co/800x600?text=Luxe+Rental'" [alt]="property.title" loading="lazy" decoding="async" />
+                <h3 class="property-card__title">{{ property.title }}</h3>
+                <p class="property-card__location">{{ property.city }} • {{ property.country }}</p>
+                <p class="property-card__price">{{ formatCurrency(property.pricePerNight, property.currency) }}</p>
+                <span class="property-card__status">{{ propertyStatusLabel(property.status) }}</span>
+                <a
+                  class="property-card__edit"
+                  [class.property-card__edit--disabled]="!property.id"
+                  [routerLink]="property.id ? ['/host/properties', property.id, 'edit'] : null"
+                  [attr.aria-disabled]="!property.id"
+                >
+                  {{ t('تعديل العقار', 'Edit Property') }}
+                </a>
+              </article>
+            } @empty {
+              <div class="panel__empty">
+                <p>{{ t('لا توجد عقارات حالياً', 'No properties yet') }}</p>
+                <a class="panel__empty-link" routerLink="/host/properties/new">{{ t('إضافة أول عقار', 'Add your first property') }}</a>
+              </div>
+            }
+          }
+        </div>
+      } @placeholder {
+        <div class="properties-grid" aria-hidden="true">
+          @for (_ of [1, 2, 3, 4]; track _) {
+            <article class="property-card property-card--skeleton">
+              <div class="property-card__media"></div>
+              <div class="property-card__line property-card__line--lg"></div>
+              <div class="property-card__line property-card__line--sm"></div>
             </article>
-          } @empty {
-            <div class="panel__empty">
-              <p>{{ t('لا توجد حجوزات نشطة أو قادمة حالياً', 'No active or upcoming bookings right now') }}</p>
-            </div>
           }
         </div>
       }
     </section>
   </section>
 
-  <a class="host-dashboard__fab" routerLink="/host/properties/new" [attr.aria-label]="t('إضافة عقار جديد', 'Add New Property')">
-    +
-  </a>
 </section>

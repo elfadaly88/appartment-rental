@@ -6,11 +6,16 @@ import { TranslateModule } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { environment } from '../../../environments/environment';
+import {
+  egyptianPhoneValidator,
+  normalizeEgyptianPhone,
+} from '../../core/validators/egyptian-phone.validator';
 
 interface ProfileResponse {
   email: string;
   displayName?: string;
   bio?: string;
+  phoneNumber?: string;
   avatarUrl?: string;
 }
 
@@ -37,6 +42,7 @@ export class ProfileComponent implements OnInit {
   readonly profileForm = this.fb.nonNullable.group({
     displayName: ['', [Validators.maxLength(100)]],
     bio: ['', [Validators.maxLength(500)]],
+    phoneNumber: ['', [egyptianPhoneValidator()]],
   });
 
   async ngOnInit(): Promise<void> {
@@ -48,8 +54,9 @@ export class ProfileComponent implements OnInit {
       this.profileForm.patchValue({
         displayName: profile.displayName ?? '',
         bio: profile.bio ?? '',
+        phoneNumber: profile.phoneNumber ?? '',
       });
-      
+
       if (profile.avatarUrl) {
         this.previewUrl.set(profile.avatarUrl);
       }
@@ -97,10 +104,12 @@ export class ProfileComponent implements OnInit {
     this.isSaving.set(true);
 
     const formData = new FormData();
-    const { displayName, bio } = this.profileForm.getRawValue();
-    
+    const { displayName, bio, phoneNumber } = this.profileForm.getRawValue();
+    const normalizedPhone = normalizeEgyptianPhone(phoneNumber);
+
     if (displayName) formData.append('displayName', displayName);
     if (bio) formData.append('bio', bio);
+    formData.append('phoneNumber', normalizedPhone);
     if (this.selectedFile) formData.append('avatar', this.selectedFile);
 
     try {
@@ -112,8 +121,11 @@ export class ProfileComponent implements OnInit {
       this.authService.updateProfileData({
         displayName: currentProfile.displayName,
         bio: currentProfile.bio,
-        avatarUrl: currentProfile.avatarUrl
+        avatarUrl: currentProfile.avatarUrl,
+        phoneNumber: currentProfile.phoneNumber,
       });
+
+      this.profileForm.patchValue({ phoneNumber: currentProfile.phoneNumber ?? normalizedPhone });
 
       this.showToast('Profile updated successfully!');
       this.selectedFile = null;
@@ -128,5 +140,13 @@ export class ProfileComponent implements OnInit {
   private showToast(msg: string): void {
     this.toastMessage.set(msg);
     setTimeout(() => this.toastMessage.set(null), 3000);
+  }
+
+  protected onPhoneInput(): void {
+    const current = this.profileForm.controls.phoneNumber.value;
+    const normalized = normalizeEgyptianPhone(current);
+    if (current !== normalized) {
+      this.profileForm.controls.phoneNumber.setValue(normalized, { emitEvent: false });
+    }
   }
 }

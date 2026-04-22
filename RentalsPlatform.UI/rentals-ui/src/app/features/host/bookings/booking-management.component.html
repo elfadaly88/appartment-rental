@@ -58,6 +58,13 @@
                 <strong>{{ booking.guestEmail }}</strong>
               </p>
             }
+            <p class="card__phone-row" [attr.title]="booking.isGuestPhoneVerified ? null : t('مرئي بعد نجاح الدفع.', 'Visible after successful payment.')">
+              <span>{{ t('جوال الضيف', 'Guest phone') }}:</span>
+              <strong>{{ guestPhoneText(booking) }}</strong>
+              @if (booking.isGuestPhoneVerified) {
+                <span class="card__verified">{{ t('موثق', 'Verified') }}</span>
+              }
+            </p>
           </div>
 
           @if (activeTab() === 'pending') {

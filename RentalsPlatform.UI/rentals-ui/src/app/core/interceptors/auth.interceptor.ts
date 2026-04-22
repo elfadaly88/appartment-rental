@@ -15,7 +15,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     : null;
 
   let authReq = req;
-  if (token && !req.headers.has('Authorization')) {
+  const isAssetRequest = req.url.includes('/assets/');
+  
+  if (token && !req.headers.has('Authorization') && !isAssetRequest) {
     authReq = req.clone({
       setHeaders: { Authorization: `Bearer ${token}` },
     });

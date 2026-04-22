@@ -1,0 +1,336 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     Luxe Rentals — Landing Page
+     ═══════════════════════════════════════════════════════════════ -->
+
+<!-- ───── HERO SECTION ───── -->
+<section
+  id="hero"
+  class="hero-section"
+  [attr.dir]="dir()"
+>
+  <!-- Floating particles overlay -->
+  <div class="particles" aria-hidden="true">
+    @for (p of [1,2,3,4,5,6,7,8]; track p) {
+      <span class="particle"></span>
+    }
+  </div>
+
+  <!-- Hero content -->
+  <div class="hero-content">
+    <!-- Eyebrow badge -->
+    <div class="hero-badge reveal">
+      <span class="badge-dot"></span>
+      <span>{{ 'LANDING.HERO.EYEBROW' | translate }}</span>
+    </div>
+
+    <h1 class="hero-title reveal">
+      {{ 'LANDING.HERO.TITLE_LINE1' | translate }}
+      <span class="hero-title-accent">{{ 'LANDING.HERO.TITLE_ACCENT' | translate }}</span>
+    </h1>
+
+    <p class="hero-subtitle reveal">
+      {{ 'LANDING.HERO.SUBTITLE' | translate }}
+    </p>
+
+    <!-- Glassmorphism Search Bar -->
+    <div class="glass-search reveal">
+      <button
+        id="hero-explore-btn"
+        class="search-btn"
+        (click)="navigateToProperties()"
+        [attr.aria-label]="'LANDING.HERO.BTN_EXPLORE' | translate"
+      >
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35"/>
+        </svg>
+        {{ 'LANDING.HERO.BTN_EXPLORE' | translate }}
+      </button>
+
+      <div class="search-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pill-icon">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/>
+        </svg>
+        <span>{{ 'LANDING.HERO.PILL_1' | translate }}</span>
+      </div>
+
+      <div class="search-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pill-icon">
+          <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span>{{ 'LANDING.HERO.PILL_2' | translate }}</span>
+      </div>
+
+      <div class="search-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="pill-icon">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span>{{ 'LANDING.HERO.PILL_3' | translate }}</span>
+      </div>
+    </div>
+
+    <!-- CTA Buttons -->
+    <div class="hero-ctas reveal">
+      <a id="hero-browse-link" routerLink="/properties" class="cta-primary">
+        {{ 'LANDING.HERO.CTA_PRIMARY' | translate }}
+      </a>
+      <a id="hero-host-link" routerLink="/auth" class="cta-secondary">
+        {{ 'LANDING.HERO.CTA_HOST' | translate }}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cta-arrow">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Scroll hint -->
+  <div class="scroll-hint" aria-hidden="true">
+    <div class="scroll-mouse"><div class="scroll-wheel"></div></div>
+    <span>{{ 'LANDING.HERO.SCROLL_HINT' | translate }}</span>
+  </div>
+</section>
+
+
+<!-- ───── FLOATING STATS DASHBOARD ───── -->
+<section
+  id="stats-section"
+  class="stats-section"
+  [attr.dir]="dir()"
+>
+  <div class="stats-inner">
+    <!-- Section header -->
+    <div class="stats-header reveal">
+      <p class="stats-eyebrow">{{ 'LANDING.STATS.EYEBROW' | translate }}</p>
+      <h2 class="stats-title">{{ 'LANDING.STATS.TITLE' | translate }}</h2>
+      <p class="stats-subtitle">{{ 'LANDING.STATS.SUBTITLE' | translate }}</p>
+    </div>
+
+    <!-- Dashboard cards -->
+    @if (isLoading()) {
+      <div class="stats-loading" role="status" aria-live="polite">
+        @for (s of [1,2,3]; track s) {
+          <div class="stat-skeleton"></div>
+        }
+      </div>
+    } @else if (hasError()) {
+      <div class="stats-error" role="alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="error-icon">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        {{ 'LANDING.STATS.ERROR' | translate }}
+      </div>
+    } @else {
+      <div class="stats-cards">
+        <!-- Card 1 — Luxury Units -->
+        <div class="stat-card reveal">
+          <div class="stat-card-icon stat-card-icon--gold">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/>
+            </svg>
+          </div>
+          <div class="stat-card-body">
+            <div class="stat-number">
+              {{ displayUnits() | number }}<span class="stat-plus">+</span>
+            </div>
+            <div class="stat-label">{{ 'LANDING.STATS.LUXURY_UNITS' | translate }}</div>
+            <div class="stat-sub">{{ 'LANDING.STATS.LUXURY_UNITS_SUB' | translate }}</div>
+          </div>
+          <div class="stat-card-glow stat-card-glow--gold" aria-hidden="true"></div>
+        </div>
+
+        <!-- Card 2 — Total Clients (featured/large) -->
+        <div class="stat-card stat-card--featured reveal">
+          <div class="stat-card-icon stat-card-icon--purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="stat-card-body">
+            <div class="stat-number stat-number--large">
+              {{ displayClients() | number }}<span class="stat-plus">+</span>
+            </div>
+            <div class="stat-label">{{ 'LANDING.STATS.TOTAL_CLIENTS' | translate }}</div>
+            <div class="stat-sub">{{ 'LANDING.STATS.TOTAL_CLIENTS_SUB' | translate }}</div>
+          </div>
+          <div class="stat-card-pulse" aria-hidden="true"></div>
+          <div class="stat-card-glow stat-card-glow--purple" aria-hidden="true"></div>
+        </div>
+
+        <!-- Card 3 — Annual Transactions -->
+        <div class="stat-card reveal">
+          <div class="stat-card-icon stat-card-icon--teal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+            </svg>
+          </div>
+          <div class="stat-card-body">
+            <div class="stat-number">
+              {{ displayTransactions() | number }}<span class="stat-plus">+</span>
+            </div>
+            <div class="stat-label">{{ 'LANDING.STATS.ANNUAL_TRANSACTIONS' | translate }}</div>
+            <div class="stat-sub">{{ ('LANDING.STATS.ANNUAL_TRANSACTIONS_SUB' | translate) + ' ' + stats()?.currentYear }}</div>
+          </div>
+          <div class="stat-card-glow stat-card-glow--teal" aria-hidden="true"></div>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+
+<!-- ───── FEATURED PROPERTIES ───── -->
+<section class="featured-section" [attr.dir]="dir()">
+  <div class="featured-inner">
+
+    <!-- Section header -->
+    <div class="featured-header reveal">
+      <p class="featured-eyebrow">{{ 'LANDING.FEATURED.EYEBROW' | translate }}</p>
+      <h2 class="featured-title">{{ 'LANDING.FEATURED.TITLE' | translate }}</h2>
+      <p class="featured-subtitle">{{ 'LANDING.FEATURED.SUBTITLE' | translate }}</p>
+    </div>
+
+    <!-- City filter chips -->
+    @if (availableCities().length > 0) {
+      <div class="city-filter" role="group" aria-label="Filter by city">
+        <button
+          class="city-chip"
+          [class.city-chip--active]="selectedCity() === ''"
+          (click)="filterByCity('')"
+          type="button"
+        >{{ 'LANDING.FEATURED.ALL' | translate }}</button>
+        @for (city of availableCities(); track city) {
+          <button
+            class="city-chip"
+            [class.city-chip--active]="selectedCity() === city"
+            (click)="filterByCity(city)"
+            type="button"
+          >{{ city }}</button>
+        }
+      </div>
+    }
+
+    <!-- Property grid -->
+    @if (featuredLoading()) {
+      <div class="fp-grid">
+        @for (_ of [1,2,3,4,5,6]; track _) {
+          <article class="fp-card fp-card--skeleton" aria-hidden="true">
+            <div class="fp-card__media"></div>
+            <div class="fp-card__body">
+              <div class="fp-skel fp-skel--lg"></div>
+              <div class="fp-skel fp-skel--sm"></div>
+            </div>
+          </article>
+        }
+      </div>
+    } @else if (featuredProperties().length === 0) {
+      <div class="featured-empty">
+        <p>{{ 'LANDING.FEATURED.EMPTY' | translate }}</p>
+      </div>
+    } @else {
+      <div class="fp-grid">
+        @for (prop of featuredProperties(); track prop.id) {
+          <article class="fp-card reveal">
+            <a class="fp-card__link" [routerLink]="['/properties', prop.id]" [attr.aria-label]="prop.title">
+              <div class="fp-card__media-wrap">
+                <img
+                  class="fp-card__img"
+                  [src]="prop.thumbnailUrl || 'https://placehold.co/600x400?text=Luxe+Rental'"
+                  [alt]="prop.title"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div class="fp-card__price-badge">
+                  {{ formatPrice(prop.pricePerNight, prop.currency) }}<span class="fp-card__per-night"> /night</span>
+                </div>
+              </div>
+              <div class="fp-card__body">
+                <h3 class="fp-card__title">{{ prop.title }}</h3>
+                <p class="fp-card__location">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fp-card__loc-icon">
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  {{ prop.city }}
+                </p>
+                <p class="fp-card__guests">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fp-card__loc-icon">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                  </svg>
+                  {{ prop.maxGuests }} guests max
+                </p>
+              </div>
+            </a>
+          </article>
+        }
+      </div>
+    }
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <nav class="fp-pagination" aria-label="Properties pagination">
+        <button
+          class="fp-page-btn fp-page-btn--arrow"
+          [disabled]="featuredPage() === 1"
+          (click)="goToPage(featuredPage() - 1)"
+          type="button"
+          aria-label="Previous page"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+        </button>
+
+        @for (p of pageNumbers(); track p) {
+          <button
+            class="fp-page-btn"
+            [class.fp-page-btn--active]="p === featuredPage()"
+            (click)="goToPage(p)"
+            type="button"
+            [attr.aria-current]="p === featuredPage() ? 'page' : null"
+          >{{ p }}</button>
+        }
+
+        <button
+          class="fp-page-btn fp-page-btn--arrow"
+          [disabled]="featuredPage() === totalPages()"
+          (click)="goToPage(featuredPage() + 1)"
+          type="button"
+          aria-label="Next page"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+        </button>
+      </nav>
+    }
+
+  </div>
+</section>
+
+
+<!-- ───── FEATURES STRIP ───── -->
+<section class="features-section" [attr.dir]="dir()">
+  <div class="features-inner">
+    @for (feat of features; track feat.key) {
+      <div class="feature-item reveal">
+        <div class="feature-icon" [innerHTML]="feat.svg | safeHtml"></div>
+        <div>
+          <div class="feature-title">{{ ('LANDING.FEATURES.' + feat.key + '_TITLE') | translate }}</div>
+          <div class="feature-desc">{{ ('LANDING.FEATURES.' + feat.key + '_DESC') | translate }}</div>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+
+<!-- ───── FINAL CTA BANNER ───── -->
+<section class="cta-banner reveal" [attr.dir]="dir()">
+  <div class="cta-banner-inner">
+    <h2 class="cta-banner-title">{{ 'LANDING.CTA.TITLE' | translate }}</h2>
+    <p class="cta-banner-sub">{{ 'LANDING.CTA.SUBTITLE' | translate }}</p>
+    <div class="cta-banner-btns">
+      <a id="cta-browse-btn" routerLink="/properties" class="cta-primary cta-primary--lg">
+        {{ 'LANDING.CTA.BTN_BROWSE' | translate }}
+      </a>
+      <a id="cta-signup-btn" routerLink="/auth" class="cta-ghost">
+        {{ 'LANDING.CTA.BTN_JOIN' | translate }}
+      </a>
+    </div>
+  </div>
+</section>

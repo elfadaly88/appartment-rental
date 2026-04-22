@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnDestroy,
   computed,
   inject,
   signal,
@@ -25,7 +26,7 @@ import { LanguageService } from '../../../core/services/language.service';
     '[attr.lang]': 'lang.currentLang()',
   },
 })
-export class PropertyApprovalsComponent {
+export class PropertyApprovalsComponent implements OnDestroy {
   protected readonly store = inject(AdminPropertyStore);
   protected readonly lang = inject(LanguageService);
 
@@ -34,12 +35,26 @@ export class PropertyApprovalsComponent {
   protected readonly rejectionReason = signal('');
   protected readonly modalError = signal<string | null>(null);
 
+  protected readonly isViewModalOpen = signal(false);
+  protected readonly viewedProperty = signal<PendingPropertyDto | null>(null);
+
+  protected readonly lightboxImage = signal<string | null>(null);
+
   protected readonly title = computed(() =>
     this.t('موافقة العقارات', 'Property Approvals'),
   );
 
+  protected readonly successToast = signal<string | null>(null);
+
   constructor() {
     void this.store.loadPending();
+  }
+
+  ngOnDestroy(): void {
+    this.closeLightbox();
+    this.closeViewModal();
+    this.closeRejectModal();
+    this.successToast.set(null);
   }
 
   protected async refresh(): Promise<void> {
@@ -47,7 +62,21 @@ export class PropertyApprovalsComponent {
   }
 
   protected async approve(propertyId: string): Promise<void> {
+    // Post-Approval UI Cleanup (No More Black Screen)
+    this.closeLightbox();
+    this.closeViewModal();
+    this.closeRejectModal();
+
     await this.store.approve(propertyId);
+
+    if (!this.store.error()) {
+      this.showSuccessToast(this.t('تمت الموافقة بنجاح', 'Unit Approved Successfully'));
+    }
+  }
+
+  private showSuccessToast(message: string): void {
+    this.successToast.set(message);
+    setTimeout(() => this.successToast.set(null), 3000);
   }
 
   protected openRejectModal(item: PendingPropertyDto): void {
@@ -62,6 +91,24 @@ export class PropertyApprovalsComponent {
     this.selectedProperty.set(null);
     this.rejectionReason.set('');
     this.modalError.set(null);
+  }
+
+  protected openViewModal(item: PendingPropertyDto): void {
+    this.viewedProperty.set(item);
+    this.isViewModalOpen.set(true);
+  }
+
+  protected closeViewModal(): void {
+    this.isViewModalOpen.set(false);
+    this.viewedProperty.set(null);
+  }
+
+  protected openLightbox(image: string): void {
+    this.lightboxImage.set(image);
+  }
+
+  protected closeLightbox(): void {
+    this.lightboxImage.set(null);
   }
 
   protected updateReason(value: string): void {
@@ -86,10 +133,13 @@ export class PropertyApprovalsComponent {
       return;
     }
 
+    // Optimistic UI cleanup
+    this.closeRejectModal();
+
     await this.store.reject(target.id, reason);
 
     if (!this.store.error()) {
-      this.closeRejectModal();
+      this.showSuccessToast(this.t('تم التحديث', 'Status Updated'));
     }
   }
 
@@ -108,6 +158,11 @@ export class PropertyApprovalsComponent {
     } catch {
       return `${currency} ${Math.round(amount).toLocaleString(locale)}`;
     }
+  }
+
+  protected formatFullPrice(amount: number, currency: string): string {
+    const priceStr = this.formatPrice(amount, currency);
+    return this.t(`${priceStr} / ليلة`, `${priceStr} / Night`);
   }
 
   protected t(ar: string, en: string): string {

@@ -58,7 +58,7 @@ export class NotificationService implements OnDestroy {
     }
 
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl(environment.hubUrl, {
+      .withUrl(this.resolveHubUrl(environment.hubUrl), {
         accessTokenFactory: () => jwtToken,
         transport: signalR.HttpTransportType.WebSockets,
         skipNegotiation: true,
@@ -94,6 +94,14 @@ export class NotificationService implements OnDestroy {
 
     if (!jwtToken) {
       console.warn('[NotificationService] No JWT token found for SignalR connection.');
+      void this.router.navigate(['/auth']);
+      return;
+    }
+
+    if (this.isJwtExpired(jwtToken)) {
+      localStorage.removeItem('jwtToken');
+      localStorage.removeItem('token');
+      console.warn('[NotificationService] JWT token expired. Redirecting to login.');
       void this.router.navigate(['/auth']);
       return;
     }
@@ -139,5 +147,43 @@ export class NotificationService implements OnDestroy {
     this.hubConnection.onclose(() => {
       this._connectionState.set(signalR.HubConnectionState.Disconnected);
     });
+  }
+
+  private resolveHubUrl(url: string): string {
+    if (!isPlatformBrowser(this.platformId)) {
+      return url;
+    }
+
+    const pageIsHttps = window.location.protocol === 'https:';
+    if (pageIsHttps && url.startsWith('http://')) {
+      return `https://${url.slice('http://'.length)}`;
+    }
+
+    if (!pageIsHttps && url.startsWith('https://')) {
+      return `http://${url.slice('https://'.length)}`;
+    }
+
+    return url;
+  }
+
+  private isJwtExpired(token: string): boolean {
+    try {
+      const payloadBase64 = token.split('.')[1] ?? '';
+      if (!payloadBase64) {
+        return true;
+      }
+
+      const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+      const payload = JSON.parse(atob(padded)) as { exp?: number };
+
+      if (typeof payload.exp !== 'number') {
+        return false;
+      }
+
+      return payload.exp * 1000 <= Date.now() + 30_000;
+    } catch {
+      return true;
+    }
   }
 }

@@ -1,8 +1,14 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using RentalsPlatform.Application.Common;
 using RentalsPlatform.Application.DTOs.Bookings;
 using RentalsPlatform.Application.Services;
+using RentalsPlatform.Domain.Entities;
+using RentalsPlatform.Domain.Enums;
+using RentalsPlatform.Infrastructure.Data;
 
 namespace RentalsPlatform.Api.Controllers;
 
@@ -11,10 +17,17 @@ namespace RentalsPlatform.Api.Controllers;
 public class BookingsController : ControllerBase
 {
     private readonly IBookingService _bookingService;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ApplicationDbContext _dbContext;
 
-    public BookingsController(IBookingService bookingService)
+    public BookingsController(
+        IBookingService bookingService,
+        UserManager<ApplicationUser> userManager,
+        ApplicationDbContext dbContext)
     {
         _bookingService = bookingService;
+        _userManager = userManager;
+        _dbContext = dbContext;
     }
 
     [Authorize]
@@ -24,6 +37,13 @@ public class BookingsController : ControllerBase
         var guestIdRaw = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(guestIdRaw, out var guestId))
             return Unauthorized();
+
+        var guest = await _userManager.FindByIdAsync(guestId.ToString());
+        if (guest is null)
+            return Unauthorized();
+
+        if (!EgyptianPhoneNumber.IsValidLocal(guest.PhoneNumber))
+            return BadRequest(new { Message = "Mobile number is required for payment security. Please update your profile before booking." });
 
         if (request.CheckOutDate <= request.CheckInDate)
             return BadRequest(new { Message = "Check-out date must be after check-in date." });
@@ -94,6 +114,42 @@ public class BookingsController : ControllerBase
         return Ok(bookings);
     }
 
+    /// <summary>
+    /// Verifies the booking payment state from DB after UI callback.
+    /// NOTE: callback success query param is only a hint and never trusted for final confirmation.
+    /// </summary>
+    [Authorize]
+    [HttpPost("verify-payment-status")]
+    public async Task<IActionResult> VerifyPaymentStatus([FromBody] VerifyBookingPaymentRequest request, CancellationToken cancellationToken)
+    {
+        if (request.BookingId == Guid.Empty)
+            return BadRequest(new { Message = "Booking id is required." });
+
+        var guestIdRaw = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(guestIdRaw, out var guestId))
+            return Unauthorized();
+
+        var booking = await _dbContext.Bookings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == request.BookingId && b.GuestId == guestId, cancellationToken);
+
+        if (booking is null)
+            return NotFound(new { Message = "Booking not found." });
+
+        var isPaid = booking.PaymentStatus == PaymentStatus.Paid;
+        var isConfirmed = booking.Status == BookingStatus.Confirmed;
+
+        return Ok(new
+        {
+            bookingId = booking.Id,
+            status = booking.Status.ToString(),
+            paymentStatus = booking.PaymentStatus.ToString(),
+            paymentId = booking.PaymobOrderId,
+            callbackSuccessHint = request.Success,
+            isVerified = isPaid && isConfirmed
+        });
+    }
+
     /// <summary>Guest cancels their own Pending or Approved booking.</summary>
     [Authorize]
     [HttpDelete("{id:guid}/cancel")]
@@ -111,5 +167,6 @@ public class BookingsController : ControllerBase
     }
 
     public sealed record CreateBookingRequest(Guid PropertyId, DateOnly CheckInDate, DateOnly CheckOutDate);
+    public sealed record VerifyBookingPaymentRequest(Guid BookingId, bool Success);
 }
 

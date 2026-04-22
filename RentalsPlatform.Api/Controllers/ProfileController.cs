@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using RentalsPlatform.Application.Common;
 using RentalsPlatform.Domain.Entities;
 using System.Security.Claims;
 
@@ -34,6 +35,7 @@ public class ProfileController : ControllerBase
             user.Email,
             user.DisplayName,
             user.Bio,
+            PhoneNumber = user.PhoneNumber,
             AvatarUrl = user.AvatarUrl ?? user.ProfilePictureUrl,
             user.JoinedDate
         });
@@ -85,8 +87,21 @@ public class ProfileController : ControllerBase
         if (user == null) return NotFound("User not found");
 
         // Update fields securely
-        user.DisplayName = request.DisplayName;
+        if (!string.IsNullOrWhiteSpace(request.DisplayName))
+        {
+            user.DisplayName = request.DisplayName;
+        }
+
         user.Bio = request.Bio;
+
+        if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            var normalizedPhone = EgyptianPhoneNumber.NormalizeToLocal(request.PhoneNumber);
+            if (!EgyptianPhoneNumber.IsValidLocal(normalizedPhone))
+                return BadRequest(new { Message = "Please enter a valid Egyptian mobile number (e.g., 010xxxxxxxx)." });
+
+            user.PhoneNumber = normalizedPhone;
+        }
 
         if (request.Avatar != null)
         {
@@ -102,9 +117,9 @@ public class ProfileController : ControllerBase
             await request.Avatar.CopyToAsync(ms);
             var fileBytes = ms.ToArray();
             var base64 = Convert.ToBase64String(fileBytes);
-            
+
             // In a real scenario, this would be a URL representing the uploaded file
-            user.AvatarUrl = $"data:{request.Avatar.ContentType};base64,{base64}"; 
+            user.AvatarUrl = $"data:{request.Avatar.ContentType};base64,{base64}";
         }
 
         var result = await _userManager.UpdateAsync(user);
@@ -117,6 +132,7 @@ public class ProfileController : ControllerBase
         {
             user.DisplayName,
             user.Bio,
+            PhoneNumber = user.PhoneNumber,
             user.AvatarUrl,
             user.JoinedDate
         });
@@ -125,12 +141,14 @@ public class ProfileController : ControllerBase
 
 public class ProfileUpdateDto
 {
-    [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Display Name is required.")]
     [System.ComponentModel.DataAnnotations.MaxLength(100, ErrorMessage = "Display Name cannot exceed 100 characters.")]
-    public string DisplayName { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
 
     [System.ComponentModel.DataAnnotations.MaxLength(500, ErrorMessage = "Bio cannot exceed 500 characters.")]
     public string? Bio { get; set; }
+
+    [System.ComponentModel.DataAnnotations.MaxLength(20, ErrorMessage = "Phone number cannot exceed 20 characters.")]
+    public string? PhoneNumber { get; set; }
 
     public IFormFile? Avatar { get; set; }
 }

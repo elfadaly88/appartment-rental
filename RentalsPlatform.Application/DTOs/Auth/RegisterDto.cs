@@ -4,4 +4,5 @@ public record RegisterDto(
     string FullName,
     string Email,
     string Password,
-    string? ProfilePictureUrl);
+    string? ProfilePictureUrl = null,
+    bool AcceptedHostTerms = false);

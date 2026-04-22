@@ -12,6 +12,7 @@ export interface User {
   role: string;
   fullName?: string;
   displayName?: string;
+  phoneNumber?: string;
   avatarUrl?: string;
   bio?: string;
 }
@@ -34,11 +35,27 @@ export interface RegisterHostPayload {
   acceptedHostTerms: boolean;
 }
 
+export interface ExternalLoginPayload {
+  provider: 'google' | 'facebook';
+  accessToken: string;
+  idToken?: string;
+  role?: 'guest' | 'host';
+  acceptedHostTerms?: boolean;
+}
+
+interface AuthUserResponse {
+  id: string;
+  email: string;
+  fullName: string;
+  displayName: string;
+  avatarUrl?: string;
+  roles: string[];
+}
+
 interface AuthResponse {
   token: string;
-  fullName: string;
-  email: string;
   isSuccess: boolean;
+  user?: AuthUserResponse;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -63,7 +80,7 @@ export class AuthService {
       this.http.post<AuthResponse>(`${this.authApiUrl}/login`, credentials),
     );
 
-    return this.persistAndDecodeToken(response.token);
+    return this.persistSession(response);
   }
 
   async registerGuest(data: RegisterGuestPayload): Promise<User> {
@@ -71,7 +88,7 @@ export class AuthService {
       this.http.post<AuthResponse>(`${this.authApiUrl}/register/guest`, data),
     );
 
-    return this.persistAndDecodeToken(response.token);
+    return this.persistSession(response);
   }
 
   async registerHost(data: RegisterHostPayload): Promise<User> {
@@ -79,7 +96,15 @@ export class AuthService {
       this.http.post<AuthResponse>(`${this.authApiUrl}/register/host`, data),
     );
 
-    return this.persistAndDecodeToken(response.token);
+    return this.persistSession(response);
+  }
+
+  async externalLogin(payload: ExternalLoginPayload): Promise<User> {
+    const response = await firstValueFrom(
+      this.http.post<AuthResponse>(`${this.authApiUrl}/external-login/callback`, payload),
+    );
+
+    return this.persistSession(response);
   }
 
   logout(): void {
@@ -129,6 +154,13 @@ export class AuthService {
     return user;
   }
 
+  private persistSession(response: AuthResponse): User {
+    const decodedUser = this.persistAndDecodeToken(response.token);
+    const mergedUser = this.mergeUserResponse(decodedUser, response.user);
+    this.currentUser.set(mergedUser);
+    return mergedUser;
+  }
+
   private decodeUserFromToken(token: string): User {
     const payload = this.decodeJwtPayload(token);
 
@@ -168,16 +200,40 @@ export class AuthService {
     return { id, email, role, fullName, displayName, avatarUrl, bio };
   }
 
-  updateProfileData(data: { displayName?: string; bio?: string; avatarUrl?: string }): void {
-    this.currentUser.update(user => {
+  updateProfileData(data: { displayName?: string; bio?: string; avatarUrl?: string; phoneNumber?: string }): void {
+    this.currentUser.update((user) => {
       if (!user) return user;
       return {
         ...user,
         displayName: data.displayName ?? user.displayName,
         bio: data.bio ?? user.bio,
-        avatarUrl: data.avatarUrl ?? user.avatarUrl
+        phoneNumber: data.phoneNumber ?? user.phoneNumber,
+        avatarUrl: data.avatarUrl ?? user.avatarUrl,
       };
     });
+  }
+
+  private mergeUserResponse(user: User, authUser?: AuthUserResponse): User {
+    if (!authUser) {
+      return user;
+    }
+
+    // Prefer the auth-response body value when explicitly non-empty;
+    // otherwise fall back to the JWT-decoded value so we never wipe a valid URL.
+    const resolvedAvatar =
+      authUser.avatarUrl && authUser.avatarUrl.trim().length > 0
+        ? authUser.avatarUrl
+        : user.avatarUrl;
+
+    return {
+      ...user,
+      id: authUser.id || user.id,
+      email: authUser.email || user.email,
+      fullName: authUser.fullName || user.fullName,
+      displayName: authUser.displayName || user.displayName,
+      avatarUrl: resolvedAvatar,
+      role: authUser.roles[0] ?? user.role,
+    };
   }
 
   private readClaim(payload: Record<string, unknown>, keys: string[]): string | null {

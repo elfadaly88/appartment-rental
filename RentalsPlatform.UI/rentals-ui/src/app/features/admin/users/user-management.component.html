@@ -62,7 +62,15 @@
         @for (user of visibleUsers(); track user.id) {
           <div role="row" class="user-grid__row">
             <div role="cell" [attr.data-label]="t('اسم المستخدم', 'User Name')">
-              <strong class="user-grid__name">{{ user.fullName }}</strong>
+              <div class="user-grid__profile">
+                <!-- We assume AdminUserDto has an avatarUrl (if not, it falls back to initials) -->
+                @if (user.avatarUrl) {
+                  <img [src]="user.avatarUrl" [alt]="user.fullName" class="user-grid__avatar" />
+                } @else {
+                  <div class="user-grid__initials">{{ getInitials(user.fullName) }}</div>
+                }
+                <strong class="user-grid__name">{{ user.fullName }}</strong>
+              </div>
             </div>
 
             <div role="cell" [attr.data-label]="t('البريد الإلكتروني', 'Email')">
@@ -70,7 +78,7 @@
             </div>
 
             <div role="cell" [attr.data-label]="t('الدور', 'Role')">
-              <span class="badge badge--role">{{ roleLabel(user.role) }}</span>
+              <span class="badge" [ngClass]="roleClass(user.role)">{{ roleLabel(user.role) }}</span>
             </div>
 
             <div role="cell" [attr.data-label]="t('الحالة', 'Status')">

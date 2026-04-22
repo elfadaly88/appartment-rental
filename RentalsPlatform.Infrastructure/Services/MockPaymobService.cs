@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using RentalsPlatform.Application.DTOs.Payments;
 using RentalsPlatform.Domain.Entities;
+using RentalsPlatform.Domain.Enums;
 
 namespace RentalsPlatform.Infrastructure.Services;
 
@@ -26,11 +27,18 @@ public class MockPaymobService : IPaymobService
         => Task.FromResult($"mock-sub-merchant-{Guid.NewGuid():N}");
 
 
-        public async Task<string> InitializeBookingPaymentAsync(string authToken, string bookingId)
-{
-    // بنرجع توكن وهمي عشان الـ Build ينجح والـ UI يفتح معاك للتجربة
-    await Task.Delay(10); // محاكاة لعملية async بسيطة
-    return "mock_payment_token_from_paymob_service_for_testing_only";
-}
+    public Task<InitiatePaymobResponseDto> InitializeBookingPaymentAsync(Guid bookingId)
+        => Task.FromResult(new InitiatePaymobResponseDto
+        {
+            BookingId = bookingId,
+            OrderId = $"mock-order-{Guid.NewGuid():N}",
+            PaymentKey = $"mock-payment-key-{Guid.NewGuid():N}",
+            PublicKey = "mock-public-key",
+            CheckoutUrl = $"http://localhost:4200/checkout/mock-paymob?orderId={bookingId}",
+            CallbackUrl = "http://localhost:4200/checkout/callback"
+        });
+
+    public Task<PaymentStatus> GetBookingPaymentStatusAsync(Guid bookingId)
+        => Task.FromResult(PaymentStatus.Paid);
 
 }

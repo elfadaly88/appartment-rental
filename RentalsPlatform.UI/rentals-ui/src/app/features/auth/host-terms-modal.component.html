@@ -1,0 +1,132 @@
+@if (isOpen()) {
+  <div class="terms-modal fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm" (click)="close()">
+    <section class="terms-modal__panel relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-white/35 bg-white/70 shadow-[0_30px_80px_rgba(15,23,42,0.22)] backdrop-blur-2xl" (click)="$event.stopPropagation()">
+      <header class="terms-modal__hero relative overflow-hidden border-b border-white/35 bg-gradient-to-br from-[#0f766e] via-[#14b8a6] to-[#38bdf8] px-4 py-5 text-white sm:px-6 md:px-8 md:py-6">
+        <div class="absolute inset-y-0 end-0 w-1/2 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_60%)]"></div>
+        <div class="relative flex items-start justify-between gap-3 sm:gap-4">
+          <div class="flex items-start gap-3 sm:gap-4">
+            <div class="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl bg-white/16 ring-1 ring-white/25 sm:h-14 sm:w-14 sm:rounded-2xl">
+              <svg class="h-6 w-6 sm:h-7 sm:w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m7.5 12 2.4 2.4a2 2 0 0 0 2.8 0l3.8-3.8a2 2 0 0 1 2.8 0l1 1a2 2 0 0 1 0 2.8l-3.7 3.7a5 5 0 0 1-7.1 0l-5.9-5.9a2 2 0 0 1 0-2.8l1-1a2 2 0 0 1 2.8 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="m16.5 12-2.4-2.4a2 2 0 0 0-2.8 0L7.5 13.4a2 2 0 0 1-2.8 0l-1-1a2 2 0 0 1 0-2.8l3.7-3.7a5 5 0 0 1 7.1 0l5.9 5.9a2 2 0 0 1 0 2.8l-1 1a2 2 0 0 1-2.8 0Z" />
+              </svg>
+            </div>
+
+            <div class="min-w-0 space-y-1.5 sm:space-y-2">
+              <p class="truncate text-xs font-semibold uppercase tracking-[0.2em] text-white/80 sm:text-xs sm:tracking-[0.24em]">بوابة شركاء النجاح</p>
+              <h2 class="text-xl font-black leading-tight sm:text-2xl md:text-3xl">Success Partners Portal</h2>
+              <p class="max-w-3xl text-xs leading-5 text-white/85 sm:text-sm sm:leading-6 md:text-[0.95rem]">
+                Review both Arabic and English terms side by side. Registration stays locked until both panels are reviewed and you accept the agreement.
+              </p>
+            </div>
+          </div>
+
+          <button type="button" class="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg bg-white/14 text-white transition hover:bg-white/22 sm:h-11 sm:w-11 sm:rounded-2xl" aria-label="Close terms" (click)="close()">
+            <svg class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m6 6 12 12M18 6 6 18" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="terms-modal__switcher border-b border-slate-200/70 bg-slate-50/50 px-4 py-4 sm:px-6 md:px-8">
+        <div class="terms-modal__progress-shell">
+          <div>
+            <p class="terms-modal__progress-label">Review progress</p>
+            <p class="terms-modal__progress-copy">{{ readProgress() }}% complete</p>
+          </div>
+          <div class="terms-modal__progress-track" aria-hidden="true">
+            <span class="terms-modal__progress-fill" [style.width.%]="readProgress()"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="terms-modal__reading-region min-h-0 flex-1 overflow-hidden">
+        <section class="terms-grid">
+          <article class="terms-column" dir="rtl">
+            <div class="terms-column__content terms-column__content--ar" (scroll)="markRead('ar', $event)">
+              <div class="terms-column__heading">
+                <div>
+                  <p class="terms-column__eyebrow">العربية</p>
+                  <h3>بوابة شركاء النجاح</h3>
+                </div>
+                <span [class.is-read]="arabicRead()">
+                  {{ arabicRead() ? 'تمت المراجعة' : 'مرر حتى النهاية' }}
+                </span>
+              </div>
+
+              @for (section of sections; track section.enTitle) {
+                <article class="terms-card">
+                  <div class="terms-card__bar" [style.background]="section.accentGradient"></div>
+                  <div class="terms-card__body">
+                    <h4>{{ section.arTitle }}</h4>
+                    <p>{{ section.arBody[0] }}</p>
+                    <p>{{ section.arBody[1] }}</p>
+                  </div>
+                </article>
+              }
+            </div>
+          </article>
+
+          <article class="terms-column" dir="ltr">
+            <div class="terms-column__content terms-column__content--en" (scroll)="markRead('en', $event)">
+              <div class="terms-column__heading">
+                <div>
+                  <p class="terms-column__eyebrow">English</p>
+                  <h3>Success Partners Portal</h3>
+                </div>
+                <span [class.is-read]="englishRead()">
+                  {{ englishRead() ? 'Reviewed' : 'Scroll to unlock' }}
+                </span>
+              </div>
+
+              @for (section of sections; track section.enTitle) {
+                <article class="terms-card">
+                  <div class="terms-card__bar" [style.background]="section.accentGradient"></div>
+                  <div class="terms-card__body">
+                    <h4>{{ section.enTitle }}</h4>
+                    <p>{{ section.enBody[0] }}</p>
+                    <p>{{ section.enBody[1] }}</p>
+                  </div>
+                </article>
+              }
+            </div>
+          </article>
+        </section>
+      </div>
+
+      <footer class="terms-footer sticky bottom-0 border-t border-slate-200/80 bg-white/92 px-4 py-4 backdrop-blur-xl sm:px-6 md:px-8">
+        <div class="flex flex-col gap-4">
+          <div class="terms-footer__status">
+            <div class="terms-footer__status-item" [class.is-read]="arabicRead()">
+              <span>Arabic</span>
+              <strong>{{ arabicRead() ? 'Ready' : 'Scroll pending' }}</strong>
+            </div>
+            <div class="terms-footer__status-item" [class.is-read]="englishRead()">
+              <span>English</span>
+              <strong>{{ englishRead() ? 'Ready' : 'Scroll pending' }}</strong>
+            </div>
+          </div>
+
+          <div class="grid gap-3 sm:flex sm:justify-end">
+            <button type="button" class="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:px-6 sm:py-3" (click)="close()">
+              {{ hasAccepted() ? 'Close' : 'Cancel' }}
+            </button>
+            <button type="button" class="group rounded-full bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:shadow-lg hover:shadow-slate-900/20 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-400 disabled:shadow-none sm:px-6 sm:py-3" [disabled]="!canAgree()" (click)="accept()">
+              @if (hasAccepted()) {
+                <span class="inline-flex items-center gap-2">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Agreed
+                </span>
+              } @else {
+                I Agree and Continue
+              }
+            </button>
+          </div>
+        </div>
+      </footer>
+    </section>
+  </div>
+}

@@ -1,341 +1,450 @@
-<section class="mx-auto mb-6 max-w-7xl px-4 py-4 md:mb-10 md:px-8">
-  <div class="overflow-hidden rounded-3xl border border-white/70 bg-white/85 p-6 shadow-[0_28px_60px_rgba(15,23,42,0.11)] backdrop-blur-sm md:p-8">
-    <header class="mb-6 space-y-3 md:mb-10">
-      <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-700">{{ 'HOST_FORM.EYEBROW' | translate }}</p>
-      <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+<!-- ══ Processing Overlay ════════════════════════════════════════════ -->
+@if (isSaving()) {
+  <div
+    class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-slate-950/30 backdrop-blur-sm"
+    aria-live="polite"
+    aria-label="Saving property"
+  >
+    <div class="flex flex-col items-center gap-4 rounded-2xl border border-white/60 bg-white/95 px-10 py-8 shadow-2xl shadow-slate-900/20">
+      <!-- Spinner -->
+      <span class="relative flex h-14 w-14">
+        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-40"></span>
+        <svg class="relative h-14 w-14 animate-spin text-teal-600" viewBox="0 0 24 24" fill="none">
+          <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+          <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+      </span>
+      <div class="text-center">
+        <p class="text-base font-bold text-slate-900">
+          {{ currentStep() === totalSteps ? ('HOST_FORM.PUBLISHING' | translate) : ('HOST_FORM.SAVING_PROGRESS' | translate) }}
+        </p>
+        <p class="mt-1 text-sm text-slate-500">{{ 'HOST_FORM.PLEASE_WAIT' | translate }}</p>
+      </div>
+      @if (uploadProgress() > 0) {
+        <div class="w-full">
+          <div class="h-1.5 overflow-hidden rounded-full bg-slate-200">
+            <div
+              class="h-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-400 transition-all duration-300"
+              [style.width.%]="uploadProgress()"
+            ></div>
+          </div>
+          <p class="mt-1.5 text-center text-xs font-semibold text-teal-700">{{ uploadProgress() }}%</p>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- ══ Page Shell ════════════════════════════════════════════════════ -->
+<section class="mx-auto mb-8 w-full max-w-4xl overflow-x-hidden px-4 py-6 sm:px-8 md:mb-12 md:py-10">
+  <div class="overflow-hidden rounded-3xl border border-white/70 bg-white/90 shadow-[0_28px_60px_rgba(15,23,42,0.11)] backdrop-blur-sm">
+
+    <!-- ── Card Header ───────────────────────────────────────────── -->
+    <div class="border-b border-slate-100 px-6 py-6 sm:px-8 md:py-8">
+      <p class="mb-1 text-[11px] font-extrabold uppercase tracking-[0.22em] text-teal-600">
+        {{ 'HOST_FORM.EYEBROW' | translate }}
+      </p>
+      <h1 class="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
         {{ (isEditMode() ? 'HOST_FORM.TITLE_EDIT' : 'HOST_FORM.TITLE_CREATE') | translate }}
       </h1>
-      <p class="max-w-3xl text-sm leading-6 text-slate-600">{{ 'HOST_FORM.SUBTITLE' | translate }}</p>
-    </header>
+      <p class="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+        {{ 'HOST_FORM.SUBTITLE' | translate }}
+      </p>
+    </div>
 
-    <div class="mb-6 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 md:mb-10 md:hidden">
-      <div class="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500">
-        <span>{{ 'HOST_FORM.STEP' | translate }} {{ currentStep() }}/{{ totalSteps }}</span>
-        <span>{{ progress() | number : '1.0-0' }}%</span>
-      </div>
-      <div class="h-2 overflow-hidden rounded-full bg-slate-200">
-        <div class="h-full bg-gradient-to-r from-teal-600 to-cyan-500 transition-all duration-300" [style.width.%]="progress()"></div>
+    <!-- ── Progress (mobile: compact bar) ───────────────────────── -->
+    <div class="border-b border-slate-100 bg-slate-50/60 px-6 py-4 sm:px-8 md:hidden">
+      <div class="mx-auto max-w-md">
+        <div class="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500">
+          <span>{{ 'HOST_FORM.STEP' | translate }} {{ currentStep() }} / {{ totalSteps }}</span>
+          <span class="text-teal-700">{{ progress() | number : '1.0-0' }}%</span>
+        </div>
+        <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
+          <div
+            class="h-full rounded-full bg-gradient-to-r from-teal-600 to-cyan-400 transition-all duration-500 ease-out"
+            [style.width.%]="progress()"
+          ></div>
+        </div>
       </div>
     </div>
 
-    <ol class="mb-6 hidden grid-cols-4 gap-3 md:mb-10 md:grid">
-      @for (step of stepItems; track step.id) {
-        <li>
-          <button
-            type="button"
-            class="group flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-start transition duration-300"
-            [class.border-teal-500]="currentStep() === step.id"
-            [class.bg-teal-50]="currentStep() === step.id"
-            [class.text-teal-800]="currentStep() === step.id"
-            [class.border-slate-200]="currentStep() !== step.id"
-            [class.bg-white]="currentStep() !== step.id"
-            [class.text-slate-500]="currentStep() !== step.id"
-            (click)="gotoStep(step.id)">
-            <span
-              class="grid h-9 w-9 place-items-center rounded-full text-sm font-semibold"
-              [class.bg-teal-600]="currentStep() === step.id"
-              [class.text-white]="currentStep() === step.id"
-              [class.bg-slate-100]="currentStep() !== step.id"
-              [class.text-slate-600]="currentStep() !== step.id"
+    <!-- ── Progress (desktop: step buttons) ─────────────────────── -->
+    <div class="hidden border-b border-slate-100 bg-slate-50/60 px-6 py-5 sm:px-8 md:block">
+      <ol class="mx-auto grid max-w-3xl grid-cols-4 gap-3">
+        @for (step of stepItems; track step.id) {
+          <li>
+            <button
+              type="button"
+              class="group flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-start transition-all duration-200"
+              [class.border-teal-500]="currentStep() === step.id"
+              [class.bg-teal-50]="currentStep() === step.id"
+              [class.shadow-sm]="currentStep() === step.id"
+              [class.border-slate-200]="currentStep() !== step.id"
+              [class.bg-white]="currentStep() !== step.id"
+              [disabled]="isSaving()"
+              (click)="gotoStep(step.id)"
             >
-              {{ step.id }}
-            </span>
-            <span class="text-sm font-semibold">{{ step.key | translate }}</span>
-          </button>
-        </li>
-      }
-    </ol>
+              <span
+                class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full text-sm font-bold transition-colors"
+                [class.bg-teal-600]="currentStep() === step.id"
+                [class.text-white]="currentStep() === step.id"
+                [class.bg-slate-100]="currentStep() !== step.id"
+                [class.text-slate-500]="currentStep() !== step.id"
+              >{{ step.id }}</span>
+              <span
+                class="text-sm font-semibold leading-tight transition-colors"
+                [class.text-teal-800]="currentStep() === step.id"
+                [class.text-slate-500]="currentStep() !== step.id"
+              >{{ step.key | translate }}</span>
+            </button>
+          </li>
+        }
+      </ol>
+    </div>
 
-    <form [formGroup]="form" novalidate class="space-y-6 md:space-y-8">
-      @if (currentStep() === 1) {
-        <section class="mb-6 grid grid-cols-1 gap-6 md:mb-10 md:grid-cols-2">
-          <label class="space-y-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.NAME_AR' | translate }}</span>
-            <div class="relative">
-              <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3 text-slate-400">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18h16M6 14h12M8 10h8M10 6h4" /></svg>
-              </span>
-              <input
-                type="text"
-                formControlName="nameAr"
-                class="h-12 w-full max-w-md rounded-2xl border bg-white/80 ps-10 pe-4 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-                [ngClass]="hasControlError('nameAr') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-              />
-            </div>
-            @if (hasControlError('nameAr')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('nameAr') }}</p>
-            }
-          </label>
+    <!-- ── Form Body ─────────────────────────────────────────────── -->
+    <div class="px-6 py-8 sm:px-8 md:py-10">
+      <form [formGroup]="form" novalidate class="space-y-6">
 
-          <label class="space-y-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.NAME_EN' | translate }}</span>
-            <div class="relative">
-              <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3 text-slate-400">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18h16M6 14h12M8 10h8M10 6h4" /></svg>
-              </span>
-              <input
-                type="text"
-                formControlName="nameEn"
-                class="h-12 w-full max-w-md rounded-2xl border bg-white/80 ps-10 pe-4 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-                [ngClass]="hasControlError('nameEn') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-              />
-            </div>
-            @if (hasControlError('nameEn')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('nameEn') }}</p>
-            }
-          </label>
+        <!-- ════ STEP 1 — Essentials ═══════════════════════════════ -->
+        @if (currentStep() === 1) {
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
 
-          <label class="space-y-2 md:col-span-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.DESC_AR' | translate }}</span>
-            <textarea
-              rows="4"
-              formControlName="descriptionAr"
-              class="w-full max-w-md rounded-2xl border bg-white/80 px-4 py-3 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-              [ngClass]="hasControlError('descriptionAr') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-            ></textarea>
-            @if (hasControlError('descriptionAr')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('descriptionAr') }}</p>
-            }
-          </label>
-
-          <label class="space-y-2 md:col-span-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.DESC_EN' | translate }}</span>
-            <textarea
-              rows="4"
-              formControlName="descriptionEn"
-              class="w-full max-w-md rounded-2xl border bg-white/80 px-4 py-3 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-              [ngClass]="hasControlError('descriptionEn') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-            ></textarea>
-            @if (hasControlError('descriptionEn')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('descriptionEn') }}</p>
-            }
-          </label>
-
-          <label class="space-y-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.CATEGORY' | translate }}</span>
-            <select
-              formControlName="category"
-              class="h-12 w-full max-w-md rounded-2xl border border-slate-200 bg-white/80 px-4 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100 md:max-w-lg md:mx-auto"
-            >
-              <option value="villa">{{ 'HOST_FORM.CAT_VILLA' | translate }}</option>
-              <option value="apartment">{{ 'HOST_FORM.CAT_APARTMENT' | translate }}</option>
-              <option value="penthouse">{{ 'HOST_FORM.CAT_PENTHOUSE' | translate }}</option>
-              <option value="resort">{{ 'HOST_FORM.CAT_RESORT' | translate }}</option>
-            </select>
-          </label>
-        </section>
-      }
-
-      @if (currentStep() === 2) {
-        <section class="mb-6 grid grid-cols-1 gap-6 md:mb-10 md:grid-cols-2">
-          <label class="space-y-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.COUNTRY' | translate }}</span>
-            <input
-              type="text"
-              formControlName="country"
-              class="h-12 w-full max-w-md rounded-2xl border bg-white/80 px-4 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-              [ngClass]="hasControlError('country') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-            />
-            @if (hasControlError('country')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('country') }}</p>
-            }
-          </label>
-
-          <label class="space-y-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.CITY' | translate }}</span>
-            <input
-              type="text"
-              formControlName="city"
-              class="h-12 w-full max-w-md rounded-2xl border bg-white/80 px-4 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-              [ngClass]="hasControlError('city') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-            />
-            @if (hasControlError('city')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('city') }}</p>
-            }
-          </label>
-
-          <label class="space-y-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.STREET' | translate }}</span>
-            <input
-              type="text"
-              formControlName="street"
-              class="h-12 w-full max-w-md rounded-2xl border bg-white/80 px-4 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-              [ngClass]="hasControlError('street') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-            />
-            @if (hasControlError('street')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('street') }}</p>
-            }
-          </label>
-
-          <label class="space-y-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.ZIP' | translate }}</span>
-            <input
-              type="text"
-              formControlName="zipCode"
-              class="h-12 w-full max-w-md rounded-2xl border bg-white/80 px-4 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-              [ngClass]="hasControlError('zipCode') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-            />
-            @if (hasControlError('zipCode')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('zipCode') }}</p>
-            }
-          </label>
-
-          <label class="space-y-2 md:col-span-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.MAP_URL' | translate }}</span>
-            <input
-              type="url"
-              formControlName="mapUrl"
-              placeholder="https://maps.google.com/..."
-              class="h-12 w-full max-w-md rounded-2xl border bg-white/80 px-4 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-              [ngClass]="hasControlError('mapUrl') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-            />
-            @if (hasControlError('mapUrl')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('mapUrl') }}</p>
-            }
-          </label>
-        </section>
-      }
-
-      @if (currentStep() === 3) {
-        <section class="mb-6 grid grid-cols-1 gap-6 md:mb-10 md:grid-cols-2">
-          <label class="space-y-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.PRICE' | translate }}</span>
-            <input
-              type="number"
-              min="1"
-              formControlName="pricePerNight"
-              class="h-12 w-full max-w-md rounded-2xl border bg-white/80 px-4 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-              [ngClass]="hasControlError('pricePerNight') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-            />
-            @if (hasControlError('pricePerNight')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('pricePerNight') }}</p>
-            }
-          </label>
-
-          <label class="space-y-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.MAX_GUESTS' | translate }}</span>
-            <input
-              type="number"
-              min="1"
-              formControlName="maxGuests"
-              class="h-12 w-full max-w-md rounded-2xl border bg-white/80 px-4 text-sm text-slate-900 outline-none transition md:max-w-lg md:mx-auto"
-              [ngClass]="hasControlError('maxGuests') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
-            />
-            @if (hasControlError('maxGuests')) {
-              <p class="text-xs font-semibold text-rose-600">{{ getControlError('maxGuests') }}</p>
-            }
-          </label>
-
-          <label class="space-y-2 md:col-span-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.AMENITIES' | translate }}</span>
-            <textarea
-              rows="4"
-              formControlName="amenitiesText"
-              class="w-full max-w-md rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100 md:max-w-lg md:mx-auto"
-            ></textarea>
-          </label>
-
-          <label class="space-y-2 md:col-span-2">
-            <span class="text-sm font-medium text-slate-700">{{ 'HOST_FORM.RULES' | translate }}</span>
-            <textarea
-              rows="4"
-              formControlName="houseRules"
-              class="w-full max-w-md rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100 md:max-w-lg md:mx-auto"
-            ></textarea>
-          </label>
-        </section>
-      }
-
-      @if (currentStep() === 4) {
-        <section class="mb-6 space-y-6 md:mb-10 md:space-y-8">
-          <div
-            class="rounded-3xl border-2 border-dashed border-teal-300 bg-[radial-gradient(circle_at_15%_20%,rgba(20,184,166,0.16),transparent_28%),radial-gradient(circle_at_90%_10%,rgba(34,211,238,0.2),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.94),rgba(248,250,252,0.9))] p-6 text-center transition duration-300"
-            [class.border-teal-500]="isDragOver()"
-            [class.scale-[1.01]]="isDragOver()"
-            (dragover)="onDragOver($event)"
-            (dragleave)="onDragLeave($event)"
-            (drop)="onDrop($event)">
-            <input id="media-input" type="file" accept="image/*" multiple class="hidden" (change)="onFileInputChange($event)" />
-            <label for="media-input" class="flex cursor-pointer flex-col items-center gap-3">
-              <span class="grid h-14 w-14 place-items-center rounded-2xl bg-white text-teal-700 shadow-sm">
-                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14" /></svg>
-              </span>
-              <span class="text-base font-semibold text-slate-900">{{ 'HOST_FORM.DROP_TITLE' | translate }}</span>
-              <span class="text-sm text-slate-600">{{ 'HOST_FORM.DROP_HINT' | translate }}</span>
-            </label>
-          </div>
-
-          @if (hasMediaError()) {
-            <p class="text-xs font-semibold text-rose-600">{{ 'HOST_FORM.ERROR_MEDIA_REQUIRED' | translate }}</p>
-          }
-
-          @if (isSaving()) {
-            <div class="rounded-2xl border border-slate-200 bg-white p-4">
-              <div class="mb-2 h-2 overflow-hidden rounded-full bg-slate-200">
-                <div class="h-full bg-gradient-to-r from-teal-600 to-cyan-500 transition-all duration-300" [style.width.%]="uploadProgress()"></div>
+            <label class="space-y-1.5">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.NAME_AR' | translate }}</span>
+              <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5 text-slate-400">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18h16M6 14h12M8 10h8M10 6h4"/></svg>
+                </span>
+                <input
+                  type="text" formControlName="nameAr" dir="rtl"
+                  class="h-12 w-full rounded-2xl border bg-white ps-10 pe-4 text-sm text-slate-900 outline-none transition"
+                  [ngClass]="hasControlError('nameAr') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+                />
               </div>
-              <p class="text-xs font-medium text-slate-600">{{ 'HOST_FORM.UPLOADING' | translate }} {{ uploadProgress() }}%</p>
-            </div>
-          }
-
-          @if (existingImages().length > 0) {
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              @for (image of existingImages(); track image.id) {
-                <article class="group relative overflow-hidden rounded-2xl bg-slate-100">
-                  <img [src]="image.url" alt="property-image" class="h-36 w-full object-cover" />
-                  @if (image.isMain) {
-                    <span class="absolute start-2 top-2 rounded-full bg-slate-900/85 px-2 py-1 text-[10px] font-semibold text-white">{{ 'HOST_FORM.PRIMARY' | translate }}</span>
-                  }
-                </article>
+              @if (hasControlError('nameAr')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('nameAr') }}</p>
               }
-            </div>
-          }
+            </label>
 
-          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            @for (item of previews(); track item.previewUrl) {
-              <article class="group relative overflow-hidden rounded-2xl bg-slate-100 shadow-sm">
-                <img [src]="item.previewUrl" [alt]="item.file.name" class="h-36 w-full object-cover transition duration-300 group-hover:scale-105" />
-                <button
-                  type="button"
-                  class="absolute end-2 top-2 rounded-full bg-slate-900/85 px-2 py-1 text-xs font-semibold text-white transition hover:bg-rose-600"
-                  (click)="removeFile($index)">
-                  {{ 'HOST_FORM.REMOVE' | translate }}
-                </button>
-              </article>
-            } @empty {
-              <div class="col-span-full rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-500">{{ 'HOST_FORM.NO_MEDIA' | translate }}</div>
-            }
+            <label class="space-y-1.5">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.NAME_EN' | translate }}</span>
+              <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5 text-slate-400">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18h16M6 14h12M8 10h8M10 6h4"/></svg>
+                </span>
+                <input
+                  type="text" formControlName="nameEn" lang="en"
+                  class="h-12 w-full rounded-2xl border bg-white ps-10 pe-4 text-sm text-slate-900 outline-none transition"
+                  [ngClass]="hasControlError('nameEn') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+                />
+              </div>
+              @if (hasControlError('nameEn')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('nameEn') }}</p>
+              }
+            </label>
+
+            <label class="space-y-1.5 sm:col-span-2">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.DESC_AR' | translate }}</span>
+              <textarea
+                rows="4" formControlName="descriptionAr" dir="rtl"
+                class="w-full rounded-2xl border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition"
+                [ngClass]="hasControlError('descriptionAr') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+              ></textarea>
+              @if (hasControlError('descriptionAr')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('descriptionAr') }}</p>
+              }
+            </label>
+
+            <label class="space-y-1.5 sm:col-span-2">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.DESC_EN' | translate }}</span>
+              <textarea
+                rows="4" formControlName="descriptionEn" lang="en"
+                class="w-full rounded-2xl border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition"
+                [ngClass]="hasControlError('descriptionEn') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+              ></textarea>
+              @if (hasControlError('descriptionEn')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('descriptionEn') }}</p>
+              }
+            </label>
+
+            <label class="space-y-1.5">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.CATEGORY' | translate }}</span>
+              <select
+                formControlName="category"
+                class="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+              >
+                <option value="villa">{{ 'HOST_FORM.CAT_VILLA' | translate }}</option>
+                <option value="apartment">{{ 'HOST_FORM.CAT_APARTMENT' | translate }}</option>
+                <option value="penthouse">{{ 'HOST_FORM.CAT_PENTHOUSE' | translate }}</option>
+                <option value="resort">{{ 'HOST_FORM.CAT_RESORT' | translate }}</option>
+              </select>
+            </label>
+
           </div>
-        </section>
-      }
-    </form>
+        }
 
-    <footer class="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <!-- ════ STEP 2 — Location ════════════════════════════════ -->
+        @if (currentStep() === 2) {
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+            <label class="space-y-1.5">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.COUNTRY' | translate }}</span>
+              <input
+                type="text" formControlName="country"
+                class="h-12 w-full rounded-2xl border bg-white px-4 text-sm text-slate-900 outline-none transition"
+                [ngClass]="hasControlError('country') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+              />
+              @if (hasControlError('country')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('country') }}</p>
+              }
+            </label>
+
+            <label class="space-y-1.5">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.CITY' | translate }}</span>
+              <input
+                type="text" formControlName="city"
+                class="h-12 w-full rounded-2xl border bg-white px-4 text-sm text-slate-900 outline-none transition"
+                [ngClass]="hasControlError('city') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+              />
+              @if (hasControlError('city')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('city') }}</p>
+              }
+            </label>
+
+            <label class="space-y-1.5 sm:col-span-2">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.STREET' | translate }}</span>
+              <input
+                type="text" formControlName="street"
+                class="h-12 w-full rounded-2xl border bg-white px-4 text-sm text-slate-900 outline-none transition"
+                [ngClass]="hasControlError('street') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+              />
+              @if (hasControlError('street')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('street') }}</p>
+              }
+            </label>
+
+            <!-- Zip Code: hidden, optional — not required in our region -->
+            <input type="hidden" formControlName="zipCode" />
+
+            <label class="space-y-1.5 sm:col-span-2">
+              <span class="text-sm font-semibold text-slate-700">
+                {{ 'HOST_FORM.MAP_URL' | translate }}
+                <span class="ms-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  {{ 'HOST_FORM.OPTIONAL' | translate }}
+                </span>
+              </span>
+              <input
+                type="url" formControlName="mapUrl"
+                placeholder="https://maps.google.com/..."
+                class="h-12 w-full rounded-2xl border bg-white px-4 text-sm text-slate-900 outline-none transition"
+                [ngClass]="hasControlError('mapUrl') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+              />
+              @if (hasControlError('mapUrl')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('mapUrl') }}</p>
+              }
+            </label>
+
+          </div>
+        }
+
+        <!-- ════ STEP 3 — Details ════════════════════════════════ -->
+        @if (currentStep() === 3) {
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+            <label class="space-y-1.5">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.PRICE' | translate }}</span>
+              <div class="relative">
+                <span class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-4 text-sm font-bold text-slate-400">EGP</span>
+                <input
+                  type="number" min="1" formControlName="pricePerNight"
+                  class="h-12 w-full rounded-2xl border bg-white ps-14 pe-4 text-sm text-slate-900 outline-none transition"
+                  [ngClass]="hasControlError('pricePerNight') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+                />
+              </div>
+              @if (hasControlError('pricePerNight')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('pricePerNight') }}</p>
+              }
+            </label>
+
+            <label class="space-y-1.5">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.MAX_GUESTS' | translate }}</span>
+              <input
+                type="number" min="1" formControlName="maxGuests"
+                class="h-12 w-full rounded-2xl border bg-white px-4 text-sm text-slate-900 outline-none transition"
+                [ngClass]="hasControlError('maxGuests') ? 'border-rose-300 ring-4 ring-rose-100' : 'border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100'"
+              />
+              @if (hasControlError('maxGuests')) {
+                <p class="text-xs font-semibold text-rose-600">{{ getControlError('maxGuests') }}</p>
+              }
+            </label>
+
+            <label class="space-y-1.5 sm:col-span-2">
+              <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.AMENITIES' | translate }}</span>
+              <p class="text-xs text-slate-400">{{ 'HOST_FORM.AMENITIES_HINT' | translate }}</p>
+              <textarea
+                rows="3" formControlName="amenitiesText"
+                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+              ></textarea>
+            </label>
+
+            <!-- House Rules: optional -->
+            <label class="space-y-1.5 sm:col-span-2">
+              <span class="text-sm font-semibold text-slate-700">
+                {{ 'HOST_FORM.RULES' | translate }}
+                <span class="ms-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                  {{ 'HOST_FORM.OPTIONAL' | translate }}
+                </span>
+              </span>
+              <p class="text-xs text-slate-400">{{ 'HOST_FORM.RULES_HINT' | translate }}</p>
+              <textarea
+                rows="3" formControlName="houseRules"
+                [placeholder]="'HOST_FORM.RULES_PLACEHOLDER' | translate"
+                class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-100"
+              ></textarea>
+            </label>
+
+          </div>
+        }
+
+        <!-- ════ STEP 4 — Media ══════════════════════════════════ -->
+        @if (currentStep() === 4) {
+          <div class="space-y-6">
+
+            <!-- Drop Zone -->
+            <div
+              class="rounded-3xl border-2 border-dashed border-teal-300 bg-[radial-gradient(circle_at_15%_20%,rgba(20,184,166,0.12),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.9))] p-8 text-center transition-all duration-300"
+              [class.border-teal-500]="isDragOver()"
+              [class.scale-[1.01]]="isDragOver()"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+            >
+              <input id="media-input" type="file" accept="image/*" multiple class="hidden" (change)="onFileInputChange($event)" />
+              <label for="media-input" class="flex cursor-pointer flex-col items-center gap-3">
+                <span class="grid h-14 w-14 place-items-center rounded-2xl bg-white text-teal-600 shadow-md shadow-teal-100">
+                  <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path stroke-linecap="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                  </svg>
+                </span>
+                <span class="text-base font-bold text-slate-800">{{ 'HOST_FORM.DROP_TITLE' | translate }}</span>
+                <span class="text-sm text-slate-500">{{ 'HOST_FORM.DROP_HINT' | translate }}</span>
+              </label>
+            </div>
+
+            @if (hasMediaError()) {
+              <p class="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-600">
+                <svg class="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+                </svg>
+                {{ 'HOST_FORM.ERROR_MEDIA_REQUIRED' | translate }}
+              </p>
+            }
+
+            <!-- Existing images (edit mode) -->
+            @if (existingImages().length > 0) {
+              <div>
+                <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">{{ 'HOST_FORM.EXISTING_IMAGES' | translate }}</p>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  @for (image of existingImages(); track image.id) {
+                    <article class="group relative overflow-hidden rounded-2xl bg-slate-100 shadow-sm">
+                      <img [src]="image.url" alt="property-image" class="h-36 w-full object-cover" />
+                      @if (image.isMain) {
+                        <span class="absolute start-2 top-2 rounded-full bg-teal-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                          {{ 'HOST_FORM.PRIMARY' | translate }}
+                        </span>
+                      }
+                    </article>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- New previews -->
+            @if (previews().length > 0) {
+              <div>
+                <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">
+                  {{ 'HOST_FORM.NEW_IMAGES' | translate }} ({{ previews().length }})
+                </p>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  @for (item of previews(); track item.previewUrl) {
+                    <article class="group relative overflow-hidden rounded-2xl bg-slate-100 shadow-sm">
+                      <img [src]="item.previewUrl" [alt]="item.file.name" class="h-36 w-full object-cover transition duration-300 group-hover:scale-105" />
+                      <button
+                        type="button"
+                        class="absolute end-2 top-2 rounded-full bg-slate-900/80 p-1.5 text-white transition hover:bg-rose-600"
+                        (click)="removeFile($index)"
+                        [attr.aria-label]="'HOST_FORM.REMOVE' | translate"
+                      >
+                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
+                    </article>
+                  }
+                </div>
+              </div>
+            } @else if (existingImages().length === 0) {
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center text-sm text-slate-400">
+                {{ 'HOST_FORM.NO_MEDIA' | translate }}
+              </div>
+            }
+
+          </div>
+        }
+
+      </form>
+    </div>
+
+    <!-- ── Footer Navigation ─────────────────────────────────────── -->
+    <footer class="flex flex-col gap-3 border-t border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+
       <button
         type="button"
-        class="h-12 w-full max-w-md rounded-2xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:opacity-50 md:max-w-lg md:mx-auto"
+        class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:min-w-[140px]"
         [disabled]="!canGoBack() || isSaving()"
-        (click)="previousStep()">
+        (click)="previousStep()"
+      >
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
         {{ 'HOST_FORM.PREVIOUS' | translate }}
       </button>
 
       @if (canGoForward()) {
         <button
           type="button"
-          class="h-12 w-full max-w-md rounded-2xl bg-gradient-to-r from-teal-600 to-cyan-500 px-5 text-sm font-semibold text-white transition hover:brightness-105 disabled:opacity-50 md:max-w-lg md:mx-auto"
+          class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-teal-600 to-cyan-500 px-6 text-sm font-bold text-white shadow-md shadow-teal-200 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[160px]"
           [disabled]="isSaving()"
-          (click)="nextStep()">
+          (click)="nextStep()"
+        >
           {{ 'HOST_FORM.NEXT' | translate }}
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
         </button>
       } @else {
         <button
           type="button"
-          class="h-12 w-full max-w-md rounded-2xl bg-gradient-to-r from-teal-600 to-cyan-500 px-5 text-sm font-semibold text-white transition hover:brightness-105 disabled:opacity-50 md:max-w-lg md:mx-auto"
+          class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-teal-600 to-teal-800 px-6 text-sm font-bold text-white shadow-md shadow-teal-200 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[200px]"
           [disabled]="isSaving() || !isCurrentStepValid()"
-          (click)="submit()">
-          {{ (isEditMode() ? 'HOST_FORM.SAVE_CHANGES' : 'HOST_FORM.SUBMIT') | translate }}
+          (click)="submit()"
+        >
+          @if (isSaving()) {
+            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            {{ 'HOST_FORM.PUBLISHING' | translate }}
+          } @else {
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <path d="M5 13l4 4L19 7"/>
+            </svg>
+            {{ (isEditMode() ? 'HOST_FORM.SAVE_CHANGES' : 'HOST_FORM.SUBMIT') | translate }}
+          }
         </button>
       }
+
     </footer>
   </div>
 </section>
