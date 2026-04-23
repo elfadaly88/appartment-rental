@@ -10,6 +10,17 @@ public static class DatabaseInitializer
 {
     public static async Task InitializeDatabaseAsync(this WebApplication app)
     {
+        // Allow skipping automatic DB migrations locally for quick testing by
+        // setting environment variable `SKIP_DB_MIGRATION=1`.
+        var skipMigration = Environment.GetEnvironmentVariable("SKIP_DB_MIGRATION");
+        if (!string.IsNullOrEmpty(skipMigration) && skipMigration == "1")
+        {
+            using var scopeSkip = app.Services.CreateScope();
+            var loggerSkip = scopeSkip.ServiceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("DatabaseInitializer");
+            loggerSkip.LogWarning("Skipping automatic database migration because SKIP_DB_MIGRATION=1.");
+            return;
+        }
         const int maxRetries = 10;
         var attempt = 0;
 

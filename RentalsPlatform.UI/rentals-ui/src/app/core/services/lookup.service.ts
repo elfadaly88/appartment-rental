@@ -16,11 +16,21 @@ export interface GovernorateDto {
   cities: CityDto[];
 }
 
+export interface FeeTypeDto {
+  id: number;
+  nameAr: string;
+  nameEn: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class LookupService {
   private readonly http = inject(HttpClient);
 
   getEgyptLocations(): Observable<GovernorateDto[]> {
     return this.http.get<GovernorateDto[]>(`${environment.apiUrl}/lookups/egypt-locations`);
+  }
+
+  getFeeTypes(): Observable<FeeTypeDto[]> {
+    return this.http.get<FeeTypeDto[]>(`${environment.apiUrl}/lookups/fee-types`);
   }
 }

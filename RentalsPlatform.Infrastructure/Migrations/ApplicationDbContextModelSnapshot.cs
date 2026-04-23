@@ -445,6 +445,49 @@ namespace RentalsPlatform.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RentalsPlatform.Domain.Entities.FeeType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("NameAr")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NameEn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FeeTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            NameAr = "رسوم دخول القرية",
+                            NameEn = "Village Entry Fee"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            NameAr = "رسوم الشاطئ",
+                            NameEn = "Beach Access Fee"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            NameAr = "رسوم تنظيف",
+                            NameEn = "Cleaning Fee"
+                        });
+                });
+
             modelBuilder.Entity("RentalsPlatform.Domain.Entities.Governorate", b =>
                 {
                     b.Property<int>("Id")
@@ -567,6 +610,33 @@ namespace RentalsPlatform.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Properties");
+                });
+
+            modelBuilder.Entity("RentalsPlatform.Domain.Entities.PropertyFee", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("CalculationType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FeeTypeId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FeeTypeId");
+
+                    b.HasIndex("PropertyId");
+
+                    b.ToTable("PropertyFees");
                 });
 
             modelBuilder.Entity("RentalsPlatform.Domain.Entities.PropertyImage", b =>
@@ -974,6 +1044,25 @@ namespace RentalsPlatform.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RentalsPlatform.Domain.Entities.PropertyFee", b =>
+                {
+                    b.HasOne("RentalsPlatform.Domain.Entities.FeeType", "FeeType")
+                        .WithMany()
+                        .HasForeignKey("FeeTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalsPlatform.Domain.Entities.Property", "Property")
+                        .WithMany("PropertyFees")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FeeType");
+
+                    b.Navigation("Property");
+                });
+
             modelBuilder.Entity("RentalsPlatform.Domain.Entities.PropertyImage", b =>
                 {
                     b.HasOne("RentalsPlatform.Domain.Entities.Property", null)
@@ -1111,6 +1200,8 @@ namespace RentalsPlatform.Infrastructure.Migrations
             modelBuilder.Entity("RentalsPlatform.Domain.Entities.Property", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("PropertyFees");
 
                     b.Navigation("PropertyImages");
 

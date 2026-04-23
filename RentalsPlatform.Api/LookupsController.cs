@@ -20,4 +20,11 @@ public class LookupsController : ControllerBase
         var result = await _lookupService.GetEgyptGovernoratesWithCitiesAsync();
         return Ok(result);
     }
+
+    [HttpGet("fee-types")]
+    public async Task<IActionResult> GetFeeTypes()
+    {
+        var result = await _lookupService.GetFeeTypesAsync();
+        return Ok(result);
+    }
 }

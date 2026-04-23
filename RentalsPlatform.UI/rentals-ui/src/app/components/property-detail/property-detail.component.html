@@ -140,12 +140,12 @@
             <h2 class="text-lg font-bold text-slate-900 mb-6">
               {{ t('تعرف على مضيفك', 'Meet your host') }}
             </h2>
-            
+
             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              
+
               <!-- Host Avatar & Info -->
               <div class="flex-1 flex flex-col sm:flex-row shadow-sm border border-slate-100 rounded-3xl p-6 bg-gradient-to-br from-white to-slate-50/50 w-full items-center sm:items-center gap-5 sm:justify-between">
-                
+
                 <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-start">
                   <!-- Avatar -->
                   <div class="relative w-24 h-24 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-md overflow-hidden bg-slate-100 flex-shrink-0">
@@ -164,7 +164,7 @@
                       </div>
                     }
                   </div>
-                  
+
                   <!-- Name & Stats -->
                   <div class="flex flex-col justify-center">
                     <h3 class="text-xl font-bold text-slate-900 flex items-center justify-center sm:justify-start gap-2">
@@ -192,7 +192,7 @@
                 </button>
               </div>
             </div>
-            
+
             <!-- Trust notice -->
             <div class="mt-5 flex items-start gap-3 bg-slate-50 rounded-xl p-4 border border-slate-100">
                <svg class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -267,6 +267,22 @@
                   <span class="font-medium tracking-tight">{{ formattedNightlyRate() }} × {{ nights() }} {{ t('ليلة', nights() === 1 ? 'night' : 'nights') }}</span>
                   <span class="font-bold text-slate-900">{{ formatCurrency(subtotal(), currency()) }}</span>
                 </div>
+
+                <!-- Extra Fees Breakdown -->
+                @for (fee of fees(); track fee.id) {
+                  <div class="flex justify-between items-center text-slate-600 text-sm">
+                    <span class="flex flex-col">
+                      <span>{{ t(fee.name.ar, fee.name.en) }}</span>
+                      <span class="text-[10px] text-slate-400">
+                        {{ fee.calculationType === 1 ? t('لكل ليلة', 'per night') : t('لكل إقامة', 'per stay') }}
+                      </span>
+                    </span>
+                    <span class="font-semibold">
+                      {{ formatCurrency(fee.calculationType === 1 ? fee.amount * nights() : fee.amount, currency()) }}
+                    </span>
+                  </div>
+                }
+
                 <div class="border-t border-slate-200/80 pt-4 flex justify-between items-center">
                   <span class="font-extrabold text-slate-900 text-lg">{{ t('الإجمالي', 'Total') }}</span>
                   <span class="font-black text-teal-700 text-xl">{{ formatCurrency(grandTotal(), currency()) }}</span>
@@ -336,7 +352,11 @@
       <p class="text-base font-bold text-slate-900">{{ formattedNightlyRate() }}</p>
       @if (nights() > 0) {
         <p class="text-xs text-teal-700 font-semibold">
-          {{ nights() }} {{ t('ليالٍ', 'nights') }} · {{ formatCurrency(grandTotal(), currency()) }} {{ t('الإجمالي', 'total') }}
+          {{ nights() }} {{ t('ليالٍ', 'nights') }} ·
+          @if (fees().length > 0) {
+            <span class="text-slate-500 font-normal">({{ t('شامل الرسوم', 'incl. fees') }})</span>
+          }
+          {{ formatCurrency(grandTotal(), currency()) }} {{ t('الإجمالي', 'total') }}
         </p>
       } @else {
         <p class="text-xs text-slate-400">{{ t('لم تختر تواريخ بعد', 'No dates selected') }}</p>

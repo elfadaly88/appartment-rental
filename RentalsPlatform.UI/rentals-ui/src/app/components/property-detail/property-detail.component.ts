@@ -103,8 +103,23 @@ export class PropertyDetailComponent implements OnInit {
     this.property()?.price?.amount ?? 0,
   );
 
+  protected readonly fees = computed(() => this.propertyDetails()?.fees ?? []);
+
+  protected readonly feesSubtotal = computed(() => {
+    const n = this.nights();
+    if (n < 1) return 0;
+    
+    return this.fees().reduce((acc: number, fee: any) => {
+      if (fee.calculationType === 1) { // PerNight
+        return acc + (fee.amount * n);
+      } else { // PerStay
+        return acc + fee.amount;
+      }
+    }, 0);
+  });
+
   protected readonly subtotal = computed(() => this.nights() * this.nightlyRate());
-  protected readonly grandTotal = computed(() => this.subtotal());
+  protected readonly grandTotal = computed(() => this.subtotal() + this.feesSubtotal());
 
   protected readonly currency = computed(
     () => this.property()?.price?.currency ?? 'EGP',

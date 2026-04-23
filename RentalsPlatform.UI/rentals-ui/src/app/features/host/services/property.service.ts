@@ -95,6 +95,16 @@ export interface HostPropertyDetails {
   rejectionReason: string | null;
   images: HostPropertyImage[];
   blockedDates: HostBlockedDate[];
+  fees: HostPropertyFee[];
+}
+
+export interface HostPropertyFee {
+  id: string;
+  feeTypeId: number;
+  feeTypeNameAr: string;
+  feeTypeNameEn: string;
+  amount: number;
+  calculationType: number;
 }
 
 export interface PriceRuleDto {

@@ -21,7 +21,11 @@
     "ERROR_EMAIL": "أدخل عنوان بريد إلكتروني صحيح.",
     "ERROR_MINLENGTH": "يرجى استخدام {{requiredLength}} أحرف على الأقل.",
     "ERROR_TERMS": "يجب قبول شروط خدمة المضيف.",
-    "ERROR_FALLBACK": "يرجى مراجعة هذا الحقل."
+    "ERROR_FALLBACK": "يرجى مراجعة هذا الحقل.",
+    "SOCIAL_GOOGLE_CONTINUE": "Continue with Google",
+    "SOCIAL_FACEBOOK_CONTINUE": "Continue with Facebook",
+    "SOCIAL_DIVIDER_LOGIN": "or continue with",
+    "SOCIAL_LOADING": "Loading..."
   },
   "NAV": {
     "HOME": "الرئيسية",
@@ -139,7 +143,17 @@
     "VALIDATION_INVALID": "يرجى إدخال قيمة صحيحة.",
     "SUCCESS_CREATE": "تم إنشاء العقار بنجاح.",
     "SUCCESS_UPDATE": "تم تحديث العقار بنجاح.",
-    "ERROR_SAVE": "تعذر حفظ العقار. حاول مرة أخرى."
+    "ERROR_SAVE": "تعذر حفظ العقار. حاول مرة أخرى.",
+    "FEES_TITLE": "الرسوم الإضافية",
+    "ADD_FEE": "إضافة رسوم",
+    "FEE_TYPE": "نوع الرسوم",
+    "SELECT_FEE": "اختر نوع الرسوم",
+    "AMOUNT": "المبلغ",
+    "CALC_TYPE": "طريقة الحساب",
+    "PER_NIGHT": "لكل ليلة",
+    "PER_STAY": "لكل إقامة",
+    "REMOVE_FEE": "حذف الرسوم",
+    "NO_FEES_ADDED": "لم يتم إضافة أي رسوم إضافية لهذا العقار بعد."
   },
   "BLOCK_DATES": {
     "VALIDATION_PROPERTY_REQUIRED": "يرجى اختيار العقار أولاً.",

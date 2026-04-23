@@ -1,4 +1,4 @@
-﻿using RentalsPlatform.Domain.Enums;
+using RentalsPlatform.Domain.Enums;
 using RentalsPlatform.Domain.ValueObjects;
 
 namespace RentalsPlatform.Domain.Entities;
@@ -29,6 +29,7 @@ public class Property
     public ICollection<Booking> Bookings { get; private set; } = new List<Booking>();
     public ICollection<UnavailableDate> UnavailableDates { get; private set; } = new List<UnavailableDate>();
     public ICollection<PropertyImage> PropertyImages { get; private set; } = new List<PropertyImage>();
+    public ICollection<PropertyFee> PropertyFees { get; private set; } = new List<PropertyFee>();
 
     // Constructor فاضي عشان الـ Entity Framework Core محتاجه (لازم يكون private أو protected)
     private Property() { }

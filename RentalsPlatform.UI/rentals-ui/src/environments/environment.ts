@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'YOUR_API_URL',
-  hubUrl: 'YOUR_HUB_URL',
+  apiUrl: 'http://localhost:5000/api',
+  hubUrl: 'http://localhost:5000/hubs/notifications',
   socialAuth: {
     googleClientId: 'YOUR_GOOGLE_CLIENT_ID',
     facebookAppId: 'YOUR_FACEBOOK_APP_ID',

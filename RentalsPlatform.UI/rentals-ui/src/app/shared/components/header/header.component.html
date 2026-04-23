@@ -17,18 +17,18 @@
       <a routerLink="/properties" routerLinkActive="nav-link--active" class="nav-link">
         {{ 'NAV.PROPERTIES' | translate }}
       </a>
-      @if (authStore.isAdmin()) {
+      @if (authService.isAdmin()) {
         <a routerLink="/admin/dashboard" routerLinkActive="nav-link--active" class="nav-link">
           {{ 'NAV.DASHBOARD' | translate }}
         </a>
-      } @else if (authStore.isHost() && !isHostWorkspaceRoute()) {
+      } @else if (authService.isHost() && !isHostWorkspaceRoute()) {
         <a routerLink="/host/dashboard" routerLinkActive="nav-link--active" class="nav-link">
           {{ 'NAV.DASHBOARD' | translate }}
         </a>
         <a routerLink="/host/properties/new" routerLinkActive="nav-link--active" class="nav-link">
           {{ 'NAV.POST_PROPERTY' | translate }}
         </a>
-      } @else if (authStore.isAuthenticated()) {
+      } @else if (authService.isAuthenticated()) {
         <a routerLink="/my-bookings" routerLinkActive="nav-link--active" class="nav-link">
           {{ 'NAV.MY_BOOKINGS' | translate }}
         </a>
@@ -38,22 +38,27 @@
     <div class="flex items-center gap-2.5 sm:gap-3">
       <app-notification-bell />
 
+
+
       <button type="button" class="lang-btn" (click)="lang.toggleLanguage()" [attr.aria-label]="'NAV.TOGGLE_LANG_LABEL' | translate">
         {{ toggleLabel() }}
       </button>
 
-      @if (authStore.isAuthenticated()) {
-        <div class="user-panel">
-          <a routerLink="/profile" class="avatar-wrap" [attr.aria-label]="'NAV.WELCOME' | translate: { name: userName() }">
-            @if (authStore.currentUser()?.avatarUrl) {
+      @if (authService.isAuthenticated()) {
+        <div class="user-panel animate-fadeup transition-all duration-300 ease-in-out hover:shadow-md"
+             [attr.aria-label]="'NAV.WELCOME' | translate: { name: userName() }">
+          <a routerLink="/profile" class="avatar-wrap">
+            @if (authService.currentUser()?.avatarUrl) {
               <img
-                [src]="authStore.currentUser()?.avatarUrl"
+                [src]="authService.currentUser()?.avatarUrl"
                 class="avatar-image"
                 alt=""
                 (error)="onAvatarError($event)"
               />
             } @else {
-              <span class="avatar-fallback">{{ userName().charAt(0).toUpperCase() }}</span>
+              <span class="avatar-fallback">
+                {{ (userName()[0] || 'U').toUpperCase() }}
+              </span>
             }
           </a>
           <!-- User name — hidden on xs, visible sm+ -->

@@ -76,6 +76,9 @@ export class NotificationToastComponent implements OnInit {
     void this.signalr.startConnection();
   }
 
+  // --- Test helper: emit a fake booking notification for manual testing ---
+  // (dev helper removed) Test notification emitter removed for production readiness.
+
   protected dismiss(id: string): void {
     if (!this.leavingIds().has(id)) {
       this.leavingIds.update((current) => {

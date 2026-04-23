@@ -19,11 +19,14 @@ import {
 
 import { environment } from '../../../environments/environment';
 import { AuthStore } from '../state/auth.store';
-import { NotificationStore } from '../state/notification.store';
+import { NotificationStore, AppNotification, NotificationTargetType } from '../state/notification.store';
 
 export interface RealtimeNotification {
   id: string;
   bookingId?: string;
+  propertyId?: string;
+  targetType?: NotificationTargetType;
+  targetId?: string;
   eventType?: string;
   guestName?: string;
   propertyName?: string;
@@ -37,17 +40,103 @@ export interface RealtimeNotification {
 export class SignalrService implements OnDestroy {
   private readonly authStore = inject(AuthStore);
   private readonly notificationStore = inject(NotificationStore);
-  private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
+  private readonly platformId = inject(PLATFORM_ID);
 
   private hubConnection: HubConnection | null = null;
-  private retryTimerId: ReturnType<typeof setTimeout> | null = null;
+  private retryTimerId: any = null;
 
-  readonly notifications = signal<RealtimeNotification[]>([]);
   readonly connectionState = signal<HubConnectionState>(HubConnectionState.Disconnected);
-  readonly isConnected = computed(
-    () => this.connectionState() === HubConnectionState.Connected,
-  );
+  readonly notifications = signal<RealtimeNotification[]>([]);
+  readonly unreadCount = computed(() => this.notificationStore.unreadCount());
+
+  async handleNotificationClick(notification: AppNotification): Promise<void> {
+    // 1. Mark as read immediately
+    await this.notificationStore.markAsRead(notification.id);
+
+    // 2. Check Authentication
+    // Log debug info to help diagnose navigation issues
+    // Use console.log as well to ensure visibility in browsers that filter debug-level logs
+    console.log('[Signalr] Notification click', { notification, user: this.authStore.currentUser(), isHost: this.authStore.isHost?.() });
+    console.debug('[Signalr] Notification click (debug)', { notification, user: this.authStore.currentUser(), isHost: this.authStore.isHost?.() });
+
+    if (!this.authStore.isAuthenticated()) {
+      const targetUrl = this.resolveTargetUrl(notification);
+      if (isPlatformBrowser(this.platformId)) {
+        sessionStorage.setItem('redirectAfterLogin', targetUrl);
+      }
+      await this.router.navigate(['/auth']);
+      return;
+    }
+
+    // 3. Resolve Target URL and Navigate
+    const targetUrl = this.resolveTargetUrl(notification);
+
+    console.debug('[Signalr] Resolved targetUrl', { targetUrl });
+    console.log('[Signalr] Resolved targetUrl', { targetUrl });
+
+    // 4. Role-Based Guard Check (Simplified)
+    if (!this.hasPermission(notification.targetType)) {
+      await this.router.navigate(['/']); // Redirect to safe page
+      return;
+    }
+
+    const perm = this.hasPermission(notification.targetType);
+    console.log('[Signalr] Permission check result', { targetType: notification.targetType, permitted: perm });
+    console.debug('[Signalr] Permission check result (debug)', { targetType: notification.targetType, permitted: perm });
+
+    try {
+      // Defer navigation to next microtask to avoid aborts when a navigation
+      // is already in progress (prevents InvalidStateError).
+      await Promise.resolve();
+      await this.router.navigateByUrl(targetUrl);
+      console.log('[Signalr] Navigation to targetUrl succeeded', { targetUrl });
+    } catch (err) {
+      console.log('[Signalr] Navigation to targetUrl aborted or failed', { targetUrl, err });
+      console.debug('[Signalr] Navigation to targetUrl aborted or failed (debug)', { targetUrl, err });
+    }
+  }
+
+  private resolveTargetUrl(notification: AppNotification): string {
+    if (notification.targetLink) return notification.targetLink;
+
+    const { targetType, targetId } = notification;
+
+    switch (targetType) {
+      case 'Booking':
+        // If the notification contains a test/generated id or no id, navigate
+        // to the bookings list rather than to an empty details view.
+        const isTestId = !targetId || /^test-/i.test(targetId);
+        if (this.authStore.isHost()) {
+          return isTestId ? `/host/bookings` : `/host/bookings?id=${targetId}`;
+        }
+        return `/my-bookings`;
+      case 'Property':
+        return `/properties/${targetId}`;
+      case 'Approval':
+        return `/admin/dashboard`;
+      case 'Message':
+        return `/messages/${targetId}`;
+      default:
+        return '/';
+    }
+  }
+
+  private hasPermission(targetType?: NotificationTargetType): boolean {
+    if (!targetType) return true;
+
+    const role = this.authStore.currentUser()?.role?.toLowerCase();
+
+    if (targetType === 'Approval' && role !== 'admin') return false;
+    // Booking notifications should be visible to authenticated users and
+    // navigate to the correct bookings page (host or guest). If the role
+    // is missing or unexpected, allow the navigation so the app can
+    // resolve the proper page (the route guards will still protect pages
+    // if the user lacks permissions).
+    if (targetType === 'Booking') return true;
+
+    return true;
+  }
 
   async startConnection(): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
@@ -136,7 +225,7 @@ export class SignalrService implements OnDestroy {
       .build();
 
     this.hubConnection.off('ReceiveNotification');
-    this.hubConnection.on('ReceiveNotification', (payload: unknown) => {
+    this.hubConnection.on('ReceiveNotification', (payload: any) => {
       const notification = this.normalizeNotification(payload);
       this.notifications.update((current) => [notification, ...current]);
       this.notificationStore.addNotification({
@@ -149,7 +238,8 @@ export class SignalrService implements OnDestroy {
           this.composeDefaultMessage(notification.guestName, notification.propertyName),
         createdAt: notification.createdAt,
         isRead: false,
-        targetLink: '/host/bookings',
+        targetType: notification.targetType || (notification.bookingId ? 'Booking' : notification.propertyId ? 'Property' : 'System'),
+        targetId: notification.targetId || notification.bookingId || notification.propertyId,
       });
     });
 
@@ -235,6 +325,16 @@ export class SignalrService implements OnDestroy {
     const bookingId =
       this.readString(source, ['bookingId', 'BookingId']) || undefined;
 
+    const propertyId =
+      this.readString(source, ['propertyId', 'PropertyId']) || undefined;
+
+    const targetType =
+      (this.readString(source, ['targetType', 'TargetType']) as NotificationTargetType) ||
+      undefined;
+
+    const targetId =
+      this.readString(source, ['targetId', 'TargetId']) || undefined;
+
     const eventType =
       this.readString(source, ['eventType', 'EventType']) || undefined;
 
@@ -250,6 +350,9 @@ export class SignalrService implements OnDestroy {
     return {
       id,
       bookingId,
+      propertyId,
+      targetType,
+      targetId,
       eventType,
       guestName,
       propertyName,
@@ -265,6 +368,16 @@ export class SignalrService implements OnDestroy {
       const value = source[key];
       if (typeof value === 'string' && value.trim()) {
         return value.trim();
+      }
+
+      // Accept non-string primitive values (Guid, number) that may come from server
+      if (value != null && typeof value !== 'object') {
+        try {
+          const s = String(value).trim();
+          if (s) return s;
+        } catch {
+          // ignore
+        }
       }
     }
     return '';

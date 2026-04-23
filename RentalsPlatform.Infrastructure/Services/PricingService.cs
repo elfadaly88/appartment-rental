@@ -41,6 +41,27 @@ public class PricingService : IPricingService
             total += matchedRule?.CustomPricePerNight ?? property.BasePricePerNight;
         }
 
-        return total;
+        // Calculate Extra Fees
+        var fees = await _dbContext.PropertyFees
+            .AsNoTracking()
+            .Where(f => f.PropertyId == propertyId)
+            .ToListAsync();
+
+        var nights = checkOut.DayNumber - checkIn.DayNumber;
+        decimal extraFeesTotal = 0m;
+
+        foreach (var fee in fees)
+        {
+            if (fee.CalculationType == Domain.Enums.FeeCalculationType.PerNight)
+            {
+                extraFeesTotal += (fee.Amount * nights);
+            }
+            else
+            {
+                extraFeesTotal += fee.Amount;
+            }
+        }
+
+        return total + extraFeesTotal;
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using RentalsPlatform.Domain.Entities;
 
@@ -20,6 +20,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Review> Reviews { get; set; }
     public DbSet<UnavailableDate> UnavailableDates { get; set; }
     public DbSet<PropertyImage> PropertyImages { get; set; }
+    public DbSet<FeeType> FeeTypes { get; set; }
+    public DbSet<PropertyFee> PropertyFees { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +61,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasMany(p => p.PropertyImages)
                 .WithOne()
                 .HasForeignKey(i => i.PropertyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(p => p.PropertyFees)
+                .WithOne(f => f.Property)
+                .HasForeignKey(f => f.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.OwnsOne(p => p.PricePerNight, priceBuilder =>
@@ -266,5 +273,30 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(r => r.CustomPricePerNight).HasColumnType("numeric(18,2)").IsRequired();
             entity.HasIndex(r => new { r.PropertyId, r.StartDate, r.EndDate });
         });
+
+        modelBuilder.Entity<FeeType>(entity =>
+        {
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.NameAr).IsRequired().HasMaxLength(100);
+            entity.Property(f => f.NameEn).IsRequired().HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<PropertyFee>(entity =>
+        {
+            entity.HasKey(f => f.Id);
+            entity.Property(f => f.Amount).HasColumnType("numeric(18,2)").IsRequired();
+            entity.Property(f => f.CalculationType).IsRequired();
+
+            entity.HasOne(f => f.FeeType)
+                .WithMany()
+                .HasForeignKey(f => f.FeeTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<FeeType>().HasData(
+            new FeeType { Id = 1, NameAr = "رسوم دخول القرية", NameEn = "Village Entry Fee" },
+            new FeeType { Id = 2, NameAr = "رسوم الشاطئ", NameEn = "Beach Access Fee" },
+            new FeeType { Id = 3, NameAr = "رسوم تنظيف", NameEn = "Cleaning Fee" }
+        );
     }
 }

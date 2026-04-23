@@ -160,10 +160,24 @@ export class AuthStore {
       this._currentUser.set(user);
 
       const navRole = this.normalizeRole(user.role);
+      
+      // Check for saved redirect URL from notification click
+      const savedRedirect = isPlatformBrowser(this.platformId) 
+        ? sessionStorage.getItem('redirectAfterLogin') 
+        : null;
+
+      if (savedRedirect) {
+        if (isPlatformBrowser(this.platformId)) {
+          sessionStorage.removeItem('redirectAfterLogin');
+        }
+        await this.router.navigateByUrl(savedRedirect);
+        return true;
+      }
+
       if (navRole === 'admin') {
-        await this.router.navigate(['/admin/approvals']);
+        await this.router.navigate(['/admin/dashboard']);
       } else if (navRole === 'host') {
-        await this.router.navigate(['/dashboard']);
+        await this.router.navigate(['/host/dashboard']);
       } else {
         await this.router.navigate(['/properties']);
       }
@@ -183,7 +197,7 @@ export class AuthStore {
   logout(): void {
     if (isPlatformBrowser(this.platformId)) {
       localStorage.removeItem('jwtToken');
-      void this.router.navigate(['/auth']);
+      void this.router.navigate(['/']);
     }
     this._currentUser.set(null);
   }
@@ -206,7 +220,7 @@ export class AuthStore {
       if (exp !== null && exp * 1000 < Date.now()) {
         localStorage.removeItem('jwtToken');
         this._currentUser.set(null);
-        void this.router.navigate(['/auth']);
+        void this.router.navigate(['/']);
         return;
       }
       const user = parseUserFromToken(token);

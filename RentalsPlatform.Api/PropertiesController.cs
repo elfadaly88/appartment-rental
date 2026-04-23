@@ -135,6 +135,8 @@ public class PropertiesController(
         var result = await (
             from p in dbContext.Properties.AsNoTracking()
                                           .Include(p => p.PropertyImages)
+                                          .Include(p => p.PropertyFees)
+                                            .ThenInclude(f => f.FeeType)
             join u in dbContext.Users.AsNoTracking()
                 on p.HostId.ToString() equals u.Id into hostGroup
             from host in hostGroup.DefaultIfEmpty()
@@ -181,6 +183,16 @@ public class PropertiesController(
             Images = property.PropertyImages
                 .OrderByDescending(i => i.IsMain)
                 .Select(i => i.Url)
+                .ToList(),
+            Fees = property.PropertyFees
+                .Select(f => new
+                {
+                    f.Id,
+                    f.FeeTypeId,
+                    Name = new { Ar = f.FeeType?.NameAr ?? "", En = f.FeeType?.NameEn ?? "" },
+                    f.Amount,
+                    f.CalculationType
+                })
                 .ToList(),
             Description = new
             {
@@ -316,6 +328,8 @@ public class PropertiesController(
             .AsNoTracking()
             .Include(p => p.PropertyImages)
             .Include(p => p.UnavailableDates)
+            .Include(p => p.PropertyFees)
+                .ThenInclude(f => f.FeeType)
             .FirstOrDefaultAsync(p => p.Id == id && p.HostId == hostId, cancellationToken);
 
         if (property is null)
@@ -344,6 +358,15 @@ public class PropertiesController(
             property.UnavailableDates
                 .OrderBy(u => u.StartDate)
                 .Select(u => new HostBlockedDateDto(u.Id, u.StartDate, u.EndDate, u.Reason))
+                .ToList(),
+            property.PropertyFees
+                .Select(f => new PropertyFeeDto(
+                    f.Id,
+                    f.FeeTypeId,
+                    f.FeeType?.NameAr ?? "",
+                    f.FeeType?.NameEn ?? "",
+                    f.Amount,
+                    f.CalculationType))
                 .ToList());
 
         return Ok(response);
@@ -376,6 +399,18 @@ public class PropertiesController(
             new Address(dto.Country, dto.City, dto.Street, dto.ZipCode, dto.MapUrl),
             new Money(dto.PricePerNight, "EGP"),
             dto.MaxGuests);
+
+        if (dto.Fees != null && dto.Fees.Count > 0)
+        {
+            foreach (var feeDto in dto.Fees)
+            {
+                property.PropertyFees.Add(new PropertyFee(
+                    property.Id,
+                    feeDto.FeeTypeId,
+                    feeDto.Amount,
+                    feeDto.CalculationType));
+            }
+        }
 
         var uploadedPublicIds = new List<string>();
         IDbContextTransaction? transaction = null;
@@ -468,6 +503,7 @@ public class PropertiesController(
 
         var property = await dbContext.Properties
             .Include(p => p.PropertyImages)
+            .Include(p => p.PropertyFees)
             .FirstOrDefaultAsync(p => p.Id == id && p.HostId == hostId, cancellationToken);
 
         if (property is null)
@@ -479,6 +515,22 @@ public class PropertiesController(
             new Address(dto.Country, dto.City, dto.Street, dto.ZipCode, dto.MapUrl),
             new Money(dto.PricePerNight, property.PricePerNight.Currency),
             dto.MaxGuests);
+
+        // Update Fees
+        dbContext.PropertyFees.RemoveRange(property.PropertyFees);
+        property.PropertyFees.Clear();
+
+        if (dto.Fees != null && dto.Fees.Count > 0)
+        {
+            foreach (var feeDto in dto.Fees)
+            {
+                property.PropertyFees.Add(new PropertyFee(
+                    property.Id,
+                    feeDto.FeeTypeId,
+                    feeDto.Amount,
+                    feeDto.CalculationType));
+            }
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(new { Message = "Property updated successfully.", PropertyId = property.Id });

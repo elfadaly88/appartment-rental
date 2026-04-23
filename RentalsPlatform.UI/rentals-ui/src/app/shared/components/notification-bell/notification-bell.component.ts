@@ -21,7 +21,7 @@ import {
 } from '@angular/animations';
 import { Router } from '@angular/router';
 
-import { NotificationStore } from '../../../core/state/notification.store';
+import { NotificationStore, AppNotification } from '../../../core/state/notification.store';
 import { SignalrService } from '../../../core/services/signalr.service';
 import { LanguageService } from '../../../core/services/language.service';
 
@@ -111,10 +111,10 @@ export class NotificationBellComponent implements OnInit {
     this.isOpen.update((current) => !current);
   }
 
-  protected async onNotificationClick(id: string, targetLink: string): Promise<void> {
-    await this.store.markAsRead(id);
+  protected async onNotificationClick(notification: AppNotification): Promise<void> {
     this.isOpen.set(false);
-    await this.router.navigateByUrl(targetLink || '/host/bookings');
+    console.log('[NotificationBell] clicked', { id: notification.id, targetType: notification.targetType, targetId: notification.targetId });
+    await this.signalr.handleNotificationClick(notification);
   }
 
   protected async markAsRead(id: string, event: Event): Promise<void> {
@@ -165,6 +165,9 @@ export class NotificationBellComponent implements OnInit {
   protected trackById(_index: number, item: { id: string }): string {
     return item.id;
   }
+
+  // Dev helper: emit a fake booking notification into SignalR + store
+  // (dev helper removed) Emit test notifications removed for production readiness.
 
   private triggerBellShake(): void {
     this.bellState.set('shake');

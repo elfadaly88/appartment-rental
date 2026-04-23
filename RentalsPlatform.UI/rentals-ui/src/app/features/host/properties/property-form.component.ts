@@ -7,9 +7,11 @@ import {
   inject,
   OnDestroy,
   signal,
+  OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  FormArray,
   NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
@@ -25,10 +27,17 @@ import {
   HostPropertyDetails,
   PropertyService,
 } from '../services/property.service';
+import { LookupService, FeeTypeDto } from '../../../core/services/lookup.service';
 
 interface MediaPreview {
   file: File;
   previewUrl: string;
+}
+
+interface PropertyFeeDraft {
+  feeTypeId: number;
+  amount: number;
+  calculationType: number;
 }
 
 interface PropertyDraft {
@@ -47,6 +56,7 @@ interface PropertyDraft {
   houseRules: string;
   amenitiesText: string;
   media: MediaPreview[];
+  fees: PropertyFeeDraft[];
 }
 
 interface PropertyWizardState {
@@ -66,9 +76,10 @@ interface PropertyWizardState {
     '[attr.lang]': 'lang.currentLang()',
   },
 })
-export class PropertyFormComponent implements OnDestroy {
+export class PropertyFormComponent implements OnInit, OnDestroy {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly propertyService = inject(PropertyService);
+  private readonly lookupService = inject(LookupService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
@@ -83,6 +94,8 @@ export class PropertyFormComponent implements OnDestroy {
   readonly mediaTouched = signal(false);
   readonly existingImages = signal<HostPropertyDetails['images']>([]);
   private readonly hydratedPropertyId = signal<string | null>(null);
+
+  readonly feeTypes = signal<FeeTypeDto[]>([]);
 
   readonly wizardState = signal<PropertyWizardState>({
     step: 1,
@@ -102,6 +115,7 @@ export class PropertyFormComponent implements OnDestroy {
       houseRules: '',
       amenitiesText: 'Wi-Fi, Pool, Parking',
       media: [],
+      fees: [],
     },
   });
 
@@ -127,7 +141,25 @@ export class PropertyFormComponent implements OnDestroy {
     maxGuests: this.fb.control(1, [Validators.required, Validators.min(1)]),
     houseRules: this.fb.control(''),
     amenitiesText: this.fb.control('Wi-Fi, Pool, Parking'),
+    fees: this.fb.array([]),
   });
+
+  get fees() {
+    return this.form.get('fees') as FormArray;
+  }
+
+  addFee() {
+    const feeGroup = this.fb.group({
+      feeTypeId: this.fb.control(0, [Validators.required, Validators.min(1)]),
+      amount: this.fb.control(0, [Validators.required, Validators.min(1)]),
+      calculationType: this.fb.control(1, [Validators.required]),
+    });
+    this.fees.push(feeGroup);
+  }
+
+  removeFee(index: number) {
+    this.fees.removeAt(index);
+  }
 
   readonly uploadProgress = this.propertyService.uploadProgress;
   readonly isSaving = this.propertyService.isSaving;
@@ -161,7 +193,8 @@ export class PropertyFormComponent implements OnDestroy {
     if (step === 3) {
       return this.form.controls.pricePerNight.valid
         && this.form.controls.maxGuests.valid
-        && this.form.controls.amenitiesText.valid;   // houseRules is optional
+        && this.form.controls.amenitiesText.valid
+        && this.form.controls.fees.valid;   // houseRules is optional
     }
 
     return this.isEditMode() || this.previews().length > 0;
@@ -189,6 +222,7 @@ export class PropertyFormComponent implements OnDestroy {
             maxGuests: value.maxGuests ?? 1,
             houseRules: value.houseRules ?? '',
             amenitiesText: value.amenitiesText ?? '',
+            fees: (value.fees as PropertyFeeDraft[]) ?? [],
           },
         }));
       });
@@ -208,6 +242,12 @@ export class PropertyFormComponent implements OnDestroy {
       if (!resolved && this.hydratedPropertyId() !== id) {
         void this.loadProperty(id);
       }
+    });
+  }
+
+  ngOnInit(): void {
+    this.lookupService.getFeeTypes().subscribe((types) => {
+      this.feeTypes.set(types);
     });
   }
 
@@ -313,6 +353,12 @@ export class PropertyFormComponent implements OnDestroy {
     formData.append('houseRules', payload.houseRules || 'Please respect the property and neighbors.');
     formData.append('amenitiesText', payload.amenitiesText);
 
+    payload.fees.forEach((fee, index) => {
+      formData.append(`fees[${index}].feeTypeId`, String(fee.feeTypeId));
+      formData.append(`fees[${index}].amount`, String(fee.amount));
+      formData.append(`fees[${index}].calculationType`, String(fee.calculationType));
+    });
+
     this.previews().forEach((item) => {
       formData.append('images', item.file, item.file.name);
     });
@@ -411,6 +457,9 @@ export class PropertyFormComponent implements OnDestroy {
   private applyPropertyData(property: HostPropertyDetails): void {
     this.hydratedPropertyId.set(property.id);
 
+    // Clear existing fees before patching
+    this.fees.clear();
+
     this.form.patchValue({
       nameAr: property.nameAr,
       nameEn: property.nameEn,
@@ -424,6 +473,20 @@ export class PropertyFormComponent implements OnDestroy {
       pricePerNight: property.pricePerNight,
       maxGuests: property.maxGuests,
     });
+
+    // Populate fees FormArray
+    if (property.fees && property.fees.length > 0) {
+      property.fees.forEach((fee) => {
+        this.fees.push(
+          this.fb.group({
+            feeTypeId: this.fb.control(fee.feeTypeId, [Validators.required, Validators.min(1)]),
+            amount: this.fb.control(fee.amount, [Validators.required, Validators.min(1)]),
+            calculationType: this.fb.control(fee.calculationType, [Validators.required]),
+          }),
+        );
+      });
+    }
+
     this.existingImages.set(property.images);
 
     this.wizardState.update((state) => ({
@@ -441,6 +504,11 @@ export class PropertyFormComponent implements OnDestroy {
         mapUrl: property.mapUrl,
         pricePerNight: property.pricePerNight,
         maxGuests: property.maxGuests,
+        fees: property.fees.map(f => ({
+          feeTypeId: f.feeTypeId,
+          amount: f.amount,
+          calculationType: f.calculationType
+        })),
       },
     }));
   }
@@ -458,6 +526,10 @@ export class PropertyFormComponent implements OnDestroy {
       if (this.form.controls[fieldName].invalid) {
         return false;
       }
+    }
+
+    if (this.currentStep() === 3 && this.form.controls.fees.invalid) {
+      return false;
     }
 
     if (this.currentStep() === 4 && !this.isEditMode() && this.previews().length === 0) {

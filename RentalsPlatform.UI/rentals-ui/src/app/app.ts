@@ -53,6 +53,6 @@ export class App {
   protected logout(): void {
     this.closeMenu();
     this.authService.logout();
-    void this.router.navigate(['/auth']);
+    void this.router.navigate(['/']);
   }
 }

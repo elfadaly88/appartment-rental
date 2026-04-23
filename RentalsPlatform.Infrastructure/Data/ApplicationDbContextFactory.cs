@@ -11,7 +11,8 @@ public class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Applicati
         var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
         // بنحط الـ Connection String هنا بشكل مباشر عشان الـ Migrations تشتغل بدون مشاكل
-        builder.UseNpgsql("Host=localhost;Port=5444;Database=RentalsDb;Username=admin;Password=secret;");
+        // نستخدم نفس بيانات الاتصال الموجودة في docker-compose (postgres container)
+        builder.UseNpgsql("Host=localhost;Port=5444;Database=rentalsdb;Username=rentals_user;Password=rentals_password;");
 
         return new ApplicationDbContext(builder.Options);
     }

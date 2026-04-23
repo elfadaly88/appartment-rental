@@ -49,4 +49,17 @@ public class LookupService : ILookupService
 
         return governorates;
     }
+
+    public async Task<IEnumerable<FeeTypeDto>> GetFeeTypesAsync()
+    {
+        return await _dbContext.FeeTypes
+            .AsNoTracking()
+            .Select(f => new FeeTypeDto
+            {
+                Id = f.Id,
+                NameAr = f.NameAr,
+                NameEn = f.NameEn
+            })
+            .ToListAsync();
+    }
 }

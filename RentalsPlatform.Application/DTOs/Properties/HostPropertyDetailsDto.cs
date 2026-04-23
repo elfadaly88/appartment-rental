@@ -19,7 +19,16 @@ public sealed record HostPropertyDetailsDto(
     PropertyStatus Status,
     string? RejectionReason,
     IReadOnlyCollection<HostPropertyImageDto> Images,
-    IReadOnlyCollection<HostBlockedDateDto> BlockedDates);
+    IReadOnlyCollection<HostBlockedDateDto> BlockedDates,
+    IReadOnlyCollection<PropertyFeeDto> Fees);
+
+public sealed record PropertyFeeDto(
+    Guid Id,
+    int FeeTypeId,
+    string FeeTypeNameAr,
+    string FeeTypeNameEn,
+    decimal Amount,
+    FeeCalculationType CalculationType);
 
 public sealed record HostPropertyImageDto(
     Guid Id,

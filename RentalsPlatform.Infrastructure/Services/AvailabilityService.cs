@@ -19,15 +19,18 @@ public class AvailabilityService : IAvailabilityService
         if (start >= end)
             return false;
 
-        var hasConfirmedBooking = await _dbContext.Bookings
+        var hasBlockingBooking = await _dbContext.Bookings
             .AsNoTracking()
             .AnyAsync(b =>
                 b.PropertyId == propertyId &&
-                b.Status == BookingStatus.Confirmed &&
+                (b.Status == BookingStatus.Confirmed ||
+                 b.Status == BookingStatus.Approved ||
+                 b.Status == BookingStatus.HostBlocked ||
+                 b.Status == BookingStatus.Completed) &&
                 start < b.EndDate &&
                 end > b.StartDate);
 
-        if (hasConfirmedBooking)
+        if (hasBlockingBooking)
             return false;
 
         var hasBlockedDate = await _dbContext.UnavailableDates
@@ -42,9 +45,13 @@ public class AvailabilityService : IAvailabilityService
 
     public async Task<IReadOnlyCollection<DateOnly>> GetTakenDatesAsync(Guid propertyId, CancellationToken cancellationToken = default)
     {
-        var confirmedRanges = await _dbContext.Bookings
+        var blockingRanges = await _dbContext.Bookings
             .AsNoTracking()
-            .Where(b => b.PropertyId == propertyId && b.Status == BookingStatus.Confirmed)
+            .Where(b => b.PropertyId == propertyId &&
+                       (b.Status == BookingStatus.Confirmed ||
+                        b.Status == BookingStatus.Approved ||
+                        b.Status == BookingStatus.HostBlocked ||
+                        b.Status == BookingStatus.Completed))
             .Select(b => new { b.StartDate, b.EndDate })
             .ToListAsync(cancellationToken);
 
@@ -56,7 +63,7 @@ public class AvailabilityService : IAvailabilityService
 
         var takenDates = new HashSet<DateOnly>();
 
-        foreach (var range in confirmedRanges)
+        foreach (var range in blockingRanges)
         {
             for (var date = range.StartDate; date < range.EndDate; date = date.AddDays(1))
             {

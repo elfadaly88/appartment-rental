@@ -432,15 +432,30 @@ export class AuthPageComponent {
 
   private async navigateAfterAuth(): Promise<void> {
     if (this.authService.isAdmin()) {
-      await this.router.navigateByUrl('/admin/dashboard');
+      try {
+        await Promise.resolve();
+        await this.router.navigateByUrl('/admin/dashboard');
+      } catch (err) {
+        console.debug('[Auth] Navigation to admin dashboard aborted or failed', err);
+      }
       return;
     }
 
     if (this.authService.isHost()) {
-      await this.router.navigateByUrl('/host/dashboard');
+      try {
+        await Promise.resolve();
+        await this.router.navigateByUrl('/host/dashboard');
+      } catch (err) {
+        console.debug('[Auth] Navigation to host dashboard aborted or failed', err);
+      }
       return;
     }
 
-    await this.router.navigateByUrl('/properties');
+    try {
+      await Promise.resolve();
+      await this.router.navigateByUrl('/properties');
+    } catch (err) {
+      console.debug('[Auth] Navigation to properties aborted or failed', err);
+    }
   }
 }

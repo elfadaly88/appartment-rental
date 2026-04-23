@@ -116,9 +116,9 @@ export class AuthService {
     this.currentUser.set(null);
     this.stateCleanup.resetAllStores();
 
-    // Redirect to login safely after logout
+    // Redirect to landing page safely after logout
     if (isPlatformBrowser(this.platformId)) {
-      void this.router.navigate(['/auth']);
+      void this.router.navigate(['/']);
     }
   }
 

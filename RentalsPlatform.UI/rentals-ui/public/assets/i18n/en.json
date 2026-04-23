@@ -21,7 +21,11 @@
     "ERROR_EMAIL": "Enter a valid email address.",
     "ERROR_MINLENGTH": "Please use at least {{requiredLength}} characters.",
     "ERROR_TERMS": "You must accept Host Terms of Service.",
-    "ERROR_FALLBACK": "Please review this field."
+    "ERROR_FALLBACK": "Please review this field.",
+    "SOCIAL_GOOGLE_CONTINUE": "Continue with Google",
+    "SOCIAL_FACEBOOK_CONTINUE": "Continue with Facebook",
+    "SOCIAL_DIVIDER_LOGIN": "or continue with",
+    "SOCIAL_LOADING": "Loading..."
   },
   "NAV": {
     "HOME": "Home",
@@ -139,7 +143,17 @@
     "VALIDATION_INVALID": "Please enter a valid value.",
     "SUCCESS_CREATE": "Property created successfully.",
     "SUCCESS_UPDATE": "Property updated successfully.",
-    "ERROR_SAVE": "Could not save property. Please try again."
+    "ERROR_SAVE": "Could not save property. Please try again.",
+    "FEES_TITLE": "Additional Fees",
+    "ADD_FEE": "Add Fee",
+    "FEE_TYPE": "Fee Type",
+    "SELECT_FEE": "Select Fee Type",
+    "AMOUNT": "Amount",
+    "CALC_TYPE": "Calculation",
+    "PER_NIGHT": "Per Night",
+    "PER_STAY": "Per Stay",
+    "REMOVE_FEE": "Remove Fee",
+    "NO_FEES_ADDED": "No additional fees added yet."
   },
   "BLOCK_DATES": {
     "VALIDATION_PROPERTY_REQUIRED": "Please choose a property first.",

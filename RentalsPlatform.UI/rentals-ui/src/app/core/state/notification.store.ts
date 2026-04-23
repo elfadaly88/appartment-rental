@@ -4,11 +4,15 @@ import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
+export type NotificationTargetType = 'Booking' | 'Property' | 'Approval' | 'Message' | 'System';
+
 export interface AppNotification {
   id: string;
   title: string;
   message: string;
-  targetLink: string;
+  targetType?: NotificationTargetType;
+  targetId?: string;
+  targetLink?: string;
   createdAt: string;
   isRead: boolean;
 }
@@ -53,6 +57,14 @@ export class NotificationStore {
     );
 
     try {
+      // The API route expects a GUID id (see NotificationsController.[HttpPatch("{id:guid}/read")] ).
+      // For dev/test notifications we generate non-GUID ids (e.g. "test-...") — skip
+      // the server call in that case to avoid 404s while preserving optimistic UI update.
+      const guidRegex = /^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$/;
+      if (!guidRegex.test(id)) {
+        return;
+      }
+
       await firstValueFrom(
         this.http.patch(`${environment.apiUrl}/notifications/${id}/read`, {}),
       );
@@ -67,17 +79,44 @@ export class NotificationStore {
     );
   }
 
-  private normalizeNotification(payload: Partial<AppNotification>): AppNotification {
+  private normalizeNotification(payload: any): AppNotification {
+    const source = payload || {};
+
+    const id = this.readString(source, ['id', 'Id', 'notificationId']) ||
+      `notif-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const title = this.readString(source, ['title', 'Title']) || 'Notification';
+    const message = this.readString(source, ['message', 'Message', 'body', 'Body']) || 'New update available.';
+
+    const targetType = (this.readString(source, ['targetType', 'TargetType']) as NotificationTargetType) ||
+      (source.bookingId || source.BookingId ? 'Booking' : source.propertyId || source.PropertyId ? 'Property' : 'System');
+
+    const targetId = this.readString(source, ['targetId', 'TargetId', 'bookingId', 'BookingId', 'propertyId', 'PropertyId']);
+
+    const targetLink = this.readString(source, ['targetLink', 'TargetLink']) || undefined;
+    const createdAt = this.readString(source, ['createdAt', 'CreatedAt', 'timestamp', 'Timestamp']) || new Date().toISOString();
+    const isRead = !!(source.isRead ?? source.IsRead ?? false);
+
     return {
-      id:
-        payload.id?.trim() ||
-        `notif-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      title: payload.title?.trim() || 'New booking update',
-      message: payload.message?.trim() || 'A new activity needs your attention.',
-      targetLink: payload.targetLink?.trim() || '/host/bookings',
-      createdAt: payload.createdAt || new Date().toISOString(),
-      isRead: payload.isRead ?? false,
+      id,
+      title,
+      message,
+      targetType,
+      targetId,
+      targetLink,
+      createdAt,
+      isRead,
     };
+  }
+
+  private readString(source: any, keys: string[]): string {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+    }
+    return '';
   }
 
   reset(): void {

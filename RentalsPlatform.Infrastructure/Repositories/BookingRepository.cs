@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using RentalsPlatform.Application.Interfaces;
 using RentalsPlatform.Domain.Entities;
 using RentalsPlatform.Domain.Enums;
@@ -24,7 +24,10 @@ public class BookingRepository : IBookingRepository
         return await _context.Bookings
             .AnyAsync(b =>
                 b.PropertyId == propertyId &&
-                b.Status != BookingStatus.Cancelled &&
+                (b.Status == BookingStatus.Confirmed || 
+                 b.Status == BookingStatus.Approved || 
+                 b.Status == BookingStatus.HostBlocked || 
+                 b.Status == BookingStatus.Completed) &&
                 (excludedBookingId == null || b.Id != excludedBookingId.Value) &&
                 b.StartDate < checkOutDate &&
                 b.EndDate > checkInDate,

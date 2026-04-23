@@ -17,9 +17,10 @@
       <p class="toast__body">{{ toast.body }}</p>
 
       <footer class="toast__actions">
-        <a class="toast__view" routerLink="/host/bookings" (click)="dismiss(toast.id)">
-          {{ t('عرض', 'View') }}
-        </a>
+            <a class="toast__view" routerLink="/host/bookings" (click)="dismiss(toast.id)">
+              {{ t('عرض', 'View') }}
+            </a>
+
       </footer>
     </article>
   }

@@ -52,5 +52,7 @@ public record CreatePropertyDto
     [Range(1, 100)]
     public int MaxGuests { get; init; } = 1;
 
+    public List<CreatePropertyFeeDto> Fees { get; init; } = new();
+
     public IFormFileCollection Images { get; init; } = null!;
 }
