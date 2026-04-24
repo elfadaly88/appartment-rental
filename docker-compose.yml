@@ -3,15 +3,15 @@ services:
     image: postgres:16
     container_name: rentals-postgres
     environment:
-      POSTGRES_USER: rentals_user
-      POSTGRES_PASSWORD: rentals_password
-      POSTGRES_DB: rentalsdb
+      POSTGRES_USER: ${POSTGRES_USER:-rentals_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-rentalsdb}
     ports:
       - "5444:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rentals_user -d rentalsdb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rentals_user} -d ${POSTGRES_DB:-rentalsdb}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -19,13 +19,38 @@ services:
 
   backend-api:
     build:
-      context: . # يشمل مجلدات الـ Api و Application و Domain و Infrastructure
+      context: .
       dockerfile: RentalsPlatform.Api/Dockerfile
     container_name: rentals-backend-api
+    env_file:
+      - .env
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=postgres-db;Port=5444;Database=rentalsdb;Username=rentals_user;Password=rentals_password
+      ConnectionStrings__DefaultConnection: >-
+        Host=postgres-db;Port=5432;Database=${POSTGRES_DB:-rentalsdb};Username=${POSTGRES_USER:-rentals_user};Password=${POSTGRES_PASSWORD}
+      JwtSettings__Key: ${JWT_SECRET_KEY}
+      JwtSettings__Issuer: ${JWT_ISSUER:-RentalsPlatformApi}
+      JwtSettings__Audience: ${JWT_AUDIENCE:-RentalsPlatformClients}
+      JwtSettings__DurationInMinutes: ${JWT_DURATION_MINUTES:-1440}
+      ExternalAuth__Google__ClientId: ${GOOGLE_CLIENT_ID}
+      ExternalAuth__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET}
+      ExternalAuth__Facebook__AppId: ${FACEBOOK_APP_ID}
+      ExternalAuth__Facebook__AppSecret: ${FACEBOOK_APP_SECRET}
+      VapidDetails__Subject: ${VAPID_SUBJECT:-mailto:admin@rentalsplatform.com}
+      VapidDetails__PublicKey: ${VAPID_PUBLIC_KEY}
+      VapidDetails__PrivateKey: ${VAPID_PRIVATE_KEY}
+      Paymob__ApiKey: ${PAYMOB_API_KEY}
+      Paymob__SecretKey: ${PAYMOB_SECRET_KEY}
+      Paymob__PublicKey: ${PAYMOB_PUBLIC_KEY}
+      Paymob__HmacSecret: ${PAYMOB_HMAC_SECRET}
+      Paymob__IntegrationId: ${PAYMOB_INTEGRATION_ID:-4028437}
+      Paymob__IframeId: ${PAYMOB_IFRAME_ID:-0}
+      Paymob__CheckoutReturnUrl: ${PAYMOB_CHECKOUT_RETURN_URL:-http://localhost:4200/checkout/callback}
+      Paymob__BaseUrl: ${PAYMOB_BASE_URL:-https://accept.paymob.com/api}
+      CloudinarySettings__CloudName: ${CLOUDINARY_CLOUD_NAME}
+      CloudinarySettings__ApiKey: ${CLOUDINARY_API_KEY}
+      CloudinarySettings__ApiSecret: ${CLOUDINARY_API_SECRET}
     ports:
       - "5000:8080"
     depends_on:
@@ -35,20 +60,37 @@ services:
 
   frontend-pwa:
     build:
-      # التعديل الأساسي: المسار الآن يشير إلى المجلد الذي يحتوي على package.json
       context: ./RentalsPlatform.UI/rentals-ui
       dockerfile: Dockerfile
     container_name: rentals-frontend-pwa
     environment:
       NODE_ENV: production
       PORT: 4000
-      # تم إضافة الرابط الخارجي عشان المتصفح يقدر يكلم الباك إند
-      API_URL: http://localhost:5000/api
-      # الرابط الداخلي لسيرفر الأنجولار (SSR) عشان يكلم الباك إند جوه الدوكر
+      API_URL: ${PUBLIC_API_URL:-http://localhost:5000/api}
       SSR_API_URL: http://backend-api:8080/api
+      PROD_API_URL: ${PUBLIC_API_URL:-http://localhost:5000/api}
+      PROD_HUB_URL: ${PUBLIC_HUB_URL:-http://localhost:5000/hubs/notifications}
+      PROD_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      PROD_FACEBOOK_APP_ID: ${FACEBOOK_APP_ID}
+      PROD_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      PROD_MAPBOX_ACCESS_TOKEN: ${MAPBOX_ACCESS_TOKEN}
     ports:
       - "4200:4000"
     depends_on:
+      - backend-api
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: rentals-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend-pwa
       - backend-api
     restart: unless-stopped
 
