@@ -10,3 +10,11 @@ secrets.json
 src/environments/environment.development.ts
 src/environments/environment.prod.ts
 src/environments/environment.local.ts
+
+# Environment / secrets (never commit real values)
+.env
+
+# SSL certificates (managed outside version control)
+nginx/ssl/*.pem
+nginx/ssl/*.crt
+nginx/ssl/*.key
