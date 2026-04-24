@@ -188,7 +188,9 @@ Set up automatic certificate renewal:
 certbot renew --dry-run
 
 # Add a cron job (runs twice daily)
-(crontab -l 2>/dev/null; echo "0 3,15 * * * certbot renew --quiet && docker compose -f /root/appartment-rental/docker-compose.yml restart nginx") | crontab -
+# Replace /home/deploy/appartment-rental with the actual clone path
+DEPLOY_DIR=/home/deploy/appartment-rental   # adjust if deploying as root: /root/appartment-rental
+(crontab -l 2>/dev/null; echo "0 3,15 * * * certbot renew --quiet && docker compose -f ${DEPLOY_DIR}/docker-compose.yml restart nginx") | crontab -
 ```
 
 ---
