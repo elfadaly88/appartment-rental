@@ -14,7 +14,7 @@
   --_surface: rgba(255, 255, 255, 0.7);
   --_surface-strong: rgba(255, 255, 255, 0.88);
   --_border: rgba(255, 255, 255, 0.55);
-  --_shadow: 0 16px 38px rgba(8, 13, 26, 0.12), 0 4px 10px rgba(8, 13, 26, 0.08);
+  --_shadow: 0 1rem 2.375rem rgba(8, 13, 26, 0.12), 0 0.25rem 0.625rem rgba(8, 13, 26, 0.08);
 
   max-inline-size: 82rem;
   margin-inline: auto;
@@ -57,8 +57,8 @@
 }
 
 .tabs__button {
-  min-block-size: 48px;
-  min-inline-size: 48px;
+  min-block-size: 3rem;
+  min-inline-size: 3rem;
   border: 1px solid var(--_border);
   border-radius: 0.9rem;
   background: var(--_surface);
@@ -113,6 +113,11 @@
   box-shadow: var(--_shadow);
   padding-block: 0.9rem;
   padding-inline: 0.9rem;
+}
+
+.card--highlighted {
+  border-color: rgba(15, 118, 110, 0.5);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16), 0 1rem 2.375rem rgba(8, 13, 26, 0.12);
 }
 
 .card__top {
@@ -213,8 +218,8 @@
 }
 
 .action-btn {
-  min-block-size: 48px;
-  min-inline-size: 48px;
+  min-block-size: 3rem;
+  min-inline-size: 3rem;
   border-radius: 0.8rem;
   border: 1px solid transparent;
   font-weight: 700;

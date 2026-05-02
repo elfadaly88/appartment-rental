@@ -47,5 +47,12 @@ export const HOST_ROUTES: Routes = [
         (m) => m.BlockDatesComponent,
       ),
   },
+  {
+    path: 'discounts',
+    loadComponent: () =>
+      import('./pricing/host-discounts.component').then(
+        (m) => m.HostDiscountsComponent,
+      ),
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];

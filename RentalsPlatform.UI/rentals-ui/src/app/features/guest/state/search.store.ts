@@ -14,6 +14,8 @@ export interface SearchCriteria {
   minPrice: number;
   maxPrice: number;
   guests: number;
+  minHostRating: number;    // 0 = no filter; 3, 4, 4.5 = floor
+  instantBook: boolean;     // true = Instant Book only
 }
 
 @Injectable({ providedIn: 'root' })
@@ -30,6 +32,8 @@ export class SearchStore {
     minPrice: 0,
     maxPrice: 15000,
     guests: 1,
+    minHostRating: 0,
+    instantBook: false,
   });
 
   private readonly _results = signal<Property[]>([]);
@@ -96,21 +100,25 @@ export class SearchStore {
     params = params.set('minPrice', String(criteria.minPrice));
     params = params.set('maxPrice', String(criteria.maxPrice));
     params = params.set('guests', String(criteria.guests));
+    if (criteria.minHostRating > 0) params = params.set('minHostRating', String(criteria.minHostRating));
+    if (criteria.instantBook) params = params.set('instantBook', 'true');
 
     return params;
-    }
+  }
 
-    reset(): void {
-      this._searchCriteria.set({
-        city: '',
-        checkIn: '',
-        checkOut: '',
-        minPrice: 0,
-        maxPrice: 15000,
-        guests: 1,
-      });
-      this._results.set([]);
-      this._isLoading.set(false);
-      this._viewMode.set('list');
+  reset(): void {
+    this._searchCriteria.set({
+      city: '',
+      checkIn: '',
+      checkOut: '',
+      minPrice: 0,
+      maxPrice: 15000,
+      guests: 1,
+      minHostRating: 0,
+      instantBook: false,
+    });
+    this._results.set([]);
+    this._isLoading.set(false);
+    this._viewMode.set('list');
   }
 }

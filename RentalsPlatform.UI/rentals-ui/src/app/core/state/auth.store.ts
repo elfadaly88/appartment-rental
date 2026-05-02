@@ -116,9 +116,13 @@ export class AuthStore {
   readonly isAdmin = computed(() => this._currentUser()?.role?.toLowerCase() === 'admin');
   readonly isAuthenticated = computed(() => !!this._currentUser());
   private readonly _isLoading = signal(false);
+  private readonly _lastError = signal<string | null>(null);
+  private readonly _isOffline = signal(false);
 
   readonly currentUser = this._currentUser.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
+  readonly lastError = this._lastError.asReadonly();
+  readonly isOffline = this._isOffline.asReadonly();
 
   // readonly isAuthenticated = computed(() => this._currentUser() !== null);
   // readonly isAdmin = computed(() => this.normalizeRole(this._currentUser()?.role) === 'admin');
@@ -147,6 +151,15 @@ export class AuthStore {
   }
   async login(credentials: AuthCredentials): Promise<boolean> {
     this._isLoading.set(true);
+    this._lastError.set(null);
+    this._isOffline.set(false);
+
+    if (isPlatformBrowser(this.platformId) && !navigator.onLine) {
+      this._isOffline.set(true);
+      this._lastError.set('You are offline. Check your internet connection and try again.');
+      this._isLoading.set(false);
+      return false;
+    }
 
     try {
       const response = await firstValueFrom(
@@ -160,10 +173,10 @@ export class AuthStore {
       this._currentUser.set(user);
 
       const navRole = this.normalizeRole(user.role);
-      
+
       // Check for saved redirect URL from notification click
-      const savedRedirect = isPlatformBrowser(this.platformId) 
-        ? sessionStorage.getItem('redirectAfterLogin') 
+      const savedRedirect = isPlatformBrowser(this.platformId)
+        ? sessionStorage.getItem('redirectAfterLogin')
         : null;
 
       if (savedRedirect) {
@@ -186,7 +199,13 @@ export class AuthStore {
     } catch {
       this._currentUser.set(null);
       if (isPlatformBrowser(this.platformId)) {
+        this._isOffline.set(!navigator.onLine);
         localStorage.removeItem('jwtToken');
+      }
+      if (this._isOffline()) {
+        this._lastError.set('You are offline. Check your internet connection and try again.');
+      } else {
+        this._lastError.set('Invalid login credentials or network error.');
       }
       return false;
     } finally {

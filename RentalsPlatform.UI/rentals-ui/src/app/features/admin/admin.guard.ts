@@ -13,7 +13,8 @@ export const adminGuard: CanActivateFn = () => {
     return true;
   }
   if (authStore.isAuthenticated()) {
-     return router.createUrlTree(['/properties']);
+    // Authenticated but not admin → show access-denied
+    return router.createUrlTree(['/access-denied']);
   }
   if (isPlatformBrowser(platformId)) {
     const token = localStorage.getItem('jwtToken');
@@ -22,6 +23,6 @@ export const adminGuard: CanActivateFn = () => {
     }
   }
 
-  // 4. لو مفيش توكن خالص، ارجع لصفحة اللوج إن
+  // No token at all → redirect to login
   return router.createUrlTree(['/auth']);
-};
+};

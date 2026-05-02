@@ -12,6 +12,9 @@ export interface GuestBooking {
   checkOutDate: string;
   nights: number;
   totalPrice: number;
+  originalPrice: number;
+  discountAmount: number;
+  discountLabel?: string | null;
   currency: string;
   status: BookingStatus;
   paymentStatus: PaymentStatus;

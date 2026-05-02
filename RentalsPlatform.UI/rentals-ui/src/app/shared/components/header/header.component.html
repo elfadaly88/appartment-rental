@@ -44,15 +44,33 @@
         {{ toggleLabel() }}
       </button>
 
+      <button
+        type="button"
+        class="menu-btn lg:hidden"
+        [attr.aria-expanded]="isMobileMenuOpen()"
+        [attr.aria-label]="'Open menu'"
+        (click)="toggleMobileMenu()"
+      >
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+          @if (!isMobileMenuOpen()) {
+            <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
+          } @else {
+            <path stroke-linecap="round" d="M6 6l12 12M18 6l-12 12" />
+          }
+        </svg>
+      </button>
+
       @if (authService.isAuthenticated()) {
         <div class="user-panel animate-fadeup transition-all duration-300 ease-in-out hover:shadow-md"
              [attr.aria-label]="'NAV.WELCOME' | translate: { name: userName() }">
-          <a routerLink="/profile" class="avatar-wrap">
+          <a [routerLink]="profileUrl()" class="avatar-wrap">
             @if (authService.currentUser()?.avatarUrl) {
               <img
                 [src]="authService.currentUser()?.avatarUrl"
                 class="avatar-image"
                 alt=""
+                loading="lazy"
+                decoding="async"
                 (error)="onAvatarError($event)"
               />
             } @else {
@@ -63,7 +81,7 @@
           </a>
           <!-- User name — hidden on xs, visible sm+ -->
           <a
-            routerLink="/profile"
+            [routerLink]="profileUrl()"
             class="hidden max-w-[110px] truncate text-sm font-semibold text-slate-700 hover:text-teal-600 transition-colors sm:block"
             [title]="userName()"
           >{{ userName() }}</a>
@@ -84,4 +102,24 @@
       }
     </div>
   </div>
+
+  @if (isMobileMenuOpen()) {
+    <nav class="mobile-menu lg:hidden" aria-label="Mobile navigation">
+      <a routerLink="/" (click)="closeMobileMenu()" class="mobile-menu__link">{{ 'NAV.HOME' | translate }}</a>
+      <a routerLink="/properties" (click)="closeMobileMenu()" class="mobile-menu__link">{{ 'NAV.PROPERTIES' | translate }}</a>
+      @if (authService.isAdmin()) {
+        <a routerLink="/admin/dashboard" (click)="closeMobileMenu()" class="mobile-menu__link">{{ 'NAV.DASHBOARD' | translate }}</a>
+      } @else if (authService.isHost()) {
+        <a routerLink="/host/dashboard" (click)="closeMobileMenu()" class="mobile-menu__link">{{ 'NAV.DASHBOARD' | translate }}</a>
+        <a routerLink="/host/properties/new" (click)="closeMobileMenu()" class="mobile-menu__link">{{ 'NAV.POST_PROPERTY' | translate }}</a>
+        <a routerLink="/host/bookings" (click)="closeMobileMenu()" class="mobile-menu__link">{{ 'NAV.MY_BOOKINGS' | translate }}</a>
+      } @else if (authService.isAuthenticated()) {
+        <a routerLink="/my-bookings" (click)="closeMobileMenu()" class="mobile-menu__link">{{ 'NAV.MY_BOOKINGS' | translate }}</a>
+      }
+
+      @if (!authService.isAuthenticated()) {
+        <a routerLink="/auth" (click)="closeMobileMenu()" class="mobile-menu__link">{{ 'NAV.LOGIN' | translate }}</a>
+      }
+    </nav>
+  }
 </header>

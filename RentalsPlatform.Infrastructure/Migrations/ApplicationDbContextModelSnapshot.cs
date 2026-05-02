@@ -274,6 +274,15 @@ namespace RentalsPlatform.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedOnUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("DiscountAmount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(18,2)")
+                        .HasDefaultValue(0m);
+
+                    b.Property<string>("DiscountLabel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
@@ -539,6 +548,39 @@ namespace RentalsPlatform.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("RentalsPlatform.Domain.Entities.HostDiscount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("MinNights")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("PropertyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId", "IsActive");
+
+                    b.ToTable("HostDiscounts");
+                });
+
             modelBuilder.Entity("RentalsPlatform.Domain.Entities.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -590,6 +632,11 @@ namespace RentalsPlatform.Infrastructure.Migrations
                     b.Property<Guid>("HostId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("InstantBook")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<int>("MaxGuests")
                         .HasColumnType("integer");
 
@@ -608,6 +655,9 @@ namespace RentalsPlatform.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("HostId")
+                        .HasDatabaseName("IX_Properties_HostId");
 
                     b.ToTable("Properties");
                 });
@@ -679,6 +729,10 @@ namespace RentalsPlatform.Infrastructure.Migrations
 
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<Guid>("PropertyId")
                         .HasColumnType("uuid");
@@ -792,6 +846,9 @@ namespace RentalsPlatform.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BookingId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
@@ -806,6 +863,10 @@ namespace RentalsPlatform.Infrastructure.Migrations
                         .HasColumnType("date");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BookingId")
+                        .HasDatabaseName("IX_UnavailableDates_BookingId")
+                        .HasFilter("\"BookingId\" IS NOT NULL");
 
                     b.HasIndex("PropertyId", "StartDate", "EndDate");
 
@@ -871,6 +932,29 @@ namespace RentalsPlatform.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsOne("RentalsPlatform.Domain.ValueObjects.Money", "OriginalPrice", b1 =>
+                        {
+                            b1.Property<Guid>("BookingId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("numeric(18,2)")
+                                .HasColumnName("OriginalPriceAmount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .HasColumnType("character varying(3)")
+                                .HasColumnName("OriginalPriceCurrency");
+
+                            b1.HasKey("BookingId");
+
+                            b1.ToTable("Bookings");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BookingId");
+                        });
+
                     b.OwnsOne("RentalsPlatform.Domain.ValueObjects.Money", "TotalPrice", b1 =>
                         {
                             b1.Property<Guid>("BookingId")
@@ -893,6 +977,9 @@ namespace RentalsPlatform.Infrastructure.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("BookingId");
                         });
+
+                    b.Navigation("OriginalPrice")
+                        .IsRequired();
 
                     b.Navigation("Property");
 
@@ -920,6 +1007,17 @@ namespace RentalsPlatform.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Country");
+                });
+
+            modelBuilder.Entity("RentalsPlatform.Domain.Entities.HostDiscount", b =>
+                {
+                    b.HasOne("RentalsPlatform.Domain.Entities.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("RentalsPlatform.Domain.Entities.Property", b =>

@@ -164,25 +164,42 @@
               <!-- Actions -->
               <div class="pipeline-card__actions">
                 @if (booking.pipelineStatus === 'Pending') {
-                  <button
-                    id="approve-{{ booking.id }}"
-                    class="pipeline-card__action pipeline-card__action--approve"
-                    type="button"
-                    [disabled]="processingId() === booking.id"
-                    (click)="approveBooking(booking.id)"
-                  >
-                    @if (processingId() === booking.id) { ⏳ } @else { ✅ }
-                    {{ t('موافقة', 'Approve') }}
-                  </button>
-                  <button
-                    id="reject-{{ booking.id }}"
-                    class="pipeline-card__action pipeline-card__action--reject"
-                    type="button"
-                    [disabled]="processingId() === booking.id"
-                    (click)="rejectBooking(booking.id)"
-                  >
-                    {{ t('رفض', 'Reject') }}
-                  </button>
+                  @if (!isCheckInDatePassed(booking.checkInDate)) {
+                    <!-- Normal pending: show Approve + Reject -->
+                    <button
+                      id="approve-{{ booking.id }}"
+                      class="pipeline-card__action pipeline-card__action--approve"
+                      type="button"
+                      [disabled]="processingId() === booking.id"
+                      (click)="approveBooking(booking.id)"
+                    >
+                      @if (processingId() === booking.id) { ⏳ } @else { ✅ }
+                      {{ t('موافقة', 'Approve') }}
+                    </button>
+                    <button
+                      id="reject-{{ booking.id }}"
+                      class="pipeline-card__action pipeline-card__action--reject"
+                      type="button"
+                      [disabled]="processingId() === booking.id"
+                      (click)="rejectBooking(booking.id)"
+                    >
+                      {{ t('رفض', 'Reject') }}
+                    </button>
+                  } @else {
+                    <!-- Check-in date has passed → disable approve, show expired badge -->
+                    <div class="pipeline-card__action pipeline-card__action--date-expired" title="Cannot approve a booking whose check-in date has passed" role="status">
+                      🚫 {{ t('منتهي: التاريخ مضى', 'Expired: Date passed') }}
+                    </div>
+                    <button
+                      id="reject-expired-{{ booking.id }}"
+                      class="pipeline-card__action pipeline-card__action--reject"
+                      type="button"
+                      [disabled]="processingId() === booking.id"
+                      (click)="rejectBooking(booking.id)"
+                    >
+                      {{ t('إغلاق', 'Dismiss') }}
+                    </button>
+                  }
                 }
                 @if (booking.pipelineStatus === 'Approved' || booking.pipelineStatus === 'Confirmed') {
                   <a

@@ -21,6 +21,9 @@ using RentalsPlatform.Infrastructure.Hubs;
 using RentalsPlatform.Infrastructure.Repositories;
 using RentalsPlatform.Infrastructure.Services;
 using WebPush;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,10 +38,63 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins("http://localhost:4200", "https://luxerentals.com", "https://www.luxerentals.com")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
+    });
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync("{\"message\": \"Too many requests. Please try again after a minute.\"}", token);
+    };
+
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        if (ip == "127.0.0.1" || ip == "::1")
+        {
+            return RateLimitPartition.GetNoLimiter(ip);
+        }
+
+        var userId = httpContext.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        var partitionKey = !string.IsNullOrEmpty(userId) ? userId : ip;
+
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, partition =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
+    });
+
+    options.AddPolicy("Auth", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        if (ip == "127.0.0.1" || ip == "::1")
+        {
+            return RateLimitPartition.GetNoLimiter(ip);
+        }
+
+        var userId = httpContext.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        var partitionKey = !string.IsNullOrEmpty(userId) ? userId : ip;
+
+        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, partition =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            });
     });
 });
 
@@ -182,6 +238,7 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAngular");
 app.UseResponseCaching();
 app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseMiddleware<EnforceBanMiddleware>();
 app.UseAuthorization();

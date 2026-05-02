@@ -119,7 +119,7 @@
         {{ 'LANDING.STATS.ERROR' | translate }}
       </div>
     } @else {
-      <div class="stats-cards">
+      <div class="stats-cards grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
         <!-- Card 1 — Luxury Units -->
         <div class="stat-card reveal">
           <div class="stat-card-icon stat-card-icon--gold">
@@ -211,7 +211,7 @@
 
     <!-- Property grid -->
     @if (featuredLoading()) {
-      <div class="fp-grid">
+      <div class="fp-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
         @for (_ of [1,2,3,4,5,6]; track _) {
           <article class="fp-card fp-card--skeleton" aria-hidden="true">
             <div class="fp-card__media"></div>
@@ -227,7 +227,7 @@
         <p>{{ 'LANDING.FEATURED.EMPTY' | translate }}</p>
       </div>
     } @else {
-      <div class="fp-grid">
+      <div class="fp-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
         @for (prop of featuredProperties(); track prop.id) {
           <article class="fp-card reveal">
             <a class="fp-card__link" [routerLink]="['/properties', prop.id]" [attr.aria-label]="prop.title">

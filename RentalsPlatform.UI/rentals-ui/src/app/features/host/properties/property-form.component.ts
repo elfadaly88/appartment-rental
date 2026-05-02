@@ -28,6 +28,7 @@ import {
   PropertyService,
 } from '../services/property.service';
 import { LookupService, FeeTypeDto } from '../../../core/services/lookup.service';
+import { PlatformService } from '../../../core/services/platform.service';
 
 interface MediaPreview {
   file: File;
@@ -84,6 +85,7 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
   protected readonly lang = inject(LanguageService);
+  private readonly platform = inject(PlatformService);
   protected readonly isRtl = computed(() => this.lang.dir() === 'rtl');
 
   readonly resolvedPropertyId = input<string | null>(null);
@@ -159,6 +161,21 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
 
   removeFee(index: number) {
     this.fees.removeAt(index);
+  }
+
+  handleFieldFocus(event: FocusEvent): void {
+    if (!this.platform.isMobileViewport() || !this.platform.isTouchDevice()) {
+      return;
+    }
+
+    const el = event.target as HTMLElement | null;
+    if (!el) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    });
   }
 
   readonly uploadProgress = this.propertyService.uploadProgress;

@@ -17,7 +17,8 @@ public class HostCalendarService : IHostCalendarService
         _availabilityService = availabilityService;
     }
 
-    public async Task BlockDatesAsync(BlockDto dto, CancellationToken cancellationToken = default)
+    /// <inheritdoc/>
+    public async Task<Guid> BlockDatesAsync(BlockDto dto, CancellationToken cancellationToken = default)
     {
         if (dto.StartDate >= dto.EndDate)
             throw new InvalidOperationException("End date must be after start date.");
@@ -30,21 +31,26 @@ public class HostCalendarService : IHostCalendarService
             throw new InvalidOperationException("Property not found.");
 
         var isAvailable = await _availabilityService.IsPeriodAvailableAsync(dto.PropertyId, dto.StartDate, dto.EndDate);
-
         if (!isAvailable)
             throw new InvalidOperationException("Cannot block these dates because they overlap with existing calendar reservations.");
 
         var blockedPeriod = new UnavailableDate(dto.PropertyId, dto.StartDate, dto.EndDate, dto.Reason);
         await _dbContext.UnavailableDates.AddAsync(blockedPeriod, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return blockedPeriod.Id;
     }
 
     public async Task UnblockDatesAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var blockedPeriod = await _dbContext.UnavailableDates.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+        var blockedPeriod = await _dbContext.UnavailableDates
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
         if (blockedPeriod is null)
             throw new InvalidOperationException("Blocked period not found.");
+
+        if (blockedPeriod.BookingId is not null)
+            throw new InvalidOperationException("Cannot manually unblock dates reserved for an active booking payment window");
 
         _dbContext.UnavailableDates.Remove(blockedPeriod);
         await _dbContext.SaveChangesAsync(cancellationToken);

@@ -53,7 +53,9 @@
       "EMPTY_TEXT": "Try adjusting your filters or come back shortly for fresh listings.",
       "VIEW_MAP": "View on Map",
       "NIGHT": "night",
-      "PREMIUM_STAY": "Premium stay"
+      "PREMIUM_STAY": "Premium stay",
+      "SPECIAL_OFFER": "Special Offer",
+      "YOUR_LISTING": "Your Listing"
     }
   },
   "ADMIN": {

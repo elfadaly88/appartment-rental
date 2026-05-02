@@ -22,6 +22,9 @@ public class Property
     public int MaxGuests { get; private set; }
     public PropertyStatus Status { get; private set; } // تحديث هنا لإضافة الحالة
     public string? RejectionReason { get; private set; } // السبب في حالة الرفض
+
+    /// <summary>When true the booking is auto-confirmed without host manual approval.</summary>
+    public bool InstantBook { get; private set; }
     public DateTime SubmittedAt { get; private set; } // تاريخ ووقت التقديم
     public Guid Version { get; private set; }
 
@@ -103,5 +106,11 @@ public class Property
     public void MarkAsBooked()
     {
         Version = Guid.NewGuid();
+    }
+
+    /// <summary>Enables or disables Instant Book for this property.</summary>
+    public void SetInstantBook(bool value)
+    {
+        InstantBook = value;
     }
 }

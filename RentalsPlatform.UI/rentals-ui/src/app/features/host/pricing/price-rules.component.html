@@ -48,6 +48,9 @@
               <div class="rule-card__content">
                 <p class="rule-card__label">{{ t('الفترة', 'Date Range') }}</p>
                 <h3 class="rule-card__range">{{ formatDateRange(rule.startDate, rule.endDate) }}</h3>
+                @if (rule.label) {
+                  <p class="rule-card__season-name">{{ rule.label }}</p>
+                }
                 <p class="rule-card__price">{{ formatCurrency(rule.customPrice) }}</p>
               </div>
 
@@ -104,6 +107,12 @@
         @if (showFieldError('customPrice')) {
           <p class="rule-form__error">{{ t('أدخل سعراً صحيحاً أكبر من صفر', 'Enter a valid price greater than zero') }}</p>
         }
+
+        <label class="rule-form__field">
+          <span>{{ t('اسم الموسم (اختياري)', 'Season Name (optional)') }}</span>
+          <input type="text" formControlName="label"
+                 [placeholder]="t('مثال: موسم الصيف، العيد...', 'e.g. Summer Peak, Eid...')" />
+        </label>
 
         <button type="submit" class="rule-form__submit" [disabled]="!canManageRules()">
           {{ t('حفظ القاعدة', 'Save Rule') }}

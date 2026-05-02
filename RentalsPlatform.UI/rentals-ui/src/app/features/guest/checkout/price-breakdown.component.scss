@@ -12,14 +12,15 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
+}
 
-  h2 {
-    margin: 0.25rem 0 0;
-    color: #0f172a;
-    font-size: 1.08rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
+.price-breakdown__title {
+  margin: 0.25rem 0 0;
+  color: #0f172a;
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .price-breakdown__eyebrow {
@@ -39,6 +40,50 @@
   text-align: end;
 }
 
+/* ── Discount hero banner ─────────────────────────────────────── */
+.price-breakdown__discount-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1.5px solid #86efac;
+  border-radius: 1rem;
+  padding: 0.875rem 1rem;
+  color: #14532d;
+}
+
+.price-breakdown__discount-title {
+  margin: 0 0 0.15rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.price-breakdown__discount-pct {
+  display: inline-block;
+  background: #15803d;
+  color: #fff;
+  border-radius: 9999px;
+  padding: 1px 7px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.price-breakdown__discount-savings {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #166534;
+
+  strong {
+    font-size: 0.95rem;
+    margin-inline-start: 0.2em;
+  }
+}
+
+/* ── Line-item card ───────────────────────────────────────────── */
 .price-breakdown__card {
   border-radius: 1.15rem;
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -64,74 +109,100 @@
   }
 }
 
+.price-breakdown__rate {
+  color: #64748b;
+  font-size: 0.82rem;
+  margin-inline-start: 0.3em;
+}
+
+/* Seasonal group row */
+.price-breakdown__row--seasonal {
+  color: #1d4ed8;
+  font-size: 0.88rem;
+}
+
+.price-breakdown__season-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  margin-inline-end: 0.4em;
+  vertical-align: middle;
+}
+
+/* Fees row */
+.price-breakdown__row--fees {
+  color: rgba(15, 23, 42, 0.6);
+  font-size: 0.88rem;
+}
+
+/* Before-discount row */
+.price-breakdown__row--subtotal {
+  font-size: 0.9rem;
+}
+
+/* Discount row */
+.price-breakdown__row--discount {
+  color: #15803d;
+  font-weight: 600;
+
+  strong {
+    color: #15803d;
+  }
+}
+
+/* Final total row */
 .price-breakdown__row--total {
   color: #0f172a;
   font-size: 1rem;
 }
 
+.price-breakdown__total-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.price-breakdown__original-total {
+  text-decoration: line-through;
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
+.price-breakdown__final-total {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+
+  &--discounted {
+    color: #0d9488;
+    font-size: 1.2rem;
+  }
+}
+
+/* Dividers */
 .price-breakdown__divider {
   block-size: 1px;
   background: linear-gradient(90deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.12), rgba(15, 23, 42, 0));
 }
 
-.price-breakdown__adjustment {
-  display: grid;
-  gap: 0.55rem;
-  border-radius: 0.95rem;
-  background: rgba(37, 99, 235, 0.06);
-  padding-block: 0.7rem;
-  padding-inline: 0.75rem;
+.price-breakdown__divider--bold {
+  block-size: 2px;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0));
 }
 
-.price-breakdown__adjustment-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  justify-self: start;
-  border: 0;
-  background: transparent;
-  color: #1d4ed8;
-  font-size: 0.84rem;
-  font-weight: 700;
-  padding: 0;
-  cursor: pointer;
-  text-align: start;
+/* Nights note */
+.price-breakdown__nights-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
 }
 
-.price-breakdown__info-icon {
-  inline-size: 18px;
-  block-size: 18px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgba(37, 99, 235, 0.14);
-  font-size: 0.74rem;
-  font-weight: 800;
-}
-
-.price-breakdown__adjustment-panel {
-  display: grid;
-  gap: 0.55rem;
-  color: rgba(15, 23, 42, 0.68);
-  font-size: 0.84rem;
-  line-height: 1.6;
-
-  p {
-    margin: 0;
-  }
-}
-
-.price-breakdown__comparison {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-
-  strong {
-    color: #0f172a;
-  }
-}
-
+/* ── Mobile ───────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .price-breakdown__header {
     flex-direction: column;
@@ -139,5 +210,15 @@
 
   .price-breakdown__dates {
     text-align: start;
+  }
+
+  .price-breakdown__card {
+    padding-inline: 0.875rem;
+  }
+
+  .price-breakdown__total-amount {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
   }
 }

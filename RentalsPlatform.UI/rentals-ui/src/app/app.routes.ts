@@ -128,6 +128,14 @@ export const routes: Routes = [
    path: 'home',
     loadComponent: () =>
       import('./features/landing/landing.component').then((m) => m.LandingComponent),
-  },{ path: '', redirectTo: 'home', pathMatch: 'full' },
+  },
+  {
+    path: 'access-denied',
+    loadComponent: () =>
+      import('./features/access-denied/access-denied.component').then(
+        (m) => m.AccessDeniedComponent,
+      ),
+  },
+  { path: '', redirectTo: 'home', pathMatch: 'full' },
   { path: '**', redirectTo: 'home' },
 ];

@@ -22,6 +22,9 @@ interface BookingReceiptDetails {
   checkInDate: string;
   checkOutDate: string;
   totalAmount: number;
+  originalAmount: number;
+  discountAmount: number;
+  discountLabel?: string | null;
   currency: string;
   paymobTransactionId: string;
   bookingDate: string;
@@ -55,6 +58,9 @@ export class BookingReceiptComponent {
     checkInDate: '2026-04-18',
     checkOutDate: '2026-04-24',
     totalAmount: 4200,
+    originalAmount: 4200,
+    discountAmount: 0,
+    discountLabel: null,
     currency: 'USD',
     paymobTransactionId: 'PMB-98421377',
     bookingDate: '2026-04-07',

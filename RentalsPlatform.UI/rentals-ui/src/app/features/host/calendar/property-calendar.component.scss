@@ -18,6 +18,8 @@
   --booking-soft: rgba(124, 58, 237, 0.14);
   --blocked: #dc2626;
   --blocked-soft: rgba(220, 38, 38, 0.13);
+  --seasonal: #0369a1;
+  --seasonal-soft: rgba(3, 105, 161, 0.13);
   --available: #ffffff;
   --available-soft: rgba(15, 23, 42, 0.02);
   --past: #cbd5e1;
@@ -190,6 +192,10 @@
   background: linear-gradient(180deg, rgba(220, 38, 38, 0.11), rgba(220, 38, 38, 0.16));
 }
 
+.day-cell--seasonal {
+  background: linear-gradient(180deg, rgba(3, 105, 161, 0.1), rgba(3, 105, 161, 0.16));
+}
+
 .day-cell--selected {
   background: linear-gradient(180deg, rgba(15, 118, 110, 0.08), rgba(15, 118, 110, 0.12));
   box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.18);
@@ -241,6 +247,11 @@
 
 .day-cell__pill--selected {
   background: var(--selected);
+  color: #ffffff;
+}
+
+.day-cell__pill--seasonal {
+  background: var(--seasonal);
   color: #ffffff;
 }
 
@@ -306,6 +317,41 @@
   color: var(--text-strong);
 }
 
+.seasonal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-block-start: 0.5rem;
+}
+
+.seasonal-form__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.seasonal-form__input {
+  width: 100%;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  background: var(--surface-strong);
+  color: var(--text-strong);
+  font-size: 0.92rem;
+
+  &:focus {
+    outline: 2px solid var(--seasonal);
+    outline-offset: 1px;
+  }
+}
+
+.seasonal-form__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-block-start: 0.25rem;
+}
+
 .calendar-agenda {
   display: none;
   margin-block-start: 1rem;
@@ -361,6 +407,28 @@
 
 .agenda-card--blocked {
   box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.12);
+}
+
+.agenda-card--seasonal {
+  box-shadow: inset 0 0 0 1px rgba(3, 105, 161, 0.15);
+}
+
+.agenda-card__remove {
+  margin-block-start: 0.6rem;
+  padding-block: 0.35rem;
+  padding-inline: 0.9rem;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #dc2626;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(220, 38, 38, 0.07);
+  }
 }
 
 .agenda-card__range,
@@ -432,6 +500,10 @@
 
 .calendar-legend__swatch--past {
   background: var(--past);
+}
+
+.calendar-legend__swatch--seasonal {
+  background: var(--seasonal);
 }
 
 @media (hover: hover) and (pointer: fine) {

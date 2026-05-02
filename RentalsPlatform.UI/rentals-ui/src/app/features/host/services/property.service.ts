@@ -112,12 +112,14 @@ export interface PriceRuleDto {
   startDate: string;
   endDate: string;
   customPrice: number;
+  label?: string;
 }
 
 export interface CreatePriceRuleDto {
   startDate: string;
   endDate: string;
   customPrice: number;
+  label?: string;
 }
 
 @Injectable({ providedIn: 'root' })

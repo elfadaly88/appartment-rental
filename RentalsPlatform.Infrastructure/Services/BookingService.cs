@@ -23,6 +23,8 @@ public class BookingService : IBookingService
     private readonly IHubContext<NotificationHub> _hubContext;
     private readonly ApplicationDbContext _dbContext;
     private readonly IPricingService _pricingService;
+    private readonly IAvailabilityService _availabilityService;
+    private readonly IPaymobService _paymobService;
 
     public BookingService(
         IBookingRepository bookingRepository,
@@ -30,7 +32,9 @@ public class BookingService : IBookingService
         INotificationService notificationService,
         IHubContext<NotificationHub> hubContext,
         ApplicationDbContext dbContext,
-        IPricingService pricingService)
+        IPricingService pricingService,
+        IAvailabilityService availabilityService,
+        IPaymobService paymobService)
     {
         _bookingRepository = bookingRepository;
         _propertyRepository = propertyRepository;
@@ -38,55 +42,71 @@ public class BookingService : IBookingService
         _hubContext = hubContext;
         _dbContext = dbContext;
         _pricingService = pricingService;
+        _availabilityService = availabilityService;
+        _paymobService = paymobService;
     }
 
     // ── Create ───────────────────────────────────────────────────────
 
     public async Task<Guid> CreateGuestBookingAsync(Guid propertyId, Guid guestId, DateOnly checkInDate, DateOnly checkOutDate, CancellationToken cancellationToken = default)
     {
-        var property = await _propertyRepository.GetByIdAsync(propertyId, cancellationToken);
-        if (property is null)
-            throw new InvalidOperationException("Property not found.");
+        using var transaction = await _dbContext.Database.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted, cancellationToken);
+        try
+        {
+            var property = await _dbContext.Properties
+                .FromSqlRaw("SELECT * FROM \"Properties\" WHERE \"Id\" = {0} FOR UPDATE", propertyId)
+                .FirstOrDefaultAsync(cancellationToken);
 
-        var isOverlap = await _bookingRepository.HasOverlappingBookingAsync(
-            propertyId, checkInDate, checkOutDate, cancellationToken);
+            if (property is null)
+                throw new InvalidOperationException("Property not found.");
 
-        if (isOverlap)
-            throw new InvalidOperationException("Sorry, these dates are already booked.");
+            // ── Smart availability check: Priority — Blocked > Booked ────────
+            // Checks both UnavailableDates (host-blocked) and existing bookings in one call.
+            //var isAvailable = await _availabilityService.IsPeriodAvailableAsync(dto.PropertyId, dto.CheckIn, dto.CheckOut);[cite: 1]
+            var isAvailable = await _availabilityService.IsPeriodAvailableAsync(propertyId, checkInDate, checkOutDate);
+            if (!isAvailable)
+                throw new InvalidOperationException("Sorry, some dates in your selection are unavailable. Please choose different dates.");
 
-        var duration = new DateRange(checkInDate, checkOutDate);
-        var booking = new Booking(property.Id, guestId, duration, property.PricePerNight);
-        var calculatedTotal = await _pricingService.CalculateTotalAmountAsync(propertyId, checkInDate, checkOutDate);
-        booking.SetTotalPrice(calculatedTotal, property.PricePerNight.Currency);
+            var duration = new DateRange(checkInDate, checkOutDate);
+            var booking = new Booking(property.Id, guestId, duration, property.PricePerNight);
+            var pricing = await _pricingService.CalculatePricingAsync(propertyId, checkInDate, checkOutDate);
+            booking.SetPricingDetails(pricing.SubTotal, pricing.DiscountAmount, pricing.FinalAmount, pricing.Currency, pricing.DiscountLabel);
 
-        property.MarkAsBooked();
-        await _bookingRepository.AddAsync(booking, cancellationToken);
-        await _propertyRepository.SaveChangesAsync(cancellationToken);
+            property.MarkAsBooked();
+            await _bookingRepository.AddAsync(booking, cancellationToken);
+            await _propertyRepository.SaveChangesAsync(cancellationToken);
 
-        var propertyName = string.IsNullOrWhiteSpace(property.Name.En) ? property.Name.Ar : property.Name.En;
-        var guest = await _dbContext.Users
-            .AsNoTracking()
-            .Where(u => u.Id == guestId.ToString())
-            .Select(u => new { u.FirstName, u.LastName, u.Email })
-            .FirstOrDefaultAsync(cancellationToken);
+            var propertyName = string.IsNullOrWhiteSpace(property.Name.En) ? property.Name.Ar : property.Name.En;
+            var guest = await _dbContext.Users
+                .AsNoTracking()
+                .Where(u => u.Id == guestId.ToString())
+                .Select(u => new { u.FirstName, u.LastName, u.Email })
+                .FirstOrDefaultAsync(cancellationToken);
 
-        var guestName = guest is null
-            ? "Guest"
-            : string.IsNullOrWhiteSpace($"{guest.FirstName} {guest.LastName}".Trim())
-                ? (guest.Email ?? "Guest")
-                : $"{guest.FirstName} {guest.LastName}".Trim();
+            var guestName = guest is null
+                ? "Guest"
+                : string.IsNullOrWhiteSpace($"{guest.FirstName} {guest.LastName}".Trim())
+                    ? (guest.Email ?? "Guest")
+                    : $"{guest.FirstName} {guest.LastName}".Trim();
 
-        var message = $"New booking request from {guestName} for {propertyName}";
-        var targetLink = $"/host/bookings/{booking.Id}";
+            var message = $"New booking request from {guestName} for {propertyName}";
+            var targetLink = $"/host/bookings/{booking.Id}";
 
-        var notification = new Notification(property.HostId.ToString(), "New Booking Request", message, targetLink);
-        await _notificationService.CreateNotificationAsync(notification);
+            var notification = new Notification(property.HostId.ToString(), "New Booking Request", message, targetLink);
+            await _notificationService.CreateNotificationAsync(notification);
 
-        var notificationPayload = new BookingNotificationPayload(booking.Id, propertyName, guestName, message);
-        await _hubContext.Clients.User(property.HostId.ToString())
-            .SendAsync("ReceiveNotification", notificationPayload, cancellationToken);
+            var notificationPayload = new BookingNotificationPayload(booking.Id, propertyName, guestName, message);
+            await _hubContext.Clients.User(property.HostId.ToString())
+                .SendAsync("ReceiveNotification", notificationPayload, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return booking.Id;
+        }
+        catch (System.Exception)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
-        return booking.Id;
     }
 
     public async Task<decimal> CalculateGuestBookingTotalAsync(Guid propertyId, DateOnly checkInDate, DateOnly checkOutDate, CancellationToken cancellationToken = default)
@@ -282,7 +302,7 @@ public class BookingService : IBookingService
             from booking in _dbContext.Bookings
             join property in _dbContext.Properties on booking.PropertyId equals property.Id
             where booking.Id == bookingId && property.HostId == hostGuid
-            select new { Booking = booking, PropertyId = property.Id, property.HostId })
+            select new { Booking = booking, PropertyId = property.Id, PropertyName = property.Name.En ?? property.Name.Ar, property.HostId })
             .SingleOrDefaultAsync();
 
         if (bookingData is null)
@@ -290,6 +310,11 @@ public class BookingService : IBookingService
 
         if (bookingData.Booking.Status != BookingStatus.Pending)
             return Result.Failure("Only pending bookings can be approved.");
+
+        // ── Date guard: prevent approving a booking whose check-in date has already passed ──
+        var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (bookingData.Booking.StartDate <= todayUtc)
+            return Result.Failure("Cannot approve a booking that has already started or whose check-in date has passed.");
 
         var overlapExists = await _bookingRepository.HasOverlappingBookingAsync(
             bookingData.PropertyId,
@@ -399,6 +424,9 @@ public class BookingService : IBookingService
                 booking.EndDate,
                 booking.EndDate.DayNumber - booking.StartDate.DayNumber,
                 booking.TotalPrice.Amount,
+                booking.OriginalPrice.Amount,
+                booking.DiscountAmount,
+                booking.DiscountLabel,
                 booking.TotalPrice.Currency,
                 booking.Status,
                 booking.PaymentStatus,
@@ -413,16 +441,47 @@ public class BookingService : IBookingService
 
         if (booking is null)
             return Result.Failure("Booking not found.");
-
+            
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
+            if (booking.PaymentStatus == PaymentStatus.Paid)
+            {
+                var refundAccepted = await _paymobService.RefundAsync(booking.Id);
+                if (!refundAccepted)
+                    return Result.Failure("فشل استرداد المبلغ، يرجى التواصل مع الدعم.");
+            }
+
+            var softBlocks = await _dbContext.UnavailableDates
+                .Where(u => u.PropertyId == booking.PropertyId && u.BookingId == booking.Id)
+                .ToListAsync();
+
+            if (softBlocks.Any())
+                _dbContext.UnavailableDates.RemoveRange(softBlocks);
+                
             booking.GuestCancel();
             await _dbContext.SaveChangesAsync();
+            
+            await transaction.CommitAsync();
+
+            var property = await _dbContext.Properties.FindAsync(booking.PropertyId);
+            if (property != null)
+            {
+                await _hubContext.Clients.User(property.HostId.ToString())
+                    .SendAsync("ReceiveNotification", new
+                    {
+                        BookingId = booking.Id,
+                        Status = booking.Status.ToString(),
+                        Message = "Guest has cancelled; dates are now available"
+                    });
+            }
+
             return Result.Success("Booking cancelled successfully.");
         }
-        catch (InvalidOperationException ex)
+        catch (System.Exception ex)
         {
-            return Result.Failure(ex.Message);
+            await transaction.RollbackAsync();
+            return Result.Failure(ex is InvalidOperationException ? ex.Message : "An error occurred during cancellation.");
         }
     }
 
@@ -430,24 +489,88 @@ public class BookingService : IBookingService
 
     /// <summary>
     /// Called by Hangfire every 15 minutes.
-    /// Expires any Approved booking whose 24-hour payment window has lapsed.
+    /// Expires any Approved booking whose 24-hour payment window has lapsed,
+    /// then notifies both Guest and Host.
     /// </summary>
     public async Task ExpireApprovedBookingsAsync()
     {
         var expiryThreshold = DateTime.UtcNow.AddHours(-24);
 
-        var expired = await _dbContext.Bookings
-            .Where(b => b.Status == BookingStatus.Approved
-                     && b.ApprovedAt.HasValue
-                     && b.ApprovedAt.Value <= expiryThreshold)
+        // Load expired bookings with property name to include in notifications
+        var expiredData = await (
+            from booking in _dbContext.Bookings
+            join property in _dbContext.Properties on booking.PropertyId equals property.Id
+            where booking.Status == BookingStatus.Approved
+               && booking.ApprovedAt.HasValue
+               && booking.ApprovedAt.Value <= expiryThreshold
+            select new
+            {
+                Booking = booking,
+                PropertyName = property.Name.En ?? property.Name.Ar,
+                HostIdStr = property.HostId.ToString()
+            })
             .ToListAsync();
 
-        foreach (var booking in expired)
+        if (expiredData.Count == 0)
+            return;
+
+        foreach (var item in expiredData)
         {
-            booking.Expire();
+            item.Booking.Expire();
+            
+            var softBlocks = await _dbContext.UnavailableDates
+                .Where(u => u.BookingId == item.Booking.Id)
+                .ToListAsync();
+
+            if (softBlocks.Any())
+                _dbContext.UnavailableDates.RemoveRange(softBlocks);
         }
 
-        if (expired.Count > 0)
-            await _dbContext.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync();
+
+        // Fire-and-forget: send notifications after DB is committed
+        _ = Task.Run(async () =>
+        {
+            foreach (var item in expiredData)
+            {
+                var propertyLabel = item.PropertyName;
+                var msg = $"Booking for {propertyLabel} has been cancelled as the payment deadline passed.";
+
+                // Notify Guest
+                await _notificationService.CreateNotificationAsync(
+                    new Notification(
+                        item.Booking.GuestId.ToString(),
+                        "Booking Expired",
+                        msg,
+                        "/my-bookings"));
+
+                // Notify Host
+                await _notificationService.CreateNotificationAsync(
+                    new Notification(
+                        item.HostIdStr,
+                        "Booking Expired",
+                        msg,
+                        "/host/bookings"));
+
+                // Real-time push via SignalR
+                await _hubContext.Clients.User(item.Booking.GuestId.ToString())
+                    .SendAsync("ReceiveNotification", new
+                    {
+                        item.Booking.Id,
+                        Title = "Booking Expired",
+                        Message = msg,
+                        TargetLink = "/my-bookings"
+                    });
+
+                await _hubContext.Clients.User(item.HostIdStr)
+                    .SendAsync("ReceiveNotification", new
+                    {
+                        item.Booking.Id,
+                        Title = "Booking Expired",
+                        Message = msg,
+                        TargetLink = "/host/bookings"
+                    });
+            }
+        });
     }
 }

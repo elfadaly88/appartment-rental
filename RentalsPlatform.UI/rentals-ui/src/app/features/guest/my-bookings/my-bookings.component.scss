@@ -96,7 +96,7 @@
   &.tab-btn--active {
     background: white;
     color: #0f766e;
-    box-shadow: 0 1px 4px rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.04);
+    box-shadow: 0 1px 0.25rem rgba(0,0,0,.1), 0 0 0 1px rgba(0,0,0,.04);
   }
 }
 
@@ -133,10 +133,15 @@
   transition: box-shadow .25s ease, border-color .25s ease, transform .2s;
 
   &:hover {
-    box-shadow: 0 6px 20px rgba(0,0,0,.09);
+    box-shadow: 0 0.375rem 1.25rem rgba(0,0,0,.09);
     border-color: #cbd5e1;
     transform: translateY(-1px);
   }
+}
+
+.booking-card--highlighted {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18), 0 0.5rem 1.5rem rgba(15, 118, 110, 0.12);
 }
 
 .booking-card__thumb {
@@ -210,6 +215,43 @@
 .booking-card__price-row {
   display: flex;
   align-items: baseline;
+  flex-wrap: wrap;
+  gap: .25rem;
+}
+
+/* Discount block stacks vertically on mobile */
+.price-discount-block {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .25rem;
+  width: 100%;
+}
+
+.booking-card__price-original {
+  font-size: .85rem;
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.discount-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: .15rem .5rem;
+  white-space: nowrap;
+}
+
+.savings-line {
+  font-size: .75rem;
+  color: #64748b;
+  width: 100%;
 }
 
 .booking-card__price {
@@ -334,7 +376,42 @@
   animation: deadline-blink 1s ease-in-out infinite;
 }
 
-// ═══ Buttons (local) ═════════════════════════════════════════════════
+.deadline-alert--expired {
+  background: rgba(220,38,38,.18);
+  color: #7f1d1d;
+  border-color: rgba(220,38,38,.4);
+  font-weight: 700;
+  animation: deadline-blink 1s ease-in-out infinite;
+}
+
+// ═══ Expired Badge ════════════════════════════════════════════════════
+.expired-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  width: 100%;
+  padding: .6rem 1rem;
+  border-radius: .75rem;
+  background: rgba(239,68,68,.1);
+  border: 1.5px solid rgba(239,68,68,.3);
+  color: #991b1b;
+  font-size: .82rem;
+  font-weight: 800;
+  text-align: center;
+  cursor: default;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: .01em;
+}
+
+.expired-hint {
+  font-size: .74rem;
+  color: #94a3b8;
+  text-align: center;
+  margin: .1rem 0 0;
+  line-height: 1.4;
+}
 .btn-danger {
   display: inline-flex;
   align-items: center;
@@ -449,12 +526,12 @@
 
 @keyframes pulse-dot {
   0%, 100% { box-shadow: 0 0 0 3px rgba(14,165,233,.2); }
-  50%       { box-shadow: 0 0 0 6px rgba(14,165,233,.08); }
+  50%       { box-shadow: 0 0 0 0.375rem rgba(14,165,233,.08); }
 }
 
 @keyframes pay-pulse {
   0%   { box-shadow: 0 0 0 0 rgba(15,118,110,.5); }
-  60%  { box-shadow: 0 0 0 10px rgba(15,118,110,0); }
+  60%  { box-shadow: 0 0 0 0.625rem rgba(15,118,110,0); }
   100% { box-shadow: 0 0 0 0 rgba(15,118,110,0); }
 }
 

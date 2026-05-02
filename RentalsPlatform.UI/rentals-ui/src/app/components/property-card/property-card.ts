@@ -4,9 +4,11 @@ import {
   input,
   output,
   computed,
+  inject,
 } from '@angular/core';
 import { Property } from '../../models/property.model';
 import { TranslateModule } from '@ngx-translate/core';
+import { AuthStore } from '../../core/state/auth.store';
 
 @Component({
   selector: 'app-property-card',
@@ -19,6 +21,14 @@ export class PropertyCard {
   readonly property = input.required<Property>();
   readonly locale = input<'ar' | 'en'>('en');
   readonly clicked = output<string>();
+
+  private readonly authStore = inject(AuthStore);
+
+  protected readonly isOwner = computed(() => {
+    return this.authStore.currentUser()?.id === this.property().hostId;
+  });
+
+  protected readonly hasActiveDiscount = computed(() => !!this.property().hasActiveDiscount);
 
   protected readonly name = computed(() => {
     const lang = this.locale();

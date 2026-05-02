@@ -125,7 +125,7 @@ public class AuthService : IAuthService
             roles = await _userManager.GetRolesAsync(user);
         }
 
-        return BuildSuccessResult(user, roles, providerInfo.Provider);
+        return await BuildSuccessResultAsync(user, roles, providerInfo.Provider);
     }
 
     public async Task<AuthResult> LoginAsync(LoginDto dto)
@@ -137,7 +137,7 @@ public class AuthService : IAuthService
         if (!isPasswordValid) return CreateFailure("Invalid email or password.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        return BuildSuccessResult(user, roles, provider: null, message: "Login successful.");
+        return await BuildSuccessResultAsync(user, roles, provider: null, message: "Login successful.");
     }
 
     private async Task<AuthResult> RegisterAsync(RegisterDto dto, string role)
@@ -163,7 +163,7 @@ public class AuthService : IAuthService
             return CreateFailure("Registration failed.", createResult.Errors.Select(e => e.Description));
 
         await _userManager.AddToRoleAsync(user, role);
-        return BuildSuccessResult(user, [role], provider: null, message: "Registered successfully.");
+        return await BuildSuccessResultAsync(user, [role], provider: null, message: "Registered successfully.");
     }
 
     private (string Token, DateTime ExpiresAtUtc) GenerateJwtToken(ApplicationUser user, IEnumerable<string> roles)
@@ -200,16 +200,21 @@ public class AuthService : IAuthService
         return (new JwtSecurityTokenHandler().WriteToken(token), expires);
     }
 
-    private AuthResult BuildSuccessResult(ApplicationUser user, IEnumerable<string> roles, string? provider, string? message = null)
+    private async Task<AuthResult> BuildSuccessResultAsync(ApplicationUser user, IEnumerable<string> roles, string? provider, string? message = null)
     {
         var normalizedRoles = roles.ToArray();
         var tokenData = GenerateJwtToken(user, normalizedRoles);
+
+        var refreshToken = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(64));
+        var expiry = DateTime.UtcNow.AddDays(7).ToString("o");
+        await _userManager.SetAuthenticationTokenAsync(user, "RentalsPlatform", "RefreshToken", $"{refreshToken}|{expiry}");
 
         return new AuthResult
         {
             IsSuccess = true,
             Message = message ?? "Success",
             Token = tokenData.Token,
+            RefreshToken = refreshToken,
             ExpiresAtUtc = tokenData.ExpiresAtUtc,
             UserId = user.Id,
             Email = user.Email ?? "",
@@ -226,6 +231,53 @@ public class AuthService : IAuthService
                 Roles = normalizedRoles
             }
         };
+    }
+
+    public async Task<AuthResult> RefreshTokenAsync(RefreshTokenDto dto)
+    {
+        ClaimsPrincipal? principal = null;
+        try
+        {
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key)),
+                ValidateLifetime = false
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            principal = tokenHandler.ValidateToken(dto.Token, tokenValidationParameters, out var securityToken);
+
+            if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+                !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                throw new SecurityTokenException("Invalid token");
+        }
+        catch
+        {
+            return CreateFailure("Invalid token.");
+        }
+
+        if (principal == null) return CreateFailure("Invalid token.");
+
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return CreateFailure("Invalid token.");
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return CreateFailure("User not found.");
+
+        var storedValue = await _userManager.GetAuthenticationTokenAsync(user, "RentalsPlatform", "RefreshToken");
+        if (string.IsNullOrEmpty(storedValue)) return CreateFailure("Invalid refresh token.");
+
+        var parts = storedValue.Split('|');
+        if (parts.Length != 2 || parts[0] != dto.RefreshToken || !DateTime.TryParse(parts[1], out var expiry) || expiry < DateTime.UtcNow)
+        {
+            return CreateFailure("Invalid or expired refresh token.");
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        return await BuildSuccessResultAsync(user, roles, provider: null, message: "Token refreshed successfully.");
     }
 
     private static AuthResult CreateFailure(string message, IEnumerable<string>? errors = null)

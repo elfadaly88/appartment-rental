@@ -1,4 +1,13 @@
 <main class="min-h-screen bg-slate-50">
   <app-header />
+  @if (platform.shouldShowDownloadBanner()) {
+    <section class="app-install-banner" aria-live="polite">
+      <div class="app-install-banner__content">
+        <p class="app-install-banner__title">Luxe Rentals App</p>
+        <p class="app-install-banner__copy">Install for faster booking and push notifications.</p>
+      </div>
+      <a class="app-install-banner__cta" routerLink="/auth">Get App</a>
+    </section>
+  }
   <router-outlet />
 </main>

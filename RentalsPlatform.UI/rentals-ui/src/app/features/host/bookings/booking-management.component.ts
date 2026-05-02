@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
+import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { LanguageService } from '../../../core/services/language.service';
 import {
@@ -35,10 +37,12 @@ type BookingTab = 'pending' | 'upcoming' | 'history';
 export class BookingManagementComponent implements OnInit {
   protected readonly lang = inject(LanguageService);
   protected readonly bookingStore = inject(BookingStore);
+  private readonly route = inject(ActivatedRoute);
   private readonly signalr = inject(SignalrService);
   private lastRealtimeId = '';
 
   protected readonly activeTab = signal<BookingTab>('pending');
+  protected readonly highlightedBookingId = signal<string | null>(null);
 
   protected readonly tabItems = computed(() => [
     {
@@ -70,7 +74,16 @@ export class BookingManagementComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    void this.bookingStore.loadBookings();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed())
+      .subscribe((params) => {
+        this.highlightedBookingId.set(params.get('id'));
+        this.applyDeepLinkContext();
+      });
+
+    void this.bookingStore.loadBookings().then(() => {
+      this.applyDeepLinkContext();
+    });
   }
 
   protected setTab(tab: BookingTab): void {
@@ -191,6 +204,32 @@ export class BookingManagementComponent implements OnInit {
       showConfirmButton: false,
       timer: 2800,
       title: this.t('تعذر تحديث الحجز', 'Could not update booking'),
+    });
+  }
+
+  private applyDeepLinkContext(): void {
+    const deepLinkedId = this.highlightedBookingId();
+    if (!deepLinkedId) {
+      return;
+    }
+
+    const inPending = this.bookingStore.pendingRequests().some((item) => item.id === deepLinkedId);
+    const inUpcoming = this.bookingStore.upcomingBookings().some((item) => item.id === deepLinkedId);
+    const inHistory = this.bookingStore.pastBookings().some((item) => item.id === deepLinkedId);
+
+    if (inPending) {
+      this.activeTab.set('pending');
+    } else if (inUpcoming) {
+      this.activeTab.set('upcoming');
+    } else if (inHistory) {
+      this.activeTab.set('history');
+    } else {
+      return;
+    }
+
+    queueMicrotask(() => {
+      const el = document.getElementById(`host-booking-card-${deepLinkedId}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   }
 

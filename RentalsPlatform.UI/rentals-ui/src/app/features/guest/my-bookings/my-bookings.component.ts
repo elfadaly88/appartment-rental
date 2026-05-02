@@ -7,7 +7,9 @@ import {
   signal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { NgClass } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GuestBookingService, GuestBooking } from './guest-booking.service';
 import { LanguageService } from '../../../core/services/language.service';
 
@@ -21,14 +23,20 @@ import { LanguageService } from '../../../core/services/language.service';
 })
 export class MyBookingsComponent implements OnInit {
   private readonly guestBookingService = inject(GuestBookingService);
+  private readonly route = inject(ActivatedRoute);
   protected readonly lang = inject(LanguageService);
-
+private readonly paramsSubscription = this.route.queryParamMap
+    .pipe(takeUntilDestroyed()) // ✅ كدة هتشتغل صح 100%
+    .subscribe((params) => {
+      this.highlightedBookingId.set(params.get('id'));
+    });
   // ── State signals ────────────────────────────────────────────────
   protected readonly bookings = signal<GuestBooking[]>([]);
   protected readonly isLoading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly activeTab = signal<'upcoming' | 'history'>('upcoming');
   protected readonly cancellingId = signal<string | null>(null);
+  protected readonly highlightedBookingId = signal<string | null>(null);
 
   // ── Today (string) for date comparisons ──────────────────────────
   protected readonly today = new Date().toISOString().split('T')[0];
@@ -58,6 +66,11 @@ export class MyBookingsComponent implements OnInit {
 
   // ── Lifecycle ─────────────────────────────────────────────────────
   ngOnInit(): void {
+    // this.route.queryParamMap
+    //   .pipe(takeUntilDestroyed())
+    //   .subscribe((params) => {
+    //     this.highlightedBookingId.set(params.get('id'));
+    //   });
     this.load();
   }
 
@@ -66,6 +79,7 @@ export class MyBookingsComponent implements OnInit {
     this.guestBookingService.getMyBookings().subscribe({
       next: (data) => {
         this.bookings.set(data);
+        this.applyDeepLinkContext();
         this.isLoading.set(false);
       },
       error: () => {
@@ -112,9 +126,10 @@ export class MyBookingsComponent implements OnInit {
     }
   }
 
-  /** True if guest needs to pay (Approved or Confirmed-without-payment). */
+  /** True if guest needs to pay (Approved, payment window still open). */
   protected needsPayment(b: GuestBooking): boolean {
-    return b.status === 6 || (b.status === 2 && b.paymentStatus !== 2);
+    return (b.status === 6 && !this.isPaymentWindowExpired(b)) ||
+           (b.status === 2 && b.paymentStatus !== 2);
   }
 
   /** True if guest can cancel (Pending or Approved). */
@@ -127,12 +142,20 @@ export class MyBookingsComponent implements OnInit {
     return b.status === 2 && b.paymentStatus === 2;
   }
 
-  /** Hours remaining in the 24-hour payment window, or null. */
+  /** Hours remaining in the 24-hour payment window, or null if not applicable. Returns 0 when window is over. */
   protected paymentDeadlineHours(b: GuestBooking): number | null {
     if (b.status !== 6 || !b.approvedAt) return null;
     const deadline = new Date(b.approvedAt).getTime() + 24 * 60 * 60 * 1000;
     const remaining = Math.floor((deadline - Date.now()) / (1000 * 60 * 60));
     return remaining > 0 ? remaining : 0;
+  }
+
+  /** True when the booking is Approved but the 24h payment window has elapsed (client-side check). */
+  protected isPaymentWindowExpired(b: GuestBooking): boolean {
+    if (b.status === 7) return true; // Already server-expired
+    if (b.status !== 6) return false;
+    const hours = this.paymentDeadlineHours(b);
+    return hours !== null && hours === 0;
   }
 
   // ── Actions ───────────────────────────────────────────────────────
@@ -178,5 +201,29 @@ export class MyBookingsComponent implements OnInit {
     } catch {
       return `${currency} ${amount.toLocaleString()}`;
     }
+  }
+
+  private applyDeepLinkContext(): void {
+    const deepLinkedId = this.highlightedBookingId();
+    if (!deepLinkedId) {
+      return;
+    }
+
+    const booking = this.bookings().find((item) => item.id === deepLinkedId);
+    if (!booking) {
+      return;
+    }
+
+    const isHistory = this.historyBookings().some((item) => item.id === deepLinkedId);
+    this.activeTab.set(isHistory ? 'history' : 'upcoming');
+
+  //   queueMicrotask(() => {
+  //     const el = document.getElementById(`booking-card-${deepLinkedId}`);
+  //     el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  //   });
+  setTimeout(() => {
+  const el = document.getElementById(`booking-card-${deepLinkedId}`);
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}, 100);
   }
 }

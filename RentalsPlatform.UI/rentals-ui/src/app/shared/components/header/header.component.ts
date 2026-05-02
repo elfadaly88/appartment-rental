@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NavigationEnd } from '@angular/router';
@@ -18,6 +18,8 @@ import { environment } from '../../../../environments/environment';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent {
+    protected readonly isMobileMenuOpen = signal(false);
+
   protected readonly authService = inject(AuthService);
   protected readonly lang = inject(LanguageService);
   private readonly router = inject(Router);
@@ -43,7 +45,29 @@ export class HeaderComponent {
 
   protected readonly isDev = computed(() => !environment.production);
 
+  /** Dynamic link to the current user’s own profile page. */
+  protected readonly profileUrl = computed(() => {
+    const uid = this.authService.currentUser()?.id;
+    return uid ? `/profile` : '/profile';
+  });
+
+  constructor() {
+    effect(() => {
+      this.currentUrl();
+      this.closeMobileMenu();
+    });
+  }
+
+  protected toggleMobileMenu(): void {
+    this.isMobileMenuOpen.update((value) => !value);
+  }
+
+  protected closeMobileMenu(): void {
+    this.isMobileMenuOpen.set(false);
+  }
+
   protected logout(): void {
+    this.closeMobileMenu();
     this.authService.logout();
     void this.router.navigate(['/']);
   }

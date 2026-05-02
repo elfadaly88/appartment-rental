@@ -424,4 +424,32 @@ public class PaymobService : IPaymobService
 
         return booking.PaymentStatus;
     }
+
+    /// <inheritdoc />
+    public async Task<bool> RefundAsync(Guid bookingId)
+    {
+        var booking = await _dbContext.Bookings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == bookingId)
+            ?? throw new InvalidOperationException("Booking not found for refund.");
+
+        if (string.IsNullOrWhiteSpace(booking.PaymobOrderId))
+            throw new InvalidOperationException("Cannot refund: no Paymob order id recorded for this booking.");
+
+        var authToken = await GetAuthTokenAsync();
+
+        var amountCents = Convert.ToInt32(
+            decimal.Round(booking.TotalPrice.Amount * 100m, 0, MidpointRounding.AwayFromZero));
+
+        var response = await _httpClient.PostAsJsonAsync("acceptance/void_refund", new
+        {
+            auth_token = authToken,
+            transaction_id = booking.PaymobOrderId,
+            amount_cents = amountCents
+        });
+
+        // Paymob returns 200/202 on accepted refunds; other codes are treated as failures.
+        return response.IsSuccessStatusCode;
+    }
 }
+

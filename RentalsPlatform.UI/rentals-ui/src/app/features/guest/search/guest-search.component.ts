@@ -13,11 +13,13 @@ import { ReactiveFormsModule, NonNullableFormBuilder, Validators } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LanguageService } from '../../../core/services/language.service';
 import { SearchStore, ViewMode } from '../state/search.store';
+import { ComparisonStore } from '../../../core/state/comparison.store';
+import { PropertyComparisonComponent } from '../../../components/property-comparison/property-comparison.component';
 
 @Component({
   selector: 'app-guest-search',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PropertyComparisonComponent],
   templateUrl: './guest-search.component.html',
   styleUrl: './guest-search.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +34,7 @@ export class GuestSearchComponent implements OnInit {
 
   protected readonly lang = inject(LanguageService);
   protected readonly searchStore = inject(SearchStore);
+  protected readonly comparisonStore = inject(ComparisonStore);
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly isFilterSheetOpen = signal(false);
@@ -49,6 +52,13 @@ export class GuestSearchComponent implements OnInit {
     'Ibiza',
   ];
 
+  protected readonly ratingOptions = [
+    { value: 0,   label: { ar: 'الكل', en: 'Any' } },
+    { value: 3,   label: { ar: '3+ نجوم', en: '3+ stars' } },
+    { value: 4,   label: { ar: '4+ نجوم', en: '4+ stars' } },
+    { value: 4.5, label: { ar: '4.5+ نجوم', en: '4.5+ stars' } },
+  ];
+
   protected readonly filterForm = this.fb.group({
     city: this.fb.control('', { validators: [Validators.maxLength(60)] }),
     checkIn: this.fb.control(''),
@@ -56,6 +66,8 @@ export class GuestSearchComponent implements OnInit {
     minPrice: this.fb.control(0),
     maxPrice: this.fb.control(15000),
     guests: this.fb.control(1, [Validators.min(1), Validators.max(20)]),
+    minHostRating: this.fb.control(0),
+    instantBook: this.fb.control(false),
   });
 
   protected readonly filteredCityOptions = computed(() => {
@@ -87,6 +99,8 @@ export class GuestSearchComponent implements OnInit {
           minPrice: Number(value.minPrice ?? 0),
           maxPrice: Number(value.maxPrice ?? 15000),
           guests: Number(value.guests ?? 1),
+          minHostRating: Number(value.minHostRating ?? 0),
+          instantBook: Boolean(value.instantBook ?? false),
         });
       });
   }
@@ -119,6 +133,11 @@ export class GuestSearchComponent implements OnInit {
 
   protected selectProperty(id: string): void {
     this.propertySelected.emit(id);
+  }
+
+  protected toggleComparison(event: MouseEvent, property: any): void {
+    event.stopPropagation();
+    this.comparisonStore.toggle(property);
   }
 
   protected propertyName(property: { name: { ar: string; en: string } }): string {

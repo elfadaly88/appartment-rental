@@ -4,6 +4,7 @@
       <img
         class="card__image"
         [src]="imageUrl()"
+        [attr.srcset]="imageUrl() + ' 1x'"
         [alt]="imageAlt()"
         loading="lazy"
         decoding="async"
@@ -11,6 +12,24 @@
     } @placeholder {
       <div class="card__skeleton" aria-hidden="true">
         <div class="card__skeleton-shimmer"></div>
+      </div>
+    }
+
+    @if (isOwner()) {
+      <div class="absolute top-3 start-3 bg-teal-600 text-white text-xs font-bold px-2 py-1 rounded shadow-sm z-10 flex items-center gap-1">
+        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ 'GUEST.PROPERTIES.YOUR_LISTING' | translate }}
+      </div>
+    }
+
+    @if (hasActiveDiscount()) {
+      <div class="card__promo-badge" aria-label="Special offer available">
+        <svg class="card__promo-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z"/>
+        </svg>
+        {{ 'GUEST.PROPERTIES.SPECIAL_OFFER' | translate }}
       </div>
     }
 

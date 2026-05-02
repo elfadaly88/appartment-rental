@@ -16,4 +16,10 @@ public interface IPaymobService
     Task<string> CreateSubMerchantAsync(string authToken, HostBankDetailsDto details);
     Task<InitiatePaymobResponseDto> InitializeBookingPaymentAsync(Guid bookingId);
     Task<PaymentStatus> GetBookingPaymentStatusAsync(Guid bookingId);
+
+    /// <summary>
+    /// Initiates a full refund for a paid booking via the Paymob Refund API.
+    /// Returns true when the refund was accepted by the gateway.
+    /// </summary>
+    Task<bool> RefundAsync(Guid bookingId);
 }

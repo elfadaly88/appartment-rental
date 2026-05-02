@@ -43,6 +43,7 @@
           [class.day-cell--range-start]="day.isRangeStart"
           [class.day-cell--range-end]="day.isRangeEnd"
           [class.day-cell--today]="day.isToday"
+          [class.day-cell--seasonal]="day.state === 'seasonal'"
           [disabled]="!day.isSelectable"
           (click)="onDayClick(day, $event)"
         >
@@ -52,6 +53,8 @@
             <span class="day-cell__pill day-cell__pill--booking">{{ day.guestName || t('محجوز', 'Booked') }}</span>
           } @else if (day.state === 'blocked') {
             <span class="day-cell__pill day-cell__pill--blocked">{{ t('محظور', 'Blocked') }}</span>
+          } @else if (day.state === 'seasonal') {
+            <span class="day-cell__pill day-cell__pill--seasonal">{{ day.helperText || t('موسمي', 'Seasonal') }}</span>
           } @else if (day.isSelected) {
             <span class="day-cell__pill day-cell__pill--selected">{{ t('محدد', 'Selected') }}</span>
           }
@@ -72,19 +75,59 @@
         [attr.aria-label]="t('إجراءات سريعة', 'Quick actions')"
       >
         <p class="quick-action__label">{{ selectedRangeLabel() }}</p>
-        <button type="button" class="quick-action__button quick-action__button--block" [disabled]="isBlocking()" (click)="blockSelectedDates()">
-          @if (isBlocking()) {
-            {{ t('جارٍ الحظر...', 'Blocking...') }}
-          } @else {
-            {{ t('حظر هذه التواريخ', 'Block these dates') }}
-          }
-        </button>
-        <button type="button" class="quick-action__button quick-action__button--price" (click)="requestCustomPrice()">
-          {{ t('تحديد سعر مخصص', 'Set Custom Price') }}
-        </button>
-        <button type="button" class="quick-action__link" (click)="closeQuickAction()">
-          {{ t('إغلاق', 'Close') }}
-        </button>
+
+        @if (isSeasonalFormOpen()) {
+          <div class="seasonal-form">
+            <label class="seasonal-form__label">{{ t('السعر / ليلة', 'Price / night') }}</label>
+            <input
+              type="number"
+              class="seasonal-form__input"
+              [value]="seasonalPriceInput()"
+              (input)="seasonalPriceInput.set(+$any($event.target).value)"
+              min="1"
+              [placeholder]="t('مثال: 120', 'e.g. 120')"
+            />
+            <label class="seasonal-form__label">{{ t('اسم الموسم', 'Season label') }}</label>
+            <input
+              type="text"
+              class="seasonal-form__input"
+              [value]="seasonalLabelInput()"
+              (input)="seasonalLabelInput.set($any($event.target).value)"
+              [placeholder]="t('مثال: موسم الصيف', 'e.g. Summer peak')"
+            />
+            <div class="seasonal-form__actions">
+              <button
+                type="button"
+                class="quick-action__button quick-action__button--price"
+                [disabled]="isSettingSeasonalPrice() || !seasonalPriceInput() || (seasonalPriceInput() ?? 0) <= 0"
+                (click)="setSeasonalPrice()"
+              >
+                @if (isSettingSeasonalPrice()) {
+                  {{ t('جارٍ الحفظ...', 'Saving...') }}
+                } @else {
+                  {{ t('حفظ السعر الموسمي', 'Save seasonal price') }}
+                }
+              </button>
+              <button type="button" class="quick-action__link" (click)="closeSeasonalForm()">
+                {{ t('إلغاء', 'Cancel') }}
+              </button>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="quick-action__button quick-action__button--block" [disabled]="isBlocking()" (click)="blockSelectedDates()">
+            @if (isBlocking()) {
+              {{ t('جارٍ الحظر...', 'Blocking...') }}
+            } @else {
+              {{ t('حظر هذه التواريخ', 'Block these dates') }}
+            }
+          </button>
+          <button type="button" class="quick-action__button quick-action__button--price" (click)="requestCustomPrice()">
+            {{ t('تحديد سعر موسمي', 'Set Seasonal Price') }}
+          </button>
+          <button type="button" class="quick-action__link" (click)="closeQuickAction()">
+            {{ t('إغلاق', 'Close') }}
+          </button>
+        }
       </aside>
     }
   </div>
@@ -98,10 +141,24 @@
     @if (agendaItems().length) {
       <div class="calendar-agenda__list">
         @for (item of agendaItems(); track trackAgenda($index, item)) {
-          <article class="agenda-card" [class.agenda-card--booking]="item.type === 'booking'" [class.agenda-card--blocked]="item.type === 'blocked'">
+          <article
+            class="agenda-card"
+            [class.agenda-card--booking]="item.type === 'booking'"
+            [class.agenda-card--blocked]="item.type === 'blocked'"
+            [class.agenda-card--seasonal]="item.type === 'seasonal'"
+          >
             <p class="agenda-card__range">{{ item.rangeLabel }}</p>
             <h3 class="agenda-card__title">{{ item.title }}</h3>
             <p class="agenda-card__subtitle">{{ item.subtitle }}</p>
+            @if (item.deletable) {
+              <button
+                type="button"
+                class="agenda-card__remove"
+                (click)="unblockEntry(item)"
+              >
+                {{ t('إزالة الحظر', 'Unblock') }}
+              </button>
+            }
           </article>
         }
       </div>
@@ -128,6 +185,10 @@
     <div class="calendar-legend__item">
       <span class="calendar-legend__swatch calendar-legend__swatch--past"></span>
       <span>{{ t('يوم سابق', 'Past day') }}</span>
+    </div>
+    <div class="calendar-legend__item">
+      <span class="calendar-legend__swatch calendar-legend__swatch--seasonal"></span>
+      <span>{{ t('سعر موسمي', 'Seasonal rate') }}</span>
     </div>
   </footer>
 </section>

@@ -25,6 +25,7 @@
     <span class="badge badge-success">{{ t('مؤكد', 'Confirmed') }}</span>
     <span class="badge badge-danger">{{ t('ملغى', 'Cancelled') }}</span>
     <span class="badge badge-muted">{{ t('مكتمل', 'Completed') }}</span>
+    <span class="badge badge-danger">{{ t('منتهي الصلاحية', 'Expired') }}</span>
   </div>
 
   <!-- ═══ TAB BAR ══════════════════════════════════════════════════ -->
@@ -110,16 +111,23 @@
   } @else {
     <div id="tab-panel" class="cards-list animate-fadeup" role="list">
       @for (booking of activeList(); track booking.id) {
-        <article class="booking-card group" role="listitem">
+        <article
+          class="booking-card group"
+          role="listitem"
+          [id]="'booking-card-' + booking.id"
+          [class.booking-card--highlighted]="highlightedBookingId() === booking.id"
+        >
 
           <!-- Property Thumbnail -->
           <div class="booking-card__thumb">
             @if (booking.propertyThumbnailUrl) {
               <img
                 [src]="booking.propertyThumbnailUrl"
+                [attr.srcset]="booking.propertyThumbnailUrl + ' 1x'"
                 [alt]="booking.propertyTitle"
                 class="booking-card__img"
                 loading="lazy"
+                decoding="async"
               >
             } @else {
               <div class="booking-card__img-placeholder">
@@ -198,20 +206,37 @@
 
             <!-- Price -->
             <div class="booking-card__price-row">
-              <span class="booking-card__price">{{ formatCurrency(booking.totalPrice, booking.currency) }}</span>
-              <span class="text-xs text-slate-400 ms-1">{{ t('الإجمالي', 'total') }}</span>
+              @if (booking.discountAmount > 0) {
+                <div class="price-discount-block">
+                  <span class="booking-card__price-original line-through text-slate-400 text-sm me-2">{{ formatCurrency(booking.originalPrice, booking.currency) }}</span>
+                  <span class="booking-card__price text-teal-700">{{ formatCurrency(booking.totalPrice, booking.currency) }}</span>
+                  <span class="discount-badge ms-2">
+                    <svg class="inline h-3 w-3 me-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z"/>
+                    </svg>
+                    {{ booking.discountLabel ?? t('خصم إقامة طويلة', 'Long Stay Discount') }}
+                  </span>
+                </div>
+                <div class="savings-line">
+                  {{ t('وفّرت', 'You saved') }}
+                  <span class="font-semibold text-teal-600 ms-1">{{ formatCurrency(booking.discountAmount, booking.currency) }}</span>
+                </div>
+              } @else {
+                <span class="booking-card__price">{{ formatCurrency(booking.totalPrice, booking.currency) }}</span>
+                <span class="text-xs text-slate-400 ms-1">{{ t('الإجمالي', 'total') }}</span>
+              }
             </div>
 
             <!-- 24h deadline warning for Approved -->
             @if (booking.status === 6) {
               @let hours = paymentDeadlineHours(booking);
               @if (hours !== null) {
-                <div class="deadline-alert" [class.deadline-alert--urgent]="hours < 3">
+                <div class="deadline-alert" [class.deadline-alert--urgent]="hours < 3" [class.deadline-alert--expired]="hours === 0">
                   <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                   @if (hours === 0) {
-                    {{ t('انتهت مهلة الدفع!', 'Payment deadline has passed!') }}
+                    {{ t('انتهت مهلة الدفع! سيتم إلغاء الحجز تلقائياً.', 'Payment deadline has passed! Booking will be cancelled automatically.') }}
                   } @else {
                     {{ t('تبقى ' + hours + ' ساعة للدفع', hours + ' hour(s) left to pay') }}
                   }
@@ -243,26 +268,49 @@
               </button>
             }
 
-            <!-- Approved: Blinking Pay Now + Cancel -->
+            <!-- Approved: Pay Now (if window open) OR Expired badge (if window closed) -->
             @if (booking.status === 6) {
-              <a
-                [routerLink]="['/checkout', booking.id]"
-                id="pay-btn-{{ booking.id }}"
-                class="btn-primary btn-primary--pulse w-full"
-              >
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+              @if (!isPaymentWindowExpired(booking)) {
+                <!-- Payment window still open → show Pay Now -->
+                <a
+                  [routerLink]="['/checkout', booking.id]"
+                  id="pay-btn-{{ booking.id }}"
+                  class="btn-primary btn-primary--pulse w-full"
+                >
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                  </svg>
+                  {{ t('ادفع الآن لتأكيد الحجز', 'Pay Now to Confirm') }}
+                </a>
+                <button
+                  type="button"
+                  class="btn-secondary w-full mt-2"
+                  [disabled]="cancellingId() === booking.id"
+                  (click)="cancelBooking(booking.id)"
+                >
+                  {{ t('إلغاء الحجز', 'Cancel Booking') }}
+                </button>
+              } @else {
+                <!-- Payment window elapsed → show Expired badge (client-side) -->
+                <div class="expired-badge" id="expired-badge-{{ booking.id }}" role="status" aria-label="Booking Expired">
+                  <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  {{ t('انتهت صلاحية الحجز', 'Booking Expired') }}
+                </div>
+                <p class="expired-hint">{{ t('انتهت مهلة الدفع. تم تحرير التواريخ.', 'The payment deadline passed. Dates have been released.') }}</p>
+              }
+            }
+
+            <!-- Already server-cancelled as Expired (status=7) -->
+            @if (booking.status === 7) {
+              <div class="expired-badge" id="expired-server-badge-{{ booking.id }}" role="status" aria-label="Booking Expired">
+                <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                {{ t('ادفع الآن لتأكيد الحجز', 'Pay Now to Confirm') }}
-              </a>
-              <button
-                type="button"
-                class="btn-secondary w-full mt-2"
-                [disabled]="cancellingId() === booking.id"
-                (click)="cancelBooking(booking.id)"
-              >
-                {{ t('إلغاء الحجز', 'Cancel Booking') }}
-              </button>
+                {{ t('انتهت صلاحية الحجز', 'Booking Expired') }}
+              </div>
+              <p class="expired-hint">{{ t('انتهت مهلة الدفع. يمكنك تقديم حجز جديد.', 'The payment deadline passed. You may submit a new booking.') }}</p>
             }
 
             <!-- Confirmed (paid): Directions + Chat + Property -->

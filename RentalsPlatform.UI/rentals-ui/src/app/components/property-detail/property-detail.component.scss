@@ -58,8 +58,8 @@ input[type="date"] {
 
 // ── Skeleton shimmer ───────────────────────────────────────────────
 @keyframes shimmer {
-  0%   { background-position: -800px 0; }
-  100% { background-position: 800px 0; }
+  0%   { background-position: -50rem 0; }
+  100% { background-position: 50rem 0; }
 }
 
 .animate-pulse [class*="bg-slate"] {
@@ -69,7 +69,7 @@ input[type="date"] {
     #f1f5f9 50%,
     #e2e8f0 75%
   );
-  background-size: 800px 100%;
+  background-size: 50rem 100%;
   animation: shimmer 1.4s infinite linear;
 }
 

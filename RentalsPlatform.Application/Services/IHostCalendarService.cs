@@ -4,6 +4,8 @@ namespace RentalsPlatform.Application.Services;
 
 public interface IHostCalendarService
 {
-    Task BlockDatesAsync(BlockDto dto, CancellationToken cancellationToken = default);
+    /// <summary>Blocks a date range in the UnavailableDates table. Returns the new entry ID.</summary>
+    Task<Guid> BlockDatesAsync(BlockDto dto, CancellationToken cancellationToken = default);
+
     Task UnblockDatesAsync(Guid id, CancellationToken cancellationToken = default);
 }

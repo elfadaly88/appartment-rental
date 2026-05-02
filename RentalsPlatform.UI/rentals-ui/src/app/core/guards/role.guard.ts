@@ -21,6 +21,7 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
       return true;
     }
 
-    return router.createUrlTree(['/properties']);
+    // User is authenticated but doesn't have the required role
+    return router.createUrlTree(['/access-denied']);
   };
 };

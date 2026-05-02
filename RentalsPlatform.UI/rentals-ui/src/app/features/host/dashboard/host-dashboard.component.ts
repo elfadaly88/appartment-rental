@@ -170,4 +170,17 @@ export class HostDashboardComponent implements OnInit {
     const remaining = Math.floor((new Date(softBlockUntil).getTime() - Date.now()) / (1000 * 60 * 60));
     return remaining > 0 ? remaining : null;
   }
+
+  /**
+   * Returns true if the check-in date has already passed (is <= today, UTC).
+   * Used to disable the Approve button on the host pipeline.
+   */
+  protected isCheckInDatePassed(checkInDate: string): boolean {
+    if (!checkInDate) return false;
+    const today = new Date();
+    // Compare date-only to avoid timezone drift on the client
+    const todayStr = today.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+    const checkIn = checkInDate.split('T')[0];          // 'YYYY-MM-DD'
+    return checkIn <= todayStr;
+  }
 }

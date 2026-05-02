@@ -17,6 +17,7 @@ export class NotificationService implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
   private hubConnection: signalR.HubConnection | undefined;
+  private pendingReconnectToken: string | null = null;
 
   // ── State Signals ───────────────────────────────────────────────────────
   private readonly _notifications = signal<NotificationMessage[]>([]);
@@ -49,6 +50,12 @@ export class NotificationService implements OnDestroy {
       return; // SSR — no WebSocket
     }
 
+    if (!navigator.onLine) {
+      this.pendingReconnectToken = jwtToken;
+      this._connectionState.set(signalR.HubConnectionState.Disconnected);
+      return;
+    }
+
     // Don't reconnect if already connected
     if (
       this.hubConnection &&
@@ -72,9 +79,11 @@ export class NotificationService implements OnDestroy {
     try {
       await this.hubConnection.start();
       this._connectionState.set(this.hubConnection.state);
+      this.pendingReconnectToken = null;
     } catch (err) {
       console.error('[NotificationService] Connection failed:', err);
       this._connectionState.set(signalR.HubConnectionState.Disconnected);
+      this.pendingReconnectToken = jwtToken;
     }
   }
 
@@ -84,6 +93,11 @@ export class NotificationService implements OnDestroy {
    */
   async startConnection(): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    if (!navigator.onLine) {
+      this._connectionState.set(signalR.HubConnectionState.Disconnected);
       return;
     }
 
@@ -124,6 +138,20 @@ export class NotificationService implements OnDestroy {
 
   ngOnDestroy(): void {
     this.stop();
+  }
+
+  constructor() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    window.addEventListener('online', () => {
+      if (this.pendingReconnectToken) {
+        void this.start(this.pendingReconnectToken);
+      } else {
+        void this.startConnection();
+      }
+    });
   }
 
   // ── Internals ───────────────────────────────────────────────────────────

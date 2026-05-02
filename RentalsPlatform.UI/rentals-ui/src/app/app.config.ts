@@ -26,6 +26,8 @@ import {
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { securityInterceptor } from './core/interceptors/security.interceptor';
+import { forbiddenInterceptor } from './core/interceptors/forbidden.interceptor';
+import { rateLimitInterceptor } from './core/interceptors/rate-limit.interceptor';
 import { environment } from '../environments/environment';
 
 const socialAuthProviders =
@@ -60,7 +62,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimationsAsync(),
     provideRouter(routes, withComponentInputBinding(), withViewTransitions()),
-    provideHttpClient(withFetch(), withInterceptors([securityInterceptor, authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([securityInterceptor, rateLimitInterceptor, authInterceptor, forbiddenInterceptor])),
     provideClientHydration(withEventReplay()),
     // ngx-translate v17: forRoot registers the module; provideTranslateHttpLoader configures the path
     importProvidersFrom(

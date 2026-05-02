@@ -11,6 +11,16 @@ public class Booking
     public DateOnly StartDate { get; private set; }
     public DateOnly EndDate { get; private set; }
     public Money TotalPrice { get; private set; }
+
+    /// <summary>Pre-discount subtotal preserved for historical accuracy.</summary>
+    public Money OriginalPrice { get; private set; }
+
+    /// <summary>Monetary amount saved via a length-of-stay discount.</summary>
+    public decimal DiscountAmount { get; private set; }
+
+    /// <summary>Human-readable label for the applied discount (e.g. "Weekly Discount").</summary>
+    public string? DiscountLabel { get; private set; }
+
     public BookingStatus Status { get; private set; }
     public PaymentStatus PaymentStatus { get; private set; }
     public string? PaymobOrderId { get; private set; }
@@ -36,9 +46,10 @@ public class Booking
         PaymentStatus = PaymentStatus.Pending;
         CreatedOnUtc = DateTime.UtcNow;
 
-        TotalPrice = new Money(
-            pricePerNight.Amount * duration.LengthInDays,
-            pricePerNight.Currency);
+        var baseTotal = pricePerNight.Amount * duration.LengthInDays;
+        TotalPrice = new Money(baseTotal, pricePerNight.Currency);
+        OriginalPrice = new Money(baseTotal, pricePerNight.Currency);
+        DiscountAmount = 0m;
     }
 
     public static Booking CreateHostBlock(Guid propertyId, DateOnly startDate, DateOnly endDate, string? reason)
@@ -57,6 +68,8 @@ public class Booking
             PaymentStatus = PaymentStatus.Pending,
             Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim(),
             TotalPrice = Money.Zero(),
+            OriginalPrice = Money.Zero(),
+            DiscountAmount = 0m,
             CreatedOnUtc = DateTime.UtcNow
         };
     }
@@ -75,6 +88,25 @@ public class Booking
             throw new ArgumentOutOfRangeException(nameof(amount), "Total amount cannot be negative.");
 
         TotalPrice = new Money(amount, currency);
+    }
+
+    /// <summary>
+    /// Sets the full pricing breakdown: original subtotal, discount applied, and final total.
+    /// Use this instead of <see cref="SetTotalPrice"/> when a discount is involved.
+    /// </summary>
+    public void SetPricingDetails(decimal originalAmount, decimal discountAmount, decimal finalAmount, string currency, string? discountLabel = null)
+    {
+        if (originalAmount < 0)
+            throw new ArgumentOutOfRangeException(nameof(originalAmount), "Original amount cannot be negative.");
+        if (discountAmount < 0)
+            throw new ArgumentOutOfRangeException(nameof(discountAmount), "Discount amount cannot be negative.");
+        if (finalAmount < 0)
+            throw new ArgumentOutOfRangeException(nameof(finalAmount), "Final amount cannot be negative.");
+
+        OriginalPrice = new Money(originalAmount, currency);
+        DiscountAmount = Math.Round(discountAmount, 2);
+        DiscountLabel = discountLabel;
+        TotalPrice = new Money(finalAmount, currency);
     }
 
     public void MarkPaymentPaid()

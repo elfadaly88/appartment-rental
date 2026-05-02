@@ -8,11 +8,14 @@ public class PropertyPriceRule
     public DateOnly EndDate { get; private set; }
     public decimal CustomPricePerNight { get; private set; }
 
+    /// <summary>Human-readable season name, e.g. "Eid Al-Adha", "Summer Peak", "New Year".</summary>
+    public string? Label { get; private set; }
+
     public Property Property { get; private set; } = null!;
 
     private PropertyPriceRule() { }
 
-    public PropertyPriceRule(Guid propertyId, DateOnly startDate, DateOnly endDate, decimal customPricePerNight)
+    public PropertyPriceRule(Guid propertyId, DateOnly startDate, DateOnly endDate, decimal customPricePerNight, string? label = null)
     {
         if (startDate > endDate)
             throw new ArgumentException("StartDate must be before or equal to EndDate.");
@@ -25,5 +28,8 @@ public class PropertyPriceRule
         StartDate = startDate;
         EndDate = endDate;
         CustomPricePerNight = customPricePerNight;
+        Label = label?.Trim();
     }
+
+    public void UpdateLabel(string? label) => Label = label?.Trim();
 }

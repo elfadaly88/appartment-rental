@@ -33,7 +33,7 @@
     <div class="auth-card__body" [attr.data-view]="view()">
       @switch (view()) {
         @case ('login') {
-          <form class="auth-form auth-form--login" [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+          <form class="auth-form auth-form--login keyboard-aware" [formGroup]="loginForm" (ngSubmit)="submit()" (focusin)="handleFieldFocus($event)" novalidate>
             <label class="floating-field" [class.is-invalid]="fieldHasError('login', 'email')">
               <input class="floating-field__input" type="email" formControlName="email" placeholder=" " autocomplete="email" />
               <span class="floating-field__label">{{ 'AUTH.FIELD_EMAIL' | translate }}</span>
@@ -137,7 +137,7 @@
           </form>
         }
         @case ('register') {
-          <form class="auth-form auth-form--register" [formGroup]="registerForm" (ngSubmit)="submit()" novalidate>
+          <form class="auth-form auth-form--register keyboard-aware" [formGroup]="registerForm" (ngSubmit)="submit()" (focusin)="handleFieldFocus($event)" novalidate>
             <div class="role-toggle" role="group" [attr.aria-label]="'AUTH.TAB_REGISTER' | translate">
               <button
                 type="button"

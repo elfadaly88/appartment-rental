@@ -156,6 +156,7 @@ export class PriceRulesComponent {
       startDate: this.fb.control('', [Validators.required]),
       endDate: this.fb.control('', [Validators.required]),
       customPrice: this.fb.control(0, [Validators.required, Validators.min(1)]),
+      label: this.fb.control(''),
     },
     { validators: dateRangeValidator() },
   );
@@ -183,6 +184,7 @@ export class PriceRulesComponent {
       startDate: raw.startDate ?? '',
       endDate: raw.endDate ?? '',
       customPrice: Number(raw.customPrice ?? 0),
+      label: raw.label?.trim() || undefined,
     });
 
     if (saved) {
@@ -190,6 +192,7 @@ export class PriceRulesComponent {
         startDate: '',
         endDate: '',
         customPrice: 0,
+        label: '',
       });
     }
   }

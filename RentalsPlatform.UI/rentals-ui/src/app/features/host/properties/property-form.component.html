@@ -104,11 +104,11 @@
 
     <!-- ── Form Body ─────────────────────────────────────────────── -->
     <div class="px-6 py-8 sm:px-8 md:py-10">
-      <form [formGroup]="form" novalidate class="space-y-6">
+      <form [formGroup]="form" novalidate class="space-y-6 keyboard-aware" (focusin)="handleFieldFocus($event)">
 
         <!-- ════ STEP 1 — Essentials ═══════════════════════════════ -->
         @if (currentStep() === 1) {
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
             <label class="space-y-1.5">
               <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.NAME_AR' | translate }}</span>
@@ -144,7 +144,7 @@
               }
             </label>
 
-            <label class="space-y-1.5 sm:col-span-2">
+            <label class="space-y-1.5 md:col-span-2">
               <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.DESC_AR' | translate }}</span>
               <textarea
                 rows="4" formControlName="descriptionAr" dir="rtl"
@@ -156,7 +156,7 @@
               }
             </label>
 
-            <label class="space-y-1.5 sm:col-span-2">
+            <label class="space-y-1.5 md:col-span-2">
               <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.DESC_EN' | translate }}</span>
               <textarea
                 rows="4" formControlName="descriptionEn" lang="en"
@@ -186,7 +186,7 @@
 
         <!-- ════ STEP 2 — Location ════════════════════════════════ -->
         @if (currentStep() === 2) {
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
             <label class="space-y-1.5">
               <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.COUNTRY' | translate }}</span>
@@ -212,7 +212,7 @@
               }
             </label>
 
-            <label class="space-y-1.5 sm:col-span-2">
+            <label class="space-y-1.5 md:col-span-2">
               <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.STREET' | translate }}</span>
               <input
                 type="text" formControlName="street"
@@ -227,7 +227,7 @@
             <!-- Zip Code: hidden, optional — not required in our region -->
             <input type="hidden" formControlName="zipCode" />
 
-            <label class="space-y-1.5 sm:col-span-2">
+            <label class="space-y-1.5 md:col-span-2">
               <span class="text-sm font-semibold text-slate-700">
                 {{ 'HOST_FORM.MAP_URL' | translate }}
                 <span class="ms-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">
@@ -250,7 +250,7 @@
 
         <!-- ════ STEP 3 — Details ════════════════════════════════ -->
         @if (currentStep() === 3) {
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
 
             <label class="space-y-1.5">
               <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.PRICE' | translate }}</span>
@@ -279,7 +279,7 @@
               }
             </label>
 
-            <label class="space-y-1.5 sm:col-span-2">
+            <label class="space-y-1.5 md:col-span-2">
               <span class="text-sm font-semibold text-slate-700">{{ 'HOST_FORM.AMENITIES' | translate }}</span>
               <p class="text-xs text-slate-400">{{ 'HOST_FORM.AMENITIES_HINT' | translate }}</p>
               <textarea
@@ -289,7 +289,7 @@
             </label>
 
             <!-- House Rules: optional -->
-            <label class="space-y-1.5 sm:col-span-2">
+            <label class="space-y-1.5 md:col-span-2">
               <span class="text-sm font-semibold text-slate-700">
                 {{ 'HOST_FORM.RULES' | translate }}
                 <span class="ms-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">
@@ -305,7 +305,7 @@
             </label>
 
             <!-- ── Dynamic Fees Section ── -->
-            <div class="space-y-4 sm:col-span-2">
+            <div class="space-y-4 md:col-span-2">
               <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-slate-800">
                   {{ 'HOST_FORM.FEES_TITLE' | translate }}
@@ -325,7 +325,7 @@
               <div formArrayName="fees" class="space-y-4">
                 @for (fee of fees.controls; track $index) {
                   <div [formGroupName]="$index" class="relative grid grid-cols-1 gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 sm:grid-cols-12">
-                    
+
                     <!-- Fee Type -->
                     <div class="sm:col-span-5">
                       <label class="mb-1 block text-xs font-semibold text-slate-500">{{ 'HOST_FORM.FEE_TYPE' | translate }}</label>

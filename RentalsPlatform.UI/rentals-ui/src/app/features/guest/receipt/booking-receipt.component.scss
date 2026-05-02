@@ -228,6 +228,15 @@
   font-size: 1rem;
 }
 
+.receipt-paper__line--subtotal {
+  opacity: 0.7;
+}
+
+.receipt-paper__line--discount {
+  color: #0f766e;
+  font-size: 0.88rem;
+}
+
 .receipt-paper__footer {
   border-block-start: 1px solid rgba(15, 23, 42, 0.08);
   margin-block-start: 1rem;

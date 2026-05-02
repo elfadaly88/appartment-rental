@@ -50,6 +50,12 @@ export class HostLayoutComponent {
       exact: false,
     },
     {
+      path: '/host/discounts',
+      label: this.t('الخصومات', 'Discounts'),
+      icon: '🏷️',
+      exact: false,
+    },
+    {
       path: '/profile',
       label: this.t('الملف الشخصي', 'Profile'),
       icon: '👤',

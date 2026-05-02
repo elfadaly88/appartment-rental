@@ -30,6 +30,11 @@ public class PropertiesController(
     {
         var properties = await propertyRepository.GetAllAsync(cancellationToken);
 
+        if (CurrentUserId is { } currentUserId)
+        {
+            properties = properties.Where(p => p.HostId != currentUserId).ToList();
+        }
+
         var response = properties.Select(p => new
         {
             p.Id,
@@ -37,7 +42,8 @@ public class PropertiesController(
             Description = string.IsNullOrWhiteSpace(p.Description.En) ? p.Description.Ar : p.Description.En,
             Price = p.PricePerNight.Amount,
             Currency = p.PricePerNight.Currency,
-            p.MaxGuests
+            p.MaxGuests,
+            HostId = p.HostId.ToString()
         });
 
         return Ok(response);
@@ -51,6 +57,8 @@ public class PropertiesController(
         [FromQuery] decimal minPrice = 0,
         [FromQuery] decimal maxPrice = 15000,
         [FromQuery] int guests = 1,
+        [FromQuery] decimal? minHostRating = null,
+        [FromQuery] bool? instantBook = null,
         CancellationToken cancellationToken = default)
     {
         if (guests < 1)
@@ -71,10 +79,21 @@ public class PropertiesController(
             .Where(p => p.PricePerNight.Amount >= minPrice && p.PricePerNight.Amount <= maxPrice)
             .Where(p => p.MaxGuests >= guests);
 
+        if (CurrentUserId is { } currentUserId)
+        {
+            query = query.Where(p => p.HostId != currentUserId);
+        }
+
         if (!string.IsNullOrWhiteSpace(city))
         {
             var normalizedCity = city.Trim().ToLower();
             query = query.Where(p => p.Location.City.ToLower() == normalizedCity);
+        }
+
+        // ── Instant Book filter ─────────────────────────────────────
+        if (instantBook.HasValue && instantBook.Value)
+        {
+            query = query.Where(p => p.InstantBook);
         }
 
         if (checkIn.HasValue && checkOut.HasValue)
@@ -90,6 +109,16 @@ public class PropertiesController(
                         && b.StartDate < to
                         && b.EndDate > from
                         && b.Status != BookingStatus.Cancelled));
+        }
+
+        // ── Host/Property rating filter ─────────────────────────────
+        // Computes average review rating per property and applies the floor.
+        if (minHostRating.HasValue && minHostRating.Value > 0)
+        {
+            query = query.Where(p =>
+                dbContext.Reviews.Where(r => r.PropertyId == p.Id).Any()
+                    ? dbContext.Reviews.Where(r => r.PropertyId == p.Id).Average(r => (double)r.Rating) >= (double)minHostRating.Value
+                    : (minHostRating.Value <= 0));
         }
 
         var results = await query
@@ -122,6 +151,18 @@ public class PropertiesController(
                     Ar = p.Description.Ar,
                     En = string.IsNullOrWhiteSpace(p.Description.En) ? p.Description.Ar : p.Description.En,
                 },
+                HostId = p.HostId.ToString(),
+                p.InstantBook,
+                AverageRating = dbContext.Reviews
+                    .Where(r => r.PropertyId == p.Id)
+                    .Any()
+                        ? dbContext.Reviews
+                            .Where(r => r.PropertyId == p.Id)
+                            .Average(r => (double)r.Rating)
+                        : (double?)null,
+                ReviewCount = dbContext.Reviews.Count(r => r.PropertyId == p.Id),
+                HasActiveDiscount = dbContext.HostDiscounts
+                    .Any(d => d.PropertyId == p.Id && d.IsActive),
             })
             .ToListAsync(cancellationToken);
 
@@ -144,9 +185,10 @@ public class PropertiesController(
             select new
             {
                 Property = p,
-                HostName      = host != null ? (host.FullName ?? host.DisplayName ?? host.Email ?? "") : "",
-                HostAvatarUrl = host != null ? (host.AvatarUrl ?? host.ProfilePictureUrl ?? "")        : "",
-                HostJoinDate  = host != null ? host.CreatedAt : (DateTime?)null,
+                HostId = p.HostId.ToString(),
+                HostName = host != null ? (host.FullName ?? host.DisplayName ?? host.Email ?? "") : "",
+                HostAvatarUrl = host != null ? (host.AvatarUrl ?? host.ProfilePictureUrl ?? "") : "",
+                HostJoinDate = host != null ? host.CreatedAt : (DateTime?)null,
             }
         ).FirstOrDefaultAsync(cancellationToken);
 
@@ -158,6 +200,34 @@ public class PropertiesController(
         // A host is "verified" when they have both a display name and an avatar
         var isVerified = !string.IsNullOrWhiteSpace(result.HostName)
                       && !string.IsNullOrWhiteSpace(result.HostAvatarUrl);
+
+        // ── Fetch reviews with guest info in a single query ──────────────
+        var reviews = await (
+            from r in dbContext.Reviews.AsNoTracking()
+            join guest in dbContext.Users.AsNoTracking()
+                on r.GuestId equals guest.Id into guestGroup
+            from guest in guestGroup.DefaultIfEmpty()
+            where r.PropertyId == id
+            orderby r.CreatedAt descending
+            select new
+            {
+                r.Id,
+                r.Rating,
+                r.Comment,
+                r.CreatedAt,
+                GuestName = guest != null
+                    ? (string.IsNullOrWhiteSpace((guest.FirstName + " " + guest.LastName).Trim())
+                        ? (guest.DisplayName ?? guest.Email ?? "Guest")
+                        : (guest.FirstName + " " + guest.LastName).Trim())
+                    : "Guest",
+                GuestAvatarUrl = guest != null ? (guest.AvatarUrl ?? guest.ProfilePictureUrl ?? "") : "",
+                GuestId = r.GuestId,
+            }
+        ).ToListAsync(cancellationToken);
+
+        var averageRating = reviews.Count > 0
+            ? Math.Round(reviews.Average(r => (double)r.Rating), 1)
+            : 0.0;
 
         var response = new
         {
@@ -177,7 +247,7 @@ public class PropertiesController(
             },
             Price = new
             {
-                Amount   = property.PricePerNight.Amount,
+                Amount = property.PricePerNight.Amount,
                 Currency = property.PricePerNight.Currency,
             },
             Images = property.PropertyImages
@@ -205,11 +275,25 @@ public class PropertiesController(
             // ── Host identity card ─────────────────────────────────────
             HostInfo = new
             {
-                Name       = string.IsNullOrWhiteSpace(result.HostName) ? "Host" : result.HostName,
-                AvatarUrl  = result.HostAvatarUrl,
+                Id = result.HostId,
+                Name = string.IsNullOrWhiteSpace(result.HostName) ? "Host" : result.HostName,
+                AvatarUrl = result.HostAvatarUrl,
                 JoinedYear = result.HostJoinDate?.Year,
                 IsVerified = isVerified,
             },
+            // ── Reviews & ratings ──────────────────────────────────────
+            AverageRating = averageRating,
+            ReviewCount = reviews.Count,
+            Reviews = reviews.Select(r => new
+            {
+                r.Id,
+                r.Rating,
+                r.Comment,
+                r.GuestId,
+                r.GuestName,
+                r.GuestAvatarUrl,
+                Month = r.CreatedAt.ToString("MMMM yyyy"),
+            }).ToList(),
         };
 
         return Ok(response);
@@ -688,8 +772,8 @@ public class PropertiesController(
         if (dto.StartDate > dto.EndDate)
             return BadRequest(new { Message = "StartDate must be before or equal to EndDate." });
 
-        if (dto.CustomPricePerNight <= 0)
-            return BadRequest(new { Message = "CustomPricePerNight must be greater than zero." });
+        if (dto.CustomPrice <= 0)
+            return BadRequest(new { Message = "Custom price must be greater than zero." });
 
         if (CurrentUserId is not { } hostId)
             return Unauthorized();
@@ -711,7 +795,7 @@ public class PropertiesController(
         if (hasOverlap)
             return BadRequest(new { Message = "Overlapping price rules are not allowed for the same property." });
 
-        var rule = new Domain.Entities.PropertyPriceRule(id, dto.StartDate, dto.EndDate, dto.CustomPricePerNight);
+        var rule = new Domain.Entities.PropertyPriceRule(id, dto.StartDate, dto.EndDate, dto.CustomPrice, dto.Label);
 
         await dbContext.PropertyPriceRules.AddAsync(rule, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -721,7 +805,8 @@ public class PropertiesController(
             Id = rule.Id,
             StartDate = rule.StartDate,
             EndDate = rule.EndDate,
-            CustomPricePerNight = rule.CustomPricePerNight
+            CustomPrice = rule.CustomPricePerNight,
+            Label = rule.Label
         });
     }
 
@@ -748,7 +833,8 @@ public class PropertiesController(
                 Id = r.Id,
                 StartDate = r.StartDate,
                 EndDate = r.EndDate,
-                CustomPricePerNight = r.CustomPricePerNight
+                CustomPrice = r.CustomPricePerNight,
+                Label = r.Label
             })
             .ToListAsync(cancellationToken);
 

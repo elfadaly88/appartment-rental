@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-/* ── Google Fonts ──────────────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 /* ── Global Design Tokens ─────────────────────────────────────────────────── */
 :root {
   /* Brand */
@@ -50,7 +47,7 @@
   }
 
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
     font-size: 1rem;
     line-height: 1.6;
     color: var(--text-primary);
@@ -82,6 +79,21 @@
     max-inline-size: none !important;
   }
 
+  button,
+  a[role='button'],
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  .touch-target {
+    min-block-size: 2.75rem;
+  }
+
+  .keyboard-aware input,
+  .keyboard-aware select,
+  .keyboard-aware textarea,
+  .keyboard-aware button {
+    scroll-margin-block-end: 8rem;
+  }
+
   img { display: block; max-width: 100%; }
 
   a { color: inherit; text-decoration: none; }
@@ -92,6 +104,52 @@
     letter-spacing: -0.02em;
     color: var(--text-primary);
   }
+}
+
+.app-install-banner {
+  position: sticky;
+  top: 4rem;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.5rem auto;
+  width: min(100% - 1rem, 56rem);
+  border: 1px solid #cbd5e1;
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, #ffffff, #ecfeff);
+  padding: 0.6rem 0.75rem;
+}
+
+.app-install-banner__content {
+  min-width: 0;
+}
+
+.app-install-banner__title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.app-install-banner__copy {
+  margin: 0;
+  color: #475569;
+  font-size: 0.76rem;
+}
+
+.app-install-banner__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 2.75rem;
+  padding-inline: 1rem;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 /* ── Component Library ────────────────────────────────────────────────────── */

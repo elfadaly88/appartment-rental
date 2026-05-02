@@ -41,4 +41,9 @@ public class MockPaymobService : IPaymobService
     public Task<PaymentStatus> GetBookingPaymentStatusAsync(Guid bookingId)
         => Task.FromResult(PaymentStatus.Paid);
 
+    /// <inheritdoc />
+    public Task<bool> RefundAsync(Guid bookingId)
+        => Task.FromResult(true); // No-op in test/dev — always succeeds.
+
 }
+

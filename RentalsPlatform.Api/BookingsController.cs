@@ -17,15 +17,18 @@ namespace RentalsPlatform.Api.Controllers;
 public class BookingsController : ControllerBase
 {
     private readonly IBookingService _bookingService;
+    private readonly IPricingService _pricingService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ApplicationDbContext _dbContext;
 
     public BookingsController(
         IBookingService bookingService,
+        IPricingService pricingService,
         UserManager<ApplicationUser> userManager,
         ApplicationDbContext dbContext)
     {
         _bookingService = bookingService;
+        _pricingService = pricingService;
         _userManager = userManager;
         _dbContext = dbContext;
     }
@@ -47,6 +50,19 @@ public class BookingsController : ControllerBase
 
         if (request.CheckOutDate <= request.CheckInDate)
             return BadRequest(new { Message = "Check-out date must be after check-in date." });
+
+        // ── Self-booking guard: hosts cannot book their own properties ────────
+        var propertyHostId = await _dbContext.Properties
+            .AsNoTracking()
+            .Where(p => p.Id == request.PropertyId)
+            .Select(p => (Guid?)p.HostId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (propertyHostId is null)
+            return NotFound(new { Message = "Property not found." });
+
+        if (propertyHostId.Value == guestId)
+            return BadRequest(new { Message = "Self-booking is not allowed. Use 'Manage Calendar' to block dates on your own property." });
 
         try
         {
@@ -71,20 +87,8 @@ public class BookingsController : ControllerBase
         if (checkOutDate <= checkInDate)
             return BadRequest(new { Message = "Check-out date must be after check-in date." });
 
-        try
-        {
-            var totalAmount = await _bookingService.CalculateGuestBookingTotalAsync(
-                propertyId,
-                checkInDate,
-                checkOutDate,
-                cancellationToken);
-
-            return Ok(new { TotalAmount = totalAmount });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { Message = ex.Message });
-        }
+        var quote = await _pricingService.GetBreakdownAsync(propertyId, checkInDate, checkOutDate, cancellationToken);
+        return Ok(quote);
     }
 
     [Authorize(Roles = "Host")]

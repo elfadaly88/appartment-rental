@@ -7,10 +7,11 @@ import { AuthService } from './core/auth/auth.service';
 import { NotificationBellComponent } from './shared/components/notification-bell/notification-bell.component';
 import { filter, map, startWith } from 'rxjs/operators';
 import { HeaderComponent } from './shared/components/header/header.component';
+import { PlatformService } from './core/services/platform.service';
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive,
-     HeaderComponent,NotificationBellComponent
+  imports: [RouterOutlet,
+     HeaderComponent
      , TranslateModule],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -23,6 +24,7 @@ import { HeaderComponent } from './shared/components/header/header.component';
 export class App {
   protected readonly lang = inject(LanguageService);
   protected readonly authService = inject(AuthService);
+  protected readonly platform = inject(PlatformService);
   private readonly router = inject(Router);
   protected readonly isMenuOpen = signal(false);
   protected readonly userEmail = computed(() => this.authService.currentUser()?.email ?? 'host@local.com');

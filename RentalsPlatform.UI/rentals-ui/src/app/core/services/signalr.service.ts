@@ -110,7 +110,7 @@ export class SignalrService implements OnDestroy {
         if (this.authStore.isHost()) {
           return isTestId ? `/host/bookings` : `/host/bookings?id=${targetId}`;
         }
-        return `/my-bookings`;
+        return isTestId ? '/my-bookings' : `/my-bookings?id=${targetId}`;
       case 'Property':
         return `/properties/${targetId}`;
       case 'Approval':
@@ -203,6 +203,19 @@ export class SignalrService implements OnDestroy {
 
   clearNotifications(): void {
     this.notifications.set([]);
+  }
+
+  showLocalToast(title: string, message: string): void {
+    const id = `local-toast-${Date.now()}`;
+    const notification: RealtimeNotification = {
+      id,
+      title,
+      message,
+      createdAt: new Date().toISOString(),
+      raw: {},
+      targetType: 'System'
+    };
+    this.notifications.update((current) => [notification, ...current]);
   }
 
   ngOnDestroy(): void {

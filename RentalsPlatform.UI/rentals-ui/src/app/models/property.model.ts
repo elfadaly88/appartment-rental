@@ -29,6 +29,12 @@ export interface Property {
   bathrooms?: number;
   area?: number;
   amenities?: BilingualText[];
+  hostId?: string;
+  maxGuests?: number;
+  instantBook?: boolean;
+  averageRating?: number | null;
+  reviewCount?: number;
+  hasActiveDiscount?: boolean;
 }
 
 export interface BookingPayload {

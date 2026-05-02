@@ -10,6 +10,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { TranslateModule } from '@ngx-translate/core'; // 👈 ضروري
 import { LanguageService } from '../../core/services/language.service'; // مسار السيرفيس بتاعك
 import { HostTermsModalComponent } from './host-terms-modal.component';
+import { PlatformService } from '../../core/services/platform.service';
 type AuthView = 'login' | 'register';
 type RegisterRole = 'guest' | 'host';
 type PasswordStrengthLevel = 'weak' | 'medium' | 'strong';
@@ -40,6 +41,7 @@ export class AuthPageComponent {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly googleAuthService = inject(GoogleAuthService);
+  private readonly platform = inject(PlatformService);
   private readonly passwordRules: PasswordRule[] = [
     {
       key: 'minLength',
@@ -216,6 +218,21 @@ export class AuthPageComponent {
 
   openHostTermsModal(): void {
     this.isHostTermsModalOpen.set(true);
+  }
+
+  handleFieldFocus(event: FocusEvent): void {
+    if (!this.platform.isMobileViewport() || !this.platform.isTouchDevice()) {
+      return;
+    }
+
+    const el = event.target as HTMLElement | null;
+    if (!el) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    });
   }
 
   closeHostTermsModal(): void {

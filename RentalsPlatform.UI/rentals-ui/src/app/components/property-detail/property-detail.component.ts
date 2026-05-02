@@ -25,7 +25,7 @@ import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-property-detail-component',
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, CurrencyPipe, SlicePipe, CommonModule],
+  imports: [ReactiveFormsModule, RouterLink, CommonModule],
   templateUrl: './property-detail.component.html',
   styleUrl: './property-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +60,23 @@ export class PropertyDetailComponent implements OnInit {
   protected readonly isLoadingDetails = signal(true);
   protected readonly isBooking = signal(false);
   protected readonly bookBtnState = signal<'idle' | 'active'>('idle');
+
+  // ── Reviews ─────────────────────────────────────────────
+  protected readonly reviews = computed(() => (this.propertyDetails()?.reviews ?? []) as any[]);
+  protected readonly reviewCount = computed(() => this.propertyDetails()?.reviewCount ?? 0);
+  protected readonly averageRating = computed(() => this.propertyDetails()?.averageRating ?? 0);
+  protected readonly showAllReviews = signal(false);
+  protected readonly visibleReviews = computed(() =>
+    this.showAllReviews() ? this.reviews() : this.reviews().slice(0, 3)
+  );
+
+  // ── Self-booking guard ───────────────────────────────────
+  /** True when the logged-in user is the host of this property. */
+  protected readonly isOwnProperty = computed(() => {
+    const currentUserId = this.authStore.currentUser()?.id;
+    const hostId = this.propertyDetails()?.hostInfo?.id as string | null | undefined;
+    return !!(currentUserId && hostId && currentUserId === hostId);
+  });
 
   protected readonly latestNotification = this.notificationService.latestNotification;
   private lastShownNotificationId: string | null = null;
@@ -283,5 +300,16 @@ export class PropertyDetailComponent implements OnInit {
       title: message.title || this.t('إشعار جديد', 'New notification'),
       text: message.body,
     });
+  }
+
+  /** Returns an array of star objects for rendering a [1..5] rating. */
+  protected starArray(rating: number): { filled: boolean }[] {
+    return Array.from({ length: 5 }, (_, i) => ({ filled: i < Math.round(rating) }));
+  }
+
+  /** URL to the host's public profile page. */
+  protected hostPublicUrl(): string {
+    const hostId = this.propertyDetails()?.hostInfo?.id;
+    return hostId ? `/user/${hostId}` : '#';
   }
 }

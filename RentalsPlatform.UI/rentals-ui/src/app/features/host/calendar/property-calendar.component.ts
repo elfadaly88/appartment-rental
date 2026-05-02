@@ -11,6 +11,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -18,6 +19,7 @@ import {
   HostCalendarEntry,
 } from '../../../core/services/host-booking.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { PropertyService, CreatePriceRuleDto } from '../services/property.service';
 
 interface DateRange {
   start: Date;
@@ -41,14 +43,15 @@ interface CalendarDayCell {
   isSelected: boolean;
   isRangeStart: boolean;
   isRangeEnd: boolean;
-  state: 'available' | 'booking' | 'blocked' | 'past';
+  state: 'available' | 'booking' | 'blocked' | 'seasonal' | 'past';
   guestName: string;
   helperText: string;
 }
 
 interface AgendaItem {
   id: string;
-  type: 'booking' | 'blocked';
+  type: 'booking' | 'blocked' | 'seasonal';
+  deletable: boolean;
   title: string;
   subtitle: string;
   rangeLabel: string;
@@ -57,7 +60,7 @@ interface AgendaItem {
 @Component({
   selector: 'app-property-calendar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './property-calendar.component.html',
   styleUrl: './property-calendar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +75,7 @@ export class PropertyCalendarComponent {
   readonly customPriceRequested = output<{ startDate: string; endDate: string }>();
 
   private readonly hostBookingService = inject(HostBookingService);
+  private readonly propertyService = inject(PropertyService);
   protected readonly lang = inject(LanguageService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
@@ -79,6 +83,12 @@ export class PropertyCalendarComponent {
   readonly isLoading = signal(false);
   readonly isBlocking = signal(false);
   readonly error = signal<string | null>(null);
+
+  // ── Seasonal price form state ────────────────────────────────────────
+  readonly isSeasonalFormOpen = signal(false);
+  readonly seasonalPriceInput = signal<number | null>(null);
+  readonly seasonalLabelInput = signal('');
+  readonly isSettingSeasonalPrice = signal(false);
 
   private readonly currentMonth = signal(startOfMonth(new Date()));
   private readonly calendarEntries = signal<HostCalendarEntry[]>([]);
@@ -141,7 +151,7 @@ export class PropertyCalendarComponent {
         isCurrentMonth,
         isPast,
         isToday: isSameDay(date, today),
-        isSelectable: isCurrentMonth && !isPast && !entry,
+        isSelectable: isCurrentMonth && !isPast && entry?.type !== 'booking' && entry?.type !== 'blocked',
         isSelected,
         isRangeStart,
         isRangeEnd,
@@ -149,7 +159,9 @@ export class PropertyCalendarComponent {
         guestName: entry?.guestName?.trim() ?? '',
         helperText: entry?.type === 'blocked'
           ? this.t('محجوز يدوياً', 'Manual block')
-          : entry?.guestName?.trim() || (entry?.type === 'booking' ? this.t('حجز مؤكد', 'Confirmed booking') : ''),
+          : entry?.type === 'seasonal'
+            ? (entry.label?.trim() || this.t('سعر موسمي', 'Seasonal price'))
+            : entry?.guestName?.trim() || (entry?.type === 'booking' ? this.t('حجز مؤكد', 'Confirmed booking') : ''),
       } satisfies CalendarDayCell;
     });
   });
@@ -166,12 +178,17 @@ export class PropertyCalendarComponent {
       .map((entry) => ({
         id: entry.id,
         type: entry.type,
+        deletable: entry.deletable === true,
         title: entry.type === 'booking'
           ? entry.guestName?.trim() || this.t('ضيف مؤكد', 'Confirmed guest')
-          : this.t('حظر يدوي', 'Manual block'),
+          : entry.type === 'seasonal'
+            ? (entry.label?.trim() || this.t('سعر موسمي', 'Seasonal pricing'))
+            : this.t('حظر يدوي', 'Manual block'),
         subtitle: entry.type === 'booking'
           ? this.t('إقامة مؤكدة', 'Confirmed stay')
-          : entry.note?.trim() || this.t('غير متاح للحجز', 'Unavailable for booking'),
+          : entry.type === 'seasonal'
+            ? `${entry.customPrice ?? ''} / ${this.t('ليلة', 'night')}`
+            : entry.note?.trim() || this.t('غير متاح للحجز', 'Unavailable for booking'),
         rangeLabel: this.formatRangeLabel(parseIsoDate(entry.startDate), parseIsoDate(entry.endDate)),
       })) satisfies AgendaItem[];
   });
@@ -280,22 +297,20 @@ export class PropertyCalendarComponent {
       const startDate = toIsoDate(range.start);
       const endDate = toIsoDate(range.end);
 
-      await firstValueFrom(
-        this.hostBookingService.blockDates({
-          propertyId,
-          startDate,
-          endDate,
-        }),
+      // API returns the created CalendarEntryDto with the real UUID
+      const created = await firstValueFrom(
+        this.hostBookingService.blockDates({ propertyId, startDate, endDate }),
       );
 
       this.calendarEntries.update((current) => [
         ...current,
         {
-          id: `block-${startDate}-${endDate}-${Date.now()}`,
+          id: created.id,
           propertyId,
-          startDate,
-          endDate,
-          type: 'blocked',
+          startDate: created.startDate,
+          endDate: created.endDate,
+          type: 'blocked' as const,
+          deletable: true,
           note: this.t('حظر يدوي', 'Manual block'),
         },
       ]);
@@ -310,12 +325,86 @@ export class PropertyCalendarComponent {
     }
   }
 
-  protected requestCustomPrice(): void {
+  protected openSeasonalForm(): void {
+    this.seasonalPriceInput.set(null);
+    this.seasonalLabelInput.set('');
+    this.isSeasonalFormOpen.set(true);
+  }
+
+  protected closeSeasonalForm(): void {
+    this.isSeasonalFormOpen.set(false);
+  }
+
+  protected async setSeasonalPrice(): Promise<void> {
+    const propertyId = this.propertyId().trim();
     const range = this.selectedRange();
-    if (!range) {
+    const price = this.seasonalPriceInput();
+
+    if (!propertyId || !range || !price || price <= 0 || this.isSettingSeasonalPrice()) {
       return;
     }
 
+    this.isSettingSeasonalPrice.set(true);
+    this.error.set(null);
+
+    try {
+      const startDate = toIsoDate(range.start);
+      const endDate = toIsoDate(range.end);
+      const label = this.seasonalLabelInput().trim() || undefined;
+
+      const dto: CreatePriceRuleDto = {
+        startDate,
+        endDate,
+        customPrice: price,
+        label,
+      };
+
+      const created = await firstValueFrom(this.propertyService.addPriceRule(propertyId, dto));
+
+      this.calendarEntries.update((current) => [
+        ...current,
+        {
+          id: created.id,
+          propertyId,
+          startDate: created.startDate,
+          endDate: created.endDate,
+          type: 'seasonal' as const,
+          deletable: false,
+          label: created.label ?? label,
+          customPrice: created.customPrice,
+        },
+      ]);
+
+      this.isSeasonalFormOpen.set(false);
+      this.quickActionMenu.set(null);
+      this.selectedRange.set(null);
+      this.selectionAnchor.set(null);
+    } catch {
+      this.error.set(this.t('تعذر تحديد السعر الموسمي.', 'Unable to set seasonal price.'));
+    } finally {
+      this.isSettingSeasonalPrice.set(false);
+    }
+  }
+
+  protected async unblockEntry(item: AgendaItem): Promise<void> {
+    if (!item.deletable) return;
+    const propertyId = this.propertyId().trim();
+    if (!propertyId) return;
+
+    try {
+      await firstValueFrom(this.hostBookingService.unblockDates(propertyId, item.id));
+      this.calendarEntries.update((current) => current.filter((e) => e.id !== item.id));
+    } catch {
+      this.error.set(this.t('تعذر إزالة الحظر.', 'Unable to remove the block.'));
+    }
+  }
+
+  protected requestCustomPrice(): void {
+    const range = this.selectedRange();
+    if (!range) return;
+    // Open inline seasonal price form
+    this.openSeasonalForm();
+    // Also emit for parent consumers that still listen to the output
     this.customPriceRequested.emit({
       startDate: toIsoDate(range.start),
       endDate: toIsoDate(range.end),

@@ -22,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<PropertyImage> PropertyImages { get; set; }
     public DbSet<FeeType> FeeTypes { get; set; }
     public DbSet<PropertyFee> PropertyFees { get; set; }
+    public DbSet<HostDiscount> HostDiscounts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(p => p.RejectionReason).HasMaxLength(500);
             entity.Property(p => p.SubmittedAt).IsRequired();
             entity.Property(p => p.BasePricePerNight).HasColumnType("numeric(18,2)").IsRequired();
+            entity.Property(p => p.InstantBook).HasDefaultValue(false).IsRequired();
 
             entity.HasMany(p => p.PropertyPriceRules)
                 .WithOne(r => r.Property)
@@ -99,6 +101,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 d.Property(x => x.Ar).HasColumnName("DescriptionAr").IsRequired();
                 d.Property(x => x.En).HasColumnName("DescriptionEn").IsRequired();
             });
+
+            // ── Performance index: all host-scoped queries filter/join on HostId ──
+            entity.HasIndex(p => p.HostId)
+                  .HasDatabaseName("IX_Properties_HostId");
         });
 
         modelBuilder.Entity<Property>()
@@ -138,6 +144,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(b => b.PaymobOrderId).HasMaxLength(100);
             entity.Property(b => b.PaymentStatus).IsRequired();
 
+            entity.Property(b => b.DiscountAmount)
+                .HasColumnType("numeric(18,2)")
+                .HasDefaultValue(0m);
+
+            entity.Property(b => b.DiscountLabel)
+                .HasMaxLength(100);
+
             entity.HasOne(b => b.Property)
                 .WithMany(p => p.Bookings)
                 .HasForeignKey(b => b.PropertyId)
@@ -148,6 +161,32 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 price.Property(m => m.Amount).HasColumnName("TotalPriceAmount").HasColumnType("numeric(18,2)");
                 price.Property(m => m.Currency).HasColumnName("TotalPriceCurrency").HasMaxLength(3);
             });
+
+            entity.OwnsOne(b => b.OriginalPrice, price =>
+            {
+                price.Property(m => m.Amount).HasColumnName("OriginalPriceAmount").HasColumnType("numeric(18,2)");
+                price.Property(m => m.Currency).HasColumnName("OriginalPriceCurrency").HasMaxLength(3);
+            });
+        });
+
+        modelBuilder.Entity<HostDiscount>(entity =>
+        {
+            entity.HasKey(h => h.Id);
+
+            entity.Property(h => h.MinNights).IsRequired();
+            entity.Property(h => h.DiscountPercent)
+                .HasColumnType("numeric(5,2)")
+                .IsRequired();
+            entity.Property(h => h.Label).HasMaxLength(100).IsRequired();
+            entity.Property(h => h.IsActive).IsRequired();
+            entity.Property(h => h.CreatedOnUtc).IsRequired();
+
+            entity.HasOne(h => h.Property)
+                .WithMany()
+                .HasForeignKey(h => h.PropertyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(h => new { h.PropertyId, h.IsActive });
         });
 
         modelBuilder.Entity<Country>(entity =>
@@ -227,7 +266,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(u => u.StartDate).IsRequired();
             entity.Property(u => u.EndDate).IsRequired();
             entity.Property(u => u.Reason).HasMaxLength(200);
+
+            // Nullable FK — null for manual host blocks, set for system soft-blocks.
+            entity.Property(u => u.BookingId).IsRequired(false);
+
             entity.HasIndex(u => new { u.PropertyId, u.StartDate, u.EndDate });
+
+            // Allows O(1) lookup when releasing dates on cancellation / expiry.
+            entity.HasIndex(u => u.BookingId)
+                  .HasDatabaseName("IX_UnavailableDates_BookingId")
+                  .HasFilter("\"BookingId\" IS NOT NULL");
         });
 
         modelBuilder.Entity<PropertyImage>(entity =>
@@ -271,6 +319,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(r => r.StartDate).IsRequired();
             entity.Property(r => r.EndDate).IsRequired();
             entity.Property(r => r.CustomPricePerNight).HasColumnType("numeric(18,2)").IsRequired();
+            entity.Property(r => r.Label).HasMaxLength(100);
             entity.HasIndex(r => new { r.PropertyId, r.StartDate, r.EndDate });
         });
 

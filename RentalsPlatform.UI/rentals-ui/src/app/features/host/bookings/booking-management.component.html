@@ -34,7 +34,11 @@
   } @else {
     <section class="cards">
       @for (booking of visibleBookings(); track booking.id) {
-        <article class="card">
+        <article
+          class="card"
+          [id]="'host-booking-card-' + booking.id"
+          [class.card--highlighted]="highlightedBookingId() === booking.id"
+        >
           <header class="card__top">
             <div>
               <p class="card__guest">{{ booking.guestName }}</p>
